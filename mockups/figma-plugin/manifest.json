@@ -1,0 +1,8 @@
+{
+  "name": "자린고비 가계부 목업 생성기",
+  "id": "jaringochi-mockup-generator",
+  "api": "1.0.0",
+  "main": "code.js",
+  "editorType": ["figma"],
+  "documentAccess": "dynamic-page"
+}

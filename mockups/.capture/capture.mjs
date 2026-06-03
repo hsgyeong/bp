@@ -32,7 +32,12 @@ await page.setViewport({ width: 440, height: 880, deviceScaleFactor: 3 });
 for (let i = 0; i < screens.length; i++) {
   await page.goto(`${baseUrl}?only=${i}`, { waitUntil: "networkidle0" });
   await page.evaluate(() => document.fonts.ready);
-  const el = await page.$(".phone");
+  const handle = await page.evaluateHandle(() =>
+    [...document.querySelectorAll(".screen-wrap")]
+      .find((w) => w.style.display !== "none")
+      .querySelector(".phone")
+  );
+  const el = handle.asElement();
   const file = resolve(outDir, `${screens[i]}.png`);
   await el.screenshot({ path: file });
   console.log(`✓ ${screens[i]}.png`);
