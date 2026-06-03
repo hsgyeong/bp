@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>자린고비 가계부 — 목업</title>
+<link rel="stylesheet" href="style.css">
+<style>
+  /* 굴비 마스코트 줄 */
+  .gulbi-hang { position: relative; }
+  .gulbi-hang .string { position:absolute; left:50%; top:-40px; width:2px; height:40px; background:#cbb38a; transform:translateX(-50%); }
+</style>
+</head>
+<body>
+
+<!-- 재사용 마스코트 SVG (symbol) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="goldg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD37A"/><stop offset="1" stop-color="#E89020"/>
+    </linearGradient>
+    <symbol id="gulbi" viewBox="0 0 120 120">
+      <!-- 꼬리 -->
+      <path d="M14 60 L2 42 Q-2 60 2 78 Z" fill="#E89020"/>
+      <!-- 몸통 -->
+      <ellipse cx="62" cy="60" rx="48" ry="30" fill="url(#goldg)" stroke="#D77E15" stroke-width="2.5"/>
+      <!-- 줄무늬(말린 굴비 결) -->
+      <path d="M40 36 Q44 60 40 84" stroke="#D77E15" stroke-width="2" fill="none" opacity=".5"/>
+      <path d="M58 33 Q62 60 58 87" stroke="#D77E15" stroke-width="2" fill="none" opacity=".4"/>
+      <!-- 지느러미 -->
+      <path d="M62 30 Q72 18 84 30 Q72 34 62 36 Z" fill="#F2A33C" stroke="#D77E15" stroke-width="1.5"/>
+      <!-- 볼터치 -->
+      <ellipse cx="78" cy="68" rx="7" ry="4.5" fill="#FF9D7A" opacity=".55"/>
+      <!-- 눈 -->
+      <circle cx="86" cy="52" r="6.5" fill="#fff" stroke="#7a5418" stroke-width="1.5"/>
+      <circle cx="87.5" cy="53" r="3" fill="#3a2a10"/>
+      <circle cx="89" cy="51.5" r="1" fill="#fff"/>
+      <!-- 입(미소) -->
+      <path d="M96 62 Q102 66 96 70" stroke="#7a5418" stroke-width="2" fill="none" stroke-linecap="round"/>
+    </symbol>
+  </defs>
+</svg>
+
+<div class="gallery">
+
+  <!-- ============ 0. 로그인 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="scroll" style="display:flex; flex-direction:column; justify-content:center; gap:6px;">
+          <div class="gulbi-hang" style="text-align:center; margin-bottom:8px;">
+            <div class="string"></div>
+            <svg style="width:120px;height:120px"><use href="#gulbi"/></svg>
+          </div>
+          <h1 style="text-align:center; font-size:27px; font-weight:900; letter-spacing:-0.6px;">자린고비</h1>
+          <p style="text-align:center; color:var(--mute); font-weight:600; font-size:14px; margin-bottom:28px;">굴비 보며 아끼는 우리집 가계부</p>
+
+          <div class="label">이메일</div>
+          <input class="field" placeholder="example@email.com" style="margin-bottom:14px;">
+          <div class="label">비밀번호</div>
+          <input class="field" type="password" placeholder="••••••••" style="margin-bottom:22px;">
+          <button class="btn-primary" style="margin-bottom:12px;">로그인</button>
+          <p style="text-align:center; font-size:13px; color:var(--ink-2); font-weight:600;">아직 회원이 아니신가요? <b style="color:var(--gold-deep)">회원가입</b></p>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">0. 로그인</div>
+  </div>
+
+  <!-- ============ 1. 홈 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar">
+          <div><div class="sub">2026년 5월</div><h1>안녕하세요, 알뜰님 👋</h1></div>
+        </div>
+        <div class="scroll">
+          <!-- 굴비 메시지 -->
+          <div class="gulbi-msg" style="margin-bottom:14px;">
+            <svg style="width:52px;height:52px;flex:0 0 52px"><use href="#gulbi"/></svg>
+            <div class="bubble-text">이번 주 예산의 <b>68%</b> 썼어요.<br>조금만 더 아껴볼까요? 🐟</div>
+          </div>
+
+          <!-- 주간 예산 사용률 -->
+          <div class="card">
+            <div class="row between" style="margin-bottom:12px;">
+              <b style="font-size:15px">이번 주 예산 사용률</b>
+              <b style="font-size:15px; color:var(--gold-deep)">68%</b>
+            </div>
+            <div class="bar-track"><div class="bar-fill" style="width:68%"></div></div>
+            <div class="row between" style="margin-top:9px; font-size:12px; font-weight:700; color:var(--mute)">
+              <span>사용 136,000원</span><span>예산 200,000원</span>
+            </div>
+          </div>
+
+          <!-- 월 수입/지출 -->
+          <div class="row" style="gap:12px; margin-top:14px;">
+            <div class="card" style="flex:1; padding:16px;">
+              <div class="muted" style="font-size:12px;font-weight:700">월 수입</div>
+              <div class="income" style="font-size:20px;font-weight:900;margin-top:6px">+1,000,000</div>
+            </div>
+            <div class="card" style="flex:1; padding:16px;">
+              <div class="muted" style="font-size:12px;font-weight:700">월 지출</div>
+              <div class="expense" style="font-size:20px;font-weight:900;margin-top:6px">-600,000</div>
+            </div>
+          </div>
+
+          <!-- 최근 거래 미리보기 -->
+          <div class="card" style="margin-top:14px;">
+            <div class="row between" style="margin-bottom:6px;"><b style="font-size:15px">최근 거래</b><span class="muted" style="font-size:12px;font-weight:700">더보기 ›</span></div>
+            <div class="txn" style="border:none">
+              <div class="cat-ic" style="background:var(--expense-soft)">🍚</div>
+              <div><div class="name">식비 · 토레타</div><div class="memo">5월 28일</div></div>
+              <div class="amt expense">-2,200</div>
+            </div>
+            <div class="txn">
+              <div class="cat-ic" style="background:var(--income-soft)">💰</div>
+              <div><div class="name">장학금 · 학자금 상환</div><div class="memo">5월 26일</div></div>
+              <div class="amt income">+6,000</div>
+            </div>
+          </div>
+        </div>
+        <div class="fab">+</div>
+        <div class="tabbar">
+          <div class="tab on"><div class="ic">🏠</div>홈</div>
+          <div class="tab"><div class="ic">📒</div>가계부</div>
+          <div class="tab"><div class="ic">📊</div>통계</div>
+          <div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">1. 홈</div>
+  </div>
+
+  <!-- ============ 2. 가계부 (리스트) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>가계부</h1><span class="sub">2026.05 ▾</span></div>
+        <div style="padding:0 20px 12px"><div class="seg"><div class="s on">일자별</div><div class="s">달력</div></div></div>
+        <!-- 월 요약 -->
+        <div style="padding:0 20px 8px">
+          <div class="card" style="padding:14px 16px;">
+            <div class="row between" style="text-align:center">
+              <div style="flex:1"><div class="muted" style="font-size:11px;font-weight:700">수입</div><div class="income" style="font-weight:900;margin-top:3px">1,000,000</div></div>
+              <div style="flex:1"><div class="muted" style="font-size:11px;font-weight:700">지출</div><div class="expense" style="font-weight:900;margin-top:3px">600,000</div></div>
+              <div style="flex:1"><div class="muted" style="font-size:11px;font-weight:700">합계</div><div style="font-weight:900;margin-top:3px">400,000</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="scroll" style="padding-top:0">
+          <div class="daygroup">
+            <div class="dayhead"><span class="d">5월 28일 <span class="muted" style="font-weight:600">화</span></span><span class="dsum expense">-2,200</span></div>
+            <div class="txn"><div class="cat-ic" style="background:var(--expense-soft)">🍚</div><div><div class="name">식비</div><div class="memo">토레타</div></div><div class="amt expense">-2,200</div></div>
+          </div>
+          <div class="daygroup">
+            <div class="dayhead"><span class="d">5월 27일 <span class="muted" style="font-weight:600">월</span></span><span class="dsum expense">-2,200</span></div>
+            <div class="txn"><div class="cat-ic" style="background:var(--expense-soft)">🥤</div><div><div class="name">식비</div><div class="memo">이오니크</div></div><div class="amt expense">-2,200</div></div>
+          </div>
+          <div class="daygroup">
+            <div class="dayhead"><span class="d">5월 26일 <span class="muted" style="font-weight:600">일</span></span><span class="dsum income">+6,000</span></div>
+            <div class="txn"><div class="cat-ic" style="background:var(--income-soft)">💰</div><div><div class="name">장학금</div><div class="memo">학자금 상환</div></div><div class="amt income">+6,000</div></div>
+          </div>
+        </div>
+        <div class="fab">+</div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div>
+          <div class="tab on"><div class="ic">📒</div>가계부</div>
+          <div class="tab"><div class="ic">📊</div>통계</div>
+          <div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">2. 가계부 (일자별)</div>
+  </div>
+
+  <!-- ============ 3. 통계 (월/단순금액) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>통계</h1></div>
+        <div style="padding:0 20px 10px"><div class="seg"><div class="s on">월</div><div class="s">주</div></div></div>
+        <div style="padding:0 20px 10px"><div class="seg" style="background:transparent;padding:0;gap:8px">
+          <div class="s on" style="background:var(--gold-soft);color:var(--gold-deep)">지출</div>
+          <div class="s" style="background:var(--cream-2)">수입</div>
+        </div></div>
+        <div style="padding:0 20px 12px"><div class="seg"><div class="s on">단순 금액</div><div class="s">카테고리별</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card">
+            <div class="row between" style="margin-bottom:4px"><b style="font-size:15px">월별 지출 추이</b></div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:14px">최근 6개월</div>
+            <!-- 꺾은선 그래프 SVG -->
+            <svg viewBox="0 0 300 160" style="width:100%;height:auto">
+              <line x1="30" y1="20" x2="30" y2="130" stroke="#ECE3D2"/>
+              <line x1="30" y1="130" x2="290" y2="130" stroke="#ECE3D2"/>
+              <polyline fill="none" stroke="#E8623D" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+                points="45,95 95,70 145,105 195,55 245,80 285,40"/>
+              <polygon fill="#E8623D" opacity="0.08" points="45,95 95,70 145,105 195,55 245,80 285,40 285,130 45,130"/>
+              <g fill="#E8623D"><circle cx="45" cy="95" r="4"/><circle cx="95" cy="70" r="4"/><circle cx="145" cy="105" r="4"/><circle cx="195" cy="55" r="4"/><circle cx="245" cy="80" r="4"/><circle cx="285" cy="40" r="5"/></g>
+              <g fill="#A89C89" font-size="11" font-weight="700" text-anchor="middle" font-family="Pretendard">
+                <text x="45" y="148">12월</text><text x="95" y="148">1월</text><text x="145" y="148">2월</text><text x="195" y="148">3월</text><text x="245" y="148">4월</text><text x="285" y="148">5월</text>
+              </g>
+            </svg>
+          </div>
+          <div class="card">
+            <div class="row between"><span class="muted" style="font-size:13px;font-weight:700">5월 지출</span><b style="font-size:17px;color:var(--expense)">600,000원</b></div>
+            <div class="row between" style="margin-top:10px"><span class="muted" style="font-size:13px;font-weight:700">전월 대비</span><b style="font-size:15px;color:var(--income)">▼ 12% 절약</b></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div>
+          <div class="tab"><div class="ic">📒</div>가계부</div>
+          <div class="tab on"><div class="ic">📊</div>통계</div>
+          <div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">3. 통계 (월 · 단순금액)</div>
+  </div>
+
+  <!-- ============ 4. 회원가입 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>회원가입</h1></div>
+        <div class="scroll" style="display:flex;flex-direction:column;justify-content:center;">
+          <div style="text-align:center;margin-bottom:18px;">
+            <svg style="width:74px;height:74px"><use href="#gulbi"/></svg>
+            <p style="color:var(--mute);font-weight:600;font-size:14px;margin-top:6px;">굴비와 함께 절약을 시작해요</p>
+          </div>
+          <div class="label">이메일</div>
+          <input class="field" placeholder="example@email.com" style="margin-bottom:14px;">
+          <div class="label">닉네임</div>
+          <input class="field" placeholder="알뜰이" style="margin-bottom:14px;">
+          <div class="label">비밀번호</div>
+          <input class="field" type="password" placeholder="8자 이상" style="margin-bottom:14px;">
+          <div class="label">비밀번호 확인</div>
+          <input class="field" type="password" placeholder="비밀번호 재입력" style="margin-bottom:24px;">
+          <button class="btn-primary">가입하기</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">0-2. 회원가입</div>
+  </div>
+
+  <!-- ============ 5. 가계부 (달력) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>가계부</h1><span class="sub">2026.05 ▾</span></div>
+        <div style="padding:0 20px 12px"><div class="seg"><div class="s">일자별</div><div class="s on">달력</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card" style="padding:14px 12px;">
+            <div class="cal-grid cal-head">
+              <span style="color:var(--expense)">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span style="color:#5B8DEF">토</span>
+            </div>
+            <div class="cal-grid cal-body">
+              <div class="cal-cell muted">27</div><div class="cal-cell muted">28</div><div class="cal-cell muted">29</div><div class="cal-cell muted">30</div><div class="cal-cell"><b>1</b></div><div class="cal-cell"><b>2</b><i class="ci e">-5천</i></div><div class="cal-cell"><b>3</b></div>
+              <div class="cal-cell"><b>4</b><i class="ci i">+10만</i></div><div class="cal-cell"><b>5</b></div><div class="cal-cell"><b>6</b><i class="ci e">-2천</i></div><div class="cal-cell"><b>7</b></div><div class="cal-cell"><b>8</b><i class="ci e">-3만</i></div><div class="cal-cell"><b>9</b></div><div class="cal-cell"><b>10</b></div>
+              <div class="cal-cell"><b>11</b><i class="ci e">-8천</i></div><div class="cal-cell"><b>12</b></div><div class="cal-cell"><b>13</b></div><div class="cal-cell"><b>14</b><i class="ci e">-1만</i></div><div class="cal-cell"><b>15</b></div><div class="cal-cell"><b>16</b></div><div class="cal-cell"><b>17</b><i class="ci i">+5천</i></div>
+              <div class="cal-cell"><b>18</b></div><div class="cal-cell"><b>19</b><i class="ci e">-4천</i></div><div class="cal-cell"><b>20</b></div><div class="cal-cell"><b>21</b></div><div class="cal-cell"><b>22</b><i class="ci e">-2만</i></div><div class="cal-cell"><b>23</b></div><div class="cal-cell"><b>24</b></div>
+              <div class="cal-cell"><b>25</b></div><div class="cal-cell on"><b>26</b><i class="ci i">+6천</i></div><div class="cal-cell"><b>27</b><i class="ci e">-2천</i></div><div class="cal-cell"><b>28</b><i class="ci e">-2천</i></div><div class="cal-cell"><b>29</b></div><div class="cal-cell"><b>30</b></div><div class="cal-cell"><b>31</b></div>
+            </div>
+          </div>
+          <div class="card" style="margin-top:12px;">
+            <div class="row between" style="margin-bottom:8px"><b style="font-size:14px">5월 26일 <span class="muted" style="font-weight:600">일</span></b><b class="income" style="font-size:14px">+6,000</b></div>
+            <div class="txn" style="border:none;padding:8px 0"><div class="cat-ic" style="background:var(--income-soft)">💰</div><div><div class="name">장학금</div><div class="memo">학자금 상환</div></div><div class="amt income">+6,000</div></div>
+          </div>
+        </div>
+        <div class="fab">+</div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div>
+          <div class="tab on"><div class="ic">📒</div>가계부</div>
+          <div class="tab"><div class="ic">📊</div>통계</div>
+          <div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">2-2. 가계부 (달력)</div>
+  </div>
+
+  <!-- ============ 6. 통계 (월 · 카테고리별 / 파이) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>통계</h1></div>
+        <div style="padding:0 20px 10px"><div class="seg"><div class="s on">월</div><div class="s">주</div></div></div>
+        <div style="padding:0 20px 10px"><div class="seg" style="background:transparent;padding:0;gap:8px">
+          <div class="s on" style="background:var(--gold-soft);color:var(--gold-deep)">지출</div><div class="s" style="background:var(--cream-2)">수입</div>
+        </div></div>
+        <div style="padding:0 20px 12px"><div class="seg"><div class="s">단순 금액</div><div class="s on">카테고리별</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card">
+            <div class="row between" style="margin-bottom:6px"><b style="font-size:15px">5월 지출 구성</b><b style="color:var(--expense)">600,000원</b></div>
+            <div style="display:flex;justify-content:center;margin:8px 0 14px">
+              <svg viewBox="0 0 160 160" style="width:150px;height:150px;transform:rotate(-90deg)">
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#E8623D" stroke-width="26" stroke-dasharray="128.9 210.4" stroke-dashoffset="0"/>
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#F2A33C" stroke-width="26" stroke-dasharray="74.6 264.7" stroke-dashoffset="-128.9"/>
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#5B8DEF" stroke-width="26" stroke-dasharray="61.1 278.2" stroke-dashoffset="-203.5"/>
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#2FA98C" stroke-width="26" stroke-dasharray="40.7 298.6" stroke-dashoffset="-264.6"/>
+                <circle cx="80" cy="80" r="54" fill="none" stroke="#B0A595" stroke-width="26" stroke-dasharray="33.9 305.4" stroke-dashoffset="-305.3"/>
+              </svg>
+            </div>
+            <div class="legend"><span class="lg"><i style="background:#E8623D"></i>식비</span><b>228,000</b><span class="lp">38%</span></div>
+            <div class="legend"><span class="lg"><i style="background:#F2A33C"></i>교통</span><b>132,000</b><span class="lp">22%</span></div>
+            <div class="legend"><span class="lg"><i style="background:#5B8DEF"></i>쇼핑</span><b>108,000</b><span class="lp">18%</span></div>
+            <div class="legend"><span class="lg"><i style="background:#2FA98C"></i>문화</span><b>72,000</b><span class="lp">12%</span></div>
+            <div class="legend"><span class="lg"><i style="background:#B0A595"></i>기타</span><b>60,000</b><span class="lp">10%</span></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div><div class="tab"><div class="ic">📒</div>가계부</div><div class="tab on"><div class="ic">📊</div>통계</div><div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">3-2. 통계 (월 · 카테고리별)</div>
+  </div>
+
+  <!-- ============ 7. 통계 (주 · 단순금액 / 막대+꺾은선) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>통계</h1></div>
+        <div style="padding:0 20px 10px"><div class="seg"><div class="s">월</div><div class="s on">주</div></div></div>
+        <div style="padding:0 20px 12px"><div class="seg"><div class="s on">단순 금액</div><div class="s">카테고리별</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card">
+            <div class="row between" style="margin-bottom:2px"><b style="font-size:15px">주별 예산 vs 지출</b></div>
+            <div class="row" style="gap:14px;font-size:11px;font-weight:700;color:var(--mute);margin-bottom:10px"><span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:var(--gold-soft);display:inline-block"></i>예산</span><span class="row" style="gap:5px"><i style="width:10px;height:10px;border-radius:3px;background:var(--gold-deep);display:inline-block"></i>지출</span></div>
+            <svg viewBox="0 0 300 150" style="width:100%;height:auto">
+              <line x1="20" y1="120" x2="290" y2="120" stroke="#ECE3D2"/>
+              <!-- 1주 -->
+              <rect x="32" y="40" width="18" height="80" rx="4" fill="#FCE8C8"/><rect x="52" y="55" width="18" height="65" rx="4" fill="#E0871A"/>
+              <!-- 2주 -->
+              <rect x="100" y="40" width="18" height="80" rx="4" fill="#FCE8C8"/><rect x="120" y="30" width="18" height="90" rx="4" fill="#E0871A"/>
+              <!-- 3주 -->
+              <rect x="168" y="40" width="18" height="80" rx="4" fill="#FCE8C8"/><rect x="188" y="72" width="18" height="48" rx="4" fill="#E0871A"/>
+              <!-- 4주(이번) -->
+              <rect x="236" y="40" width="18" height="80" rx="4" fill="#FCE8C8"/><rect x="256" y="66" width="18" height="54" rx="4" fill="#E0871A"/>
+              <g fill="#A89C89" font-size="11" font-weight="700" text-anchor="middle" font-family="Pretendard">
+                <text x="51" y="138">1주</text><text x="119" y="138">2주</text><text x="187" y="138">3주</text><text x="255" y="138">4주</text>
+              </g>
+            </svg>
+          </div>
+          <div class="card">
+            <b style="font-size:15px">예산 대비 지출 달성률</b>
+            <svg viewBox="0 0 300 130" style="width:100%;height:auto;margin-top:8px">
+              <line x1="30" y1="95" x2="290" y2="95" stroke="#ECE3D2"/>
+              <line x1="30" y1="35" x2="290" y2="35" stroke="#F4ECDC" stroke-dasharray="3 3"/>
+              <text x="2" y="39" fill="#A89C89" font-size="10" font-weight="700" text-anchor="start" font-family="Pretendard">100%</text>
+              <polyline fill="none" stroke="var(--income)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" points="55,55 130,42 205,78 280,68"/>
+              <g fill="var(--income)"><circle cx="55" cy="55" r="4"/><circle cx="130" cy="42" r="4"/><circle cx="205" cy="78" r="4"/><circle cx="280" cy="68" r="4"/></g>
+              <g fill="#A89C89" font-size="11" font-weight="700" text-anchor="middle" font-family="Pretendard"><text x="55" y="113">1주</text><text x="130" y="113">2주</text><text x="205" y="113">3주</text><text x="280" y="113">4주</text></g>
+            </svg>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div><div class="tab"><div class="ic">📒</div>가계부</div><div class="tab on"><div class="ic">📊</div>통계</div><div class="tab"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">3-3. 통계 (주 · 단순금액)</div>
+  </div>
+
+  <!-- ============ 8. 더보기 (설정) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><h1>더보기</h1></div>
+        <div class="scroll">
+          <div class="card" style="display:flex;align-items:center;gap:14px;">
+            <div style="width:54px;height:54px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;"><svg style="width:40px;height:40px"><use href="#gulbi"/></svg></div>
+            <div style="flex:1"><div style="font-size:18px;font-weight:800">알뜰이</div><div class="muted" style="font-size:13px;font-weight:600">example@email.com</div></div>
+            <button class="btn-ghost" style="width:auto;padding:9px 14px;font-size:13px">수정</button>
+          </div>
+
+          <div class="label" style="margin:22px 0 8px 4px;font-size:13px">분류 / 관리</div>
+          <div class="card" style="padding:4px 4px;">
+            <div class="menu"><span class="mic">📥</span>수입 분류 관리<span class="arr">›</span></div>
+            <div class="menu"><span class="mic">📤</span>지출 분류 관리<span class="arr">›</span></div>
+            <div class="menu" style="border:none"><span class="mic">🎯</span>예산 설정<span class="arr">›</span></div>
+          </div>
+
+          <div class="label" style="margin:22px 0 8px 4px;font-size:13px">계정</div>
+          <div class="card" style="padding:4px 4px;">
+            <div class="menu"><span class="mic">🔒</span>비밀번호 수정<span class="arr">›</span></div>
+            <div class="menu" style="border:none"><span class="mic">🚪</span>로그아웃<span class="arr">›</span></div>
+          </div>
+          <p style="text-align:center;color:var(--mute);font-size:12px;font-weight:600;margin-top:18px">회원 탈퇴</p>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><div class="ic">🏠</div>홈</div><div class="tab"><div class="ic">📒</div>가계부</div><div class="tab"><div class="ic">📊</div>통계</div><div class="tab on"><div class="ic">⋯</div>더보기</div>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">4. 더보기 (설정)</div>
+  </div>
+
+  <!-- ============ 9. 거래 등록 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><span class="sub" style="font-size:18px">✕</span><h1 style="font-size:18px">거래 등록</h1><span class="sub">저장</span></div>
+        <div style="padding:0 20px 14px"><div class="seg"><div class="s">수입</div><div class="s on" style="background:#fff;color:var(--expense)">지출</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card" style="text-align:center;padding:22px 18px;">
+            <div class="muted" style="font-size:12px;font-weight:700;margin-bottom:6px">금액</div>
+            <div style="font-size:34px;font-weight:900;color:var(--expense)">- 2,200<span style="font-size:18px;color:var(--mute)"> 원</span></div>
+          </div>
+          <div class="label" style="margin:18px 0 8px 2px">분류</div>
+          <div class="chips">
+            <span class="chip on">🍚 식비</span><span class="chip">🚌 교통</span><span class="chip">🛍 쇼핑</span><span class="chip">🎬 문화</span><span class="chip">＋</span>
+          </div>
+          <div class="label" style="margin:18px 0 8px 2px">날짜</div>
+          <div class="field row between">2026년 5월 28일 (화)<span class="muted">📅</span></div>
+          <div class="label" style="margin:14px 0 8px 2px">메모</div>
+          <input class="field" placeholder="토레타">
+        </div>
+        <div style="padding:14px 20px 20px"><button class="btn-primary">저장하기</button></div>
+      </div>
+    </div>
+    <div class="screen-label">5-1. 거래 등록</div>
+  </div>
+
+  <!-- ============ 10. 카테고리 설정 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><span class="sub" style="font-size:18px">‹</span><h1 style="font-size:18px">지출 분류 관리</h1><span class="sub"> </span></div>
+        <div style="padding:0 20px 14px"><div class="seg"><div class="s">수입 분류</div><div class="s on">지출 분류</div></div></div>
+        <div class="scroll" style="padding-top:0">
+          <div class="card" style="padding:4px 4px;">
+            <div class="menu"><span class="cat-ic" style="background:var(--expense-soft)">🍚</span>식비<span class="arr">≡</span></div>
+            <div class="menu"><span class="cat-ic" style="background:#FDEFD6">🚌</span>교통<span class="arr">≡</span></div>
+            <div class="menu"><span class="cat-ic" style="background:#E4ECFD">🛍</span>쇼핑<span class="arr">≡</span></div>
+            <div class="menu"><span class="cat-ic" style="background:var(--income-soft)">🎬</span>문화<span class="arr">≡</span></div>
+            <div class="menu" style="border:none"><span class="cat-ic" style="background:#F0ECE4">📦</span>기타<span class="arr">≡</span></div>
+          </div>
+          <button class="btn-ghost" style="margin-top:14px;color:var(--gold-deep);border-color:var(--gold-soft)">＋ 분류 추가</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">5-2. 카테고리 설정</div>
+  </div>
+
+  <!-- ============ 11. 예산 설정 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><span class="sub" style="font-size:18px">‹</span><h1 style="font-size:18px">예산 설정</h1><span class="sub">저장</span></div>
+        <div class="scroll">
+          <div class="gulbi-msg" style="margin-bottom:16px">
+            <svg style="width:46px;height:46px;flex:0 0 46px"><use href="#gulbi"/></svg>
+            <div class="bubble-text" style="font-size:13px">예산을 정하면 굴비가 매주 사용률을 알려드려요!</div>
+          </div>
+          <div class="card">
+            <div class="label" style="margin:0 0 8px 2px">한 달 예산</div>
+            <div class="field" style="font-size:22px;font-weight:900;text-align:right">800,000 <span style="font-size:15px;color:var(--mute)">원</span></div>
+            <div class="muted" style="font-size:12px;font-weight:700;margin-top:10px;text-align:right">주간 약 200,000원</div>
+          </div>
+          <div class="label" style="margin:20px 0 8px 4px;font-size:13px">분류별 예산 (선택)</div>
+          <div class="card" style="padding:6px 4px;">
+            <div class="menu" style="padding:13px 12px"><span class="cat-ic" style="background:var(--expense-soft)">🍚</span>식비<b class="arr" style="font-size:14px;color:var(--ink)">300,000</b></div>
+            <div class="menu" style="padding:13px 12px"><span class="cat-ic" style="background:#FDEFD6">🚌</span>교통<b class="arr" style="font-size:14px;color:var(--ink)">150,000</b></div>
+            <div class="menu" style="padding:13px 12px;border:none"><span class="cat-ic" style="background:#E4ECFD">🛍</span>쇼핑<b class="arr" style="font-size:14px;color:var(--ink)">100,000</b></div>
+          </div>
+        </div>
+        <div style="padding:14px 20px 20px"><button class="btn-primary">예산 저장</button></div>
+      </div>
+    </div>
+    <div class="screen-label">5-3. 예산 설정</div>
+  </div>
+
+  <!-- ============ 12. 내 프로필 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><span class="sub" style="font-size:18px">‹</span><h1 style="font-size:18px">내 프로필</h1><span class="sub"> </span></div>
+        <div class="scroll">
+          <div style="text-align:center;margin:10px 0 22px">
+            <div style="width:88px;height:88px;border-radius:50%;background:var(--gold-soft);display:grid;place-items:center;margin:0 auto"><svg style="width:62px;height:62px"><use href="#gulbi"/></svg></div>
+          </div>
+          <div class="label" style="margin:0 0 8px 2px">닉네임</div>
+          <div class="field row between" style="margin-bottom:14px">알뜰이<span class="muted" style="font-size:13px;font-weight:700;color:var(--gold-deep)">변경</span></div>
+          <div class="label" style="margin:0 0 8px 2px">이메일</div>
+          <div class="field" style="color:var(--mute);margin-bottom:26px">example@email.com</div>
+
+          <button class="btn-ghost" style="margin-bottom:12px">🔒 비밀번호 수정</button>
+          <button class="btn-ghost" style="color:var(--expense);border-color:var(--expense-soft)">회원 탈퇴</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">5-4. 내 프로필</div>
+  </div>
+
+  <!-- ============ 13. 비밀번호 확인 모달 (탈퇴) ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen" style="background:rgba(46,40,32,.5)">
+        <div class="topbar" style="opacity:.35"><span class="sub" style="font-size:18px">‹</span><h1 style="font-size:18px">내 프로필</h1><span class="sub"> </span></div>
+        <div style="flex:1"></div>
+        <!-- 바텀시트 -->
+        <div class="sheet">
+          <div class="sheet-grip"></div>
+          <div style="text-align:center;margin-bottom:6px"><svg style="width:50px;height:50px"><use href="#gulbi"/></svg></div>
+          <h2 style="text-align:center;font-size:18px;font-weight:800">정말 탈퇴하시겠어요?</h2>
+          <p style="text-align:center;color:var(--mute);font-size:13px;font-weight:600;margin:8px 0 18px;line-height:1.5">탈퇴하면 모든 가계부 기록이 사라져요.<br>확인을 위해 비밀번호를 입력해주세요.</p>
+          <input class="field" type="password" placeholder="현재 비밀번호" style="margin-bottom:14px">
+          <button class="btn-primary" style="background:linear-gradient(135deg,#F0795A,#E8623D);box-shadow:0 8px 18px rgba(232,98,61,.35);margin-bottom:10px">탈퇴하기</button>
+          <button class="btn-ghost">취소</button>
+        </div>
+      </div>
+    </div>
+    <div class="screen-label">5-5. 비밀번호 확인 · 탈퇴</div>
+  </div>
+
+  <!-- ============ 14. 비밀번호 수정 ============ -->
+  <div class="screen-wrap">
+    <div class="phone">
+      <div class="statusbar"><span>9:41</span><span class="dots">📶 🔋</span></div>
+      <div class="screen">
+        <div class="topbar"><span class="sub" style="font-size:18px">‹</span><h1 style="font-size:18px">비밀번호 수정</h1><span class="sub"> </span></div>
+        <div class="scroll">
+          <div class="label" style="margin:8px 0 8px 2px">현재 비밀번호</div>
+          <input class="field" type="password" placeholder="현재 비밀번호" style="margin-bottom:18px">
+          <div class="label" style="margin:0 0 8px 2px">새 비밀번호</div>
+          <input class="field" type="password" placeholder="8자 이상" style="margin-bottom:14px">
+          <div class="label" style="margin:0 0 8px 2px">새 비밀번호 확인</div>
+          <input class="field" type="password" placeholder="새 비밀번호 재입력">
+        </div>
+        <div style="padding:14px 20px 20px"><button class="btn-primary">변경하기</button></div>
+      </div>
+    </div>
+    <div class="screen-label">5-4-2. 비밀번호 수정</div>
+  </div>
+
+</div>
+<script>
+  // ?only=N → N번째 화면만 표시 (캡처용)
+  var m = new URLSearchParams(location.search).get('only');
+  if (m !== null) {
+    var wraps = document.querySelectorAll('.screen-wrap');
+    wraps.forEach(function(w, i){ if (i != m) w.style.display='none'; });
+    document.body.style.padding='40px';
+    document.querySelector('.gallery').style.justifyContent='flex-start';
+  }
+</script>
+</body>
+</html>
