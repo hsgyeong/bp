@@ -83,3 +83,16 @@ REST 규약: Base URL `/api`, 인증은 `Authorization: Bearer <token>` (JWT).
 - ⚠️ **알려진 이슈**: `application.properties`의
   `mybatis.mapper-locations=classpath:mappers/**`(복수) vs 실제 경로
   `resources/mapper/`(단수) 불일치 → 매퍼 로딩 안 됨. 자세한 건 PROGRESS 참고.
+
+## 8. 개발 계획 · 분담 (2026-06-04 확정)
+
+- **분담 방식**: 기능 **수직 분할** — 두 명이 각자 **풀스택**(백엔드+프론트)으로 도메인을 통째 담당. API.md 계약 기준 병렬 작업, 같은 파일 동시수정 최소화.
+- **담당**
+  - **팀원 A — 기록+계정**: 백 `auth/user`·`transaction` / 화면 00·04·08·12·13·14·02·09·05·01
+  - **팀원 B — 설정+분석**: 백 `category`·`budget`·`statistics`·`notification` / 화면 10·11·03·06·07 + 알림 UI
+- **브랜치**: `feat/<도메인>`(auth/transaction/category/budget/statistics/notification/home), 버그·설정은 `chore/<작업>`. **master 직접 커밋 금지** → PR 교차 리뷰 후 머지.
+- **일정**: 7일(6/4 목~6/12 금) MVP → 6/15~ 보너스 → **6/22~24 발표 준비**. 주말(6/6~7)=버퍼.
+- **머지 순서(의존성)**: ① B 카테고리 먼저 머지 → A 거래등록 / ② A 거래 → B 통계·알림 / ③ B 예산 → 알림 트리거 / ④ 마지막에 A 홈(여러 API 조립).
+- **인증 타이밍**: Security(6/8)·JWT(6/9) 학습 **직후** 구현. 그 전엔 **임시 인증**으로 도메인 개발 — 현재 유저 취득을 **백 `getCurrentUserId()` 1곳 / 프 axios 인터셉터 1곳**으로 추상화해 두고 6/9에 그 한 곳만 실 JWT로 교체.
+- **MVP 범위**: 알림(지출 임계치 트리거) **포함**. 굴비 챗봇(Spring AI)은 **보너스**(6/15~).
+- **작업 보드(노션)**: [6/4~6/12 간트 차트](https://app.notion.com/p/375f6ce1f2d0800a9b7df76850d6924a) 페이지 — [팀원 A DB](https://app.notion.com/p/a0d60b72deb741dfa3908bafb6e34610) / [팀원 B DB](https://app.notion.com/p/5ddb54dea1d94af2a2a228d4e37af621) (각 표·간트·보드 뷰). **일자별 할 일·복습·상태는 노션에서 관리** (이 문서에 중복 기재하지 않음).
