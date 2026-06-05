@@ -7,7 +7,7 @@
 
 ## DEC-0001 · 백엔드 스택: Spring Boot 4 + MyBatis + MySQL
 - **날짜**: 2026-06
-- **결정**: Java 21 / Spring Boot 4.0.6 / MyBatis / MySQL(`ssafy` 스키마) 사용.
+- **결정**: Java 21 / Spring Boot 4.0.6 / MyBatis / MySQL(`jaringochi` 스키마) 사용.
 - **이유**: 학습 범위에 맞춘 표준 조합. JPA 대신 MyBatis로 SQL 직접 제어.
 - **영향**: 매퍼 XML은 `resources/mapper/` 하위, 응답은 camelCase 매핑.
 
@@ -44,6 +44,13 @@
 - **결정**: 알림(지출 임계치 트리거)은 **MVP 포함**. 굴비 챗봇(Spring AI)은 **보너스**(6/15~). 발표 준비는 6/22~24.
 - **이유**: 알림은 핵심 컨셉(절약 경고)이라 포함. 챗봇은 Spring AI 학습(6/10) 이후라 후순위.
 - **영향**: `notification` 테이블에 `weekly_budget_id`+`threshold` 포함(임계치 중복 알림 방지용).
+
+## DEC-0008 · db 이름 ssafy 에서 jaringochi로 수정
+- **날짜**: 2026-06-05
+- **결정**: db 이름 ssafy 에서 jaringochi로 수정
+- **이유**: 이전에 db 설계할 때 정한 사항
+- **영향**: application.properties와 agents.md, decisions.md 수정
+
 
 <!--
 ## DEC-000N · 제목
