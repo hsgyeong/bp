@@ -35,7 +35,7 @@ bp/
 
 ### 백엔드 (`jaringochi/`)
 - **Java 21**, **Spring Boot 4.0.6**, **MyBatis** (`mybatis-spring-boot-starter 4.0.1`)
-- DB: **MySQL** — 스키마 `ssafy`, 계정 `ssafy / ssafy`, `jdbc:mysql://127.0.0.1:3306/ssafy`
+- DB: **MySQL** — 스키마 `jaringochi`, 계정 `ssafy / ssafy`, `jdbc:mysql://127.0.0.1:3306/jaringochi`
 - 서버 포트 **8080**, springdoc-openapi(Swagger UI) 포함, Lombok 사용
 - 패키지 베이스: `com.bp.jaringochi`, 도메인형 구조 `domain/<도메인>/{controller,service,...}`
 - 빌드: `./mvnw spring-boot:run` (Windows: `mvnw.cmd`)
