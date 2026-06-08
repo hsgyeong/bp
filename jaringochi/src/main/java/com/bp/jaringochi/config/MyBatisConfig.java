@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 @MapperScan({
         "com.bp.jaringochi.domain.budget.dao",
+        "com.bp.jaringochi.domain.category.dao", 
         "com.bp.jaringochi.domain.report.dao",
         "com.bp.jaringochi.domain.statistics.dao",
         "com.bp.jaringochi.domain.user.dao"
