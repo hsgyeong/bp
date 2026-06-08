@@ -7,7 +7,7 @@
 
 | 담당 | 도구 | 작업 | 브랜치 | 비고 |
 |------|------|------|--------|------|
-| | | | | |
+| 팀원 B | Claude | 카테고리 API (DTO·DAO 완료 → Mapper XML·Service·Controller 진행) | feat/category | 끝나면 즉시 PR 머지 (A 거래등록 선행) |
 
 ## 완료 (Done)
 
@@ -27,6 +27,21 @@
   매퍼 미로딩. 설정값 또는 폴더명을 한쪽으로 통일 필요.
 
 ## 다음 할 일 (Backlog)
+
+### 2026-06-08 · 카테고리 작업 중 확인 필요 (팀원 B)
+
+- [ ] **ErrorCode에 카테고리 코드 추가** — 현재 `ErrorCode` enum에 category 코드가 없음
+  (user/transaction/budget/notification만 있음). 카테고리 Service에서 403/404를
+  던지려면 아래 2개 추가 필요:
+  - `CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "C404", "해당 카테고리를 찾을 수 없습니다.")`
+  - `CATEGORY_FORBIDDEN(HttpStatus.FORBIDDEN, "C403", "해당 카테고리에 접근할 권한이 없습니다.")`
+  - ⚠️ `ErrorCode.java`는 공통 파일(친구 작성) → 수정 전 공유해서 충돌 방지.
+- [ ] **응답의 `isDefault` 처리 방식 결정** — API.md 카테고리 응답엔 `isDefault`(기본제공 여부)가
+  있는데 `Category` DTO엔 없음. `isDefault`는 `userId == null` 이면 true인 파생값.
+  - (a) DTO에 `isDefault` 필드 추가 + Service에서 계산 / (b) `userId` 그대로 노출 후 프론트가 판단(간단).
+  - MVP는 (b)도 가능. 추후 결정.
+
+### 일반
 
 - [ ] DB 스키마 DDL 확정 (5개 테이블)
 - [ ] 인증(JWT) 백엔드 구현
