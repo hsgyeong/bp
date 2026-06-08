@@ -41,6 +41,25 @@
   - (a) DTO에 `isDefault` 필드 추가 + Service에서 계산 / (b) `userId` 그대로 노출 후 프론트가 판단(간단).
   - MVP는 (b)도 가능. 추후 결정.
 
+- [ ] **카테고리 display_order(표시 순서) 처리 방침 결정**
+  - 순서 정책: **새 카테고리는 맨 뒤**로. (대부분 앱 관례 + 기본 카테고리 순서 안 깨짐)
+    - 맨 앞(display_order=0)은 기본 제공 카테고리(1,2,3…) 위로 끼어들어 어색 → 비채택.
+    - 진짜 맨 앞/맨 뒤 둘 다 기존 값 조회 쿼리(min-1 / max+1)가 필요함.
+  - 구현 선택지:
+    - **옵션 X (MVP 단순)**: display_order 자동설정 안 함 → `ORDER BY type, id`(생성순)으로 조회.
+      `findMaxDisplayOrder` 불필요. 새 카테고리는 id가 커서 자연히 뒤에 생김.
+    - **옵션 Y (미래 대비)**: `findMaxDisplayOrder`로 max+1 부여. 추후 드래그 정렬 기능에 바로 활용.
+  - 현재 판단: 드래그 정렬은 **보너스**라 MVP는 옵션 X로 시작 가능. 드래그 정렬 도입 시 옵션 Y로 전환.
+  - (관련: `CategoryServiceImpl.addCategory`, `CategoryDao.findMaxDisplayOrder`, `CategoryMapper.xml`) 
+
+- [ ] **카테고리 조회 `type` 파라미터 필수 처리** — 수입/지출을 섞어 조회할 일이 없어
+  Mapper의 `selectCategories`에서 `<if>`를 빼고 `AND type = #{type}` 고정함. 따라서 type 생략 시
+  `type=NULL` 비교로 **빈 목록**이 반환됨 → 아래 2가지로 일관성 맞춰야 함:
+  - **CategoryController(미작성)**: `@RequestParam(required = true) Integer type` 으로 type 필수화
+    (생략 시 400으로 명확히 거부 → 빈 목록과 혼동 방지).
+  - API.md 2-1: "생략 시 전체" → **"type 필수"** 로 수정 완료 (2026-06-08).
+  - (선택) `ORDER BY type, id` 에서 `type` 은 한 type만 조회하므로 `ORDER BY id` 로 줄여도 됨.
+
 ### 일반
 
 - [ ] DB 스키마 DDL 확정 (5개 테이블)

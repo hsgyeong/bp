@@ -13,6 +13,18 @@ CREATE DATABASE IF NOT EXISTS `jaringochi`
 USE `jaringochi`;
 
 -- ─────────────────────────────────────────────
+-- [재실행 대비] 기존 테이블 제거 (개발용 — mode=always)
+-- FK 체크를 잠시 꺼서 순서 상관없이 DROP
+-- ─────────────────────────────────────────────
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `notification`;
+DROP TABLE IF EXISTS `transaction`;
+DROP TABLE IF EXISTS `weekly_budget`;
+DROP TABLE IF EXISTS `category`;
+DROP TABLE IF EXISTS `user`;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ─────────────────────────────────────────────
 -- [2] 테이블 생성
 -- ─────────────────────────────────────────────
 
