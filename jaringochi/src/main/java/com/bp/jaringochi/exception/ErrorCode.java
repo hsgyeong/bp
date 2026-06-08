@@ -19,6 +19,10 @@ public enum ErrorCode {
 	USER_UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "U401", "로그인이 필요합니다."),
 	USER_FORBIDDEN(HttpStatus.FORBIDDEN, "U403", "권한이 없습니다."),
 	
+	// ===== 카테고리 =====
+	CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "C404", "해당 카테고리를 찾을 수 없습니다."),
+	CATEGORY_FORBIDDEN(HttpStatus.FORBIDDEN, "C403", "해당 카테고리에 접근할 권한이 없습니다."),
+	
 	// ===== 거래내역 =====
 	TRANSACTION_INVALID_INPUT(HttpStatus.BAD_REQUEST, "T400", "입력값이 올바르지 않습니다."),
 	TRANSACTION_FORBIDDEN(HttpStatus.FORBIDDEN, "T403", "해당 거래내역에 접근할 권한이 없습니다."),

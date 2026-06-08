@@ -12,6 +12,9 @@ public interface CategoryDao {
 	
 	int insertCategory(Category category);
 	
+	// 사용자가 카테고리를 생성할 때, 화면 표시 순서를 정해주지 않으면 기본값으로 맨 끝에 해당 카테고리를 놓기 위함. 현재 마지막 표시순서 찾기
+//	Integer findMaxDisplayOrder(@Param("userId") Long userId, @Param("type") Integer type);  // 추후에 추가
+	
 	// userId와 type(1=수입, 2=지출)을 받아 필터링해서 조회해야 하기 때문에 @Param으로 인자를 받음
 	List<Category> selectCategories(@Param("userId") Long userId, @Param("type") Integer type);
 	
@@ -20,6 +23,8 @@ public interface CategoryDao {
 	int updateCategory(Category category);
 	
 	int hideCategory(Long id); // softdelete 
+	
+
 	
 }
 
