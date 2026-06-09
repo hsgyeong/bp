@@ -228,16 +228,12 @@
 
 ---
 
-### 4-2. 주간 예산 목록 조회
-- **GET** `/api/budgets/weekly`
+### 4-2. 최근 주간 예산 목록 (이번 주 포함 최근 5주)
+- **GET** `/api/budgets/weekly/recent`
 - 인증: 필요
+- 파라미터 없음. **월과 무관하게** 오늘이 속한 주를 포함해 `start_date` 기준 **최근 5개** 주간예산을 반환 (미래 주 제외).
 
-| 쿼리 | 타입 | 설명 |
-|------|------|------|
-| year | int | 연도 |
-| month | int | 월 (해당 월에 속한 주 예산들) |
-
-**Response 200** 주간 예산 배열 (각 항목에 지출/비율 포함)
+**Response 200** 주간 예산 배열 (각 항목에 지출/비율 포함, 과거→현재 순)
 
 ---
 
@@ -381,6 +377,6 @@
 | 사용자 | GET·PUT·DELETE /users/me |
 | 카테고리 | GET·POST /categories, PUT·DELETE /categories/{id} |
 | 거래 | GET·POST /transactions, GET·PUT·DELETE /transactions/{id} |
-| 주간예산 | GET /budgets/weekly/current, GET·POST /budgets/weekly, PUT /budgets/weekly/{id} |
+| 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
 | 통계 | GET /statistics/by-category, /statistics/summary |
