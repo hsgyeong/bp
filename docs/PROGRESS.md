@@ -29,6 +29,19 @@
 
 ## 다음 할 일 (Backlog)
 
+### 2026-06-09 · 예산 작업 중 확인 필요 (팀원 B)
+
+- [ ] **ErrorCode에 예산 소유권 403 코드 없음** — 현재 예산용은
+  `BUDGET_NOT_FOUND / BUDGET_ALREADY_EXISTS / BUDGET_UPDATE_LIMIT_EXCEEDED / BUDGET_INVALID_INPUT`
+  4개뿐. 카테고리의 `CATEGORY_FORBIDDEN` 같은 **소유권 위반(403)** 코드가 예산엔 없음.
+  예산 수정(PUT 4-4)에서 남의 예산 접근을 막는 `findOwned`에 403이 필요함. 선택지:
+  - **(a) `BUDGET_FORBIDDEN` 추가** — ⚠️ 코드 문자열 `B403`은 이미
+    `BUDGET_UPDATE_LIMIT_EXCEEDED`가 사용 중 → `B4031` 등 **다른 문자열**로 잡아야 함.
+    `ErrorCode.java`는 공통 파일(친구 작성) → 수정 전 공유.
+  - **(b) 기존 `USER_FORBIDDEN`(U403) 재사용** — 추가 없이 바로. 도메인 특정성은 떨어짐.
+  - 현재 `BudgetServiceImpl.findOwned`는 **(a) `BUDGET_FORBIDDEN` 기준으로 작성**됨 →
+    코드 추가 전엔 컴파일 안 됨. (a)/(b) 결정 필요.
+
 ### 2026-06-08 · 카테고리 작업 중 확인 필요 (팀원 B)
 
 - [ ] **ErrorCode에 카테고리 코드 추가** — 현재 `ErrorCode` enum에 category 코드가 없음
