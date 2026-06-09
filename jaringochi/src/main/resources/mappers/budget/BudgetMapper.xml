@@ -1,3 +1,72 @@
+<?xml version="1.0" encoding="UTF-8" ?>
 <!DOCTYPE mapper
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.bp.jaringochi.domain.budget.dao.BudgetDao">
+
+    <!-- 공통 컬럼 + 그 주 지출합(spent_money) 서브쿼리 (type=2 지출만, 그 주 범위, 같은 유저) -->
+    <sql id="weeklyColumns">
+        wb.id, wb.user_id, wb.amount, wb.start_date, wb.end_date, wb.update_count,
+        COALESCE((
+            SELECT SUM(t.amount)
+            FROM `transaction` t
+            WHERE t.user_id = wb.user_id
+              AND t.type = 2
+              AND t.`date` BETWEEN wb.start_date AND wb.end_date
+        ), 0) AS spent_money
+    </sql>
+
+    <!-- ===== 엔드포인트 ===== -->
+
+    <!-- 4-1. 현재 주 예산 (오늘이 속한 주) -->
+    <select id="selectCurrentWeek" resultType="WeeklyBudget">
+        SELECT <include refid="weeklyColumns"/>
+        FROM weekly_budget wb
+        WHERE wb.user_id = #{userId}
+          AND CURDATE() BETWEEN wb.start_date AND wb.end_date
+        LIMIT 1
+    </select>
+
+    <!-- 4-2. 이번 주 포함 최근 5주 (월 무관) -->
+    <select id="selectRecentWeeks" resultType="WeeklyBudget">
+        SELECT <include refid="weeklyColumns"/>
+        FROM weekly_budget wb
+        WHERE wb.user_id = #{userId}
+          AND wb.start_date &lt;= CURDATE()
+        ORDER BY wb.start_date DESC
+        LIMIT 5
+    </select>
+
+    <!-- 4-3. 등록 (id 자동 채움) -->
+    <insert id="insertWeeklyBudget" parameterType="WeeklyBudget"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO weekly_budget (user_id, amount, start_date, end_date)
+        VALUES (#{userId}, #{amount}, #{startDate}, #{endDate})
+    </insert>
+
+    <!-- 4-4. 수정 (amount 변경 + update_count +1, updated_at은 DB가 자동 갱신) -->
+    <update id="updateWeeklyBudget" parameterType="WeeklyBudget">
+        UPDATE weekly_budget
+        SET amount = #{amount},
+            update_count = update_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- ===== 보조 조회 ===== -->
+
+    <!-- 4-3 보조: 같은 유저 + 같은 주 시작일 중복 검사 (지출합 불필요) -->
+    <select id="selectByWeek" resultType="WeeklyBudget">
+        SELECT id, user_id, amount, start_date, end_date, update_count
+        FROM weekly_budget
+        WHERE user_id = #{userId}
+          AND start_date = #{startDate}
+    </select>
+
+    <!-- 4-4 보조: id 단건 (존재·소유권 + 수정 후 최신본, 지출합 포함) -->
+    <select id="selectById" resultType="WeeklyBudget">
+        SELECT <include refid="weeklyColumns"/>
+        FROM weekly_budget wb
+        WHERE wb.id = #{id}
+    </select>
+
+</mapper>

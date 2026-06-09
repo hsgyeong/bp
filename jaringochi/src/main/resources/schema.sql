@@ -13,6 +13,18 @@ CREATE DATABASE IF NOT EXISTS `jaringochi`
 USE `jaringochi`;
 
 -- ─────────────────────────────────────────────
+-- [재실행 대비] 기존 테이블 제거 (개발용 — mode=always)
+-- FK 체크를 잠시 꺼서 순서 상관없이 DROP
+-- ─────────────────────────────────────────────
+SET FOREIGN_KEY_CHECKS = 0;
+DROP TABLE IF EXISTS `notification`;
+DROP TABLE IF EXISTS `transaction`;
+DROP TABLE IF EXISTS `weekly_budget`;
+DROP TABLE IF EXISTS `category`;
+DROP TABLE IF EXISTS `user`;
+SET FOREIGN_KEY_CHECKS = 1;
+
+-- ─────────────────────────────────────────────
 -- [2] 테이블 생성
 -- ─────────────────────────────────────────────
 
@@ -33,7 +45,7 @@ CREATE TABLE `category` (
   `name`          VARCHAR(50)  NOT NULL                   COMMENT '월급, 식비 등',
   `type`          TINYINT      NOT NULL                   COMMENT '1=수입 / 2=지출',
   `display_order` INT          DEFAULT 0                  COMMENT '수입/지출 그룹 내 표시 순서',
-  `is_active`     TINYINT      NOT NULL DEFAULT 1         COMMENT '1=사용 / 0=숨김(soft delete)',
+  `is_active`     TINYINT(1)      NOT NULL DEFAULT 1         COMMENT '1=사용 / 0=숨김(soft delete)',
   `icon`          VARCHAR(255) NULL                       COMMENT '(선택) 아이콘',
   `color`         VARCHAR(20)  NULL                       COMMENT '(선택) 차트 색상',
   `created_at`    DATETIME     DEFAULT CURRENT_TIMESTAMP  COMMENT '생성 시각',
