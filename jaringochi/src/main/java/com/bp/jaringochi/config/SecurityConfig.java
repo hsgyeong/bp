@@ -5,8 +5,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
@@ -32,8 +30,8 @@ public class SecurityConfig {
 		
 		.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/api/auth/signup", "/api/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()  // 회원가입과 로그인은 토큰 없이 접근 허용
-		//		.anyRequest().authenticated() // 그 외 모든 요청은 로그인, 즉 JWT 인증 필요
-				.anyRequest().permitAll()	// 일단 모든 접근 허용 (임시)
+				.anyRequest().authenticated() // 그 외 모든 요청은 로그인, 즉 JWT 인증 필요
+		
 		)
 		
 		.addFilterBefore(		// JWT 필터를 Spring Security 필터 체인에 추가
@@ -45,8 +43,4 @@ public class SecurityConfig {
 			
 	}
 	
-	@Bean
-	public PasswordEncoder passwordEncoder() {
-		return new BCryptPasswordEncoder();
-	}
 }

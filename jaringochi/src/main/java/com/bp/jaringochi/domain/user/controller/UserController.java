@@ -38,7 +38,7 @@ public class UserController {
     public Map<String, Object> login(@RequestBody User user) {
     	User loginUser = userService.login(user.getEmail(), user.getPassword());
     	
-    	String token = jwtUtil.createToken(loginUser.getId(), loginUser.getPassword());
+    	String token = jwtUtil.createToken(loginUser.getId(), loginUser.getEmail());
     	
     	return Map.of(
     		"token", token,
@@ -66,24 +66,17 @@ public class UserController {
     	return userService.findByEmail(email);
     }
     
-    @PutMapping("/users/{id}")
-    public User updateUser(@PathVariable Long id, @RequestBody User user, Authentication authentication) {
+    @PutMapping("/users/me")
+    public User updateUser(@RequestBody User user, Authentication authentication) {
     	User loginUser = getCurrentUser(authentication);
-    	
-    	if (!loginUser.getId().equals(id)) {
-    		throw new BusinessException(ErrorCode.USER_FORBIDDEN);
-    	}
-    	return userService.updateUser(id, user);
+    	return userService.updateUser(loginUser.getId(), user);
     }
     
-    @DeleteMapping("/users/{id}")
-    public void deleteUser(@PathVariable Long id, Authentication authentication) {
+    @DeleteMapping("/users/me")
+    public Map<String, String> deleteUser(Authentication authentication) {
     	User loginUser = getCurrentUser(authentication);
-
-		if (!loginUser.getId().equals(id)) {
-			throw new BusinessException(ErrorCode.USER_FORBIDDEN);
-		}
-    	userService.deleteUser(id);
+    	userService.deleteUser(loginUser.getId());
+    	 return Map.of("message", "회원 탈퇴가 완료되었습니다.");
     }
     
     private User getCurrentUser(Authentication authentication) {
