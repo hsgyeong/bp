@@ -51,6 +51,12 @@
 - **이유**: 이전에 db 설계할 때 정한 사항
 - **영향**: application.properties와 agents.md, decisions.md 수정
 
+## DEC-0009 · 예산은 '주' 단위만 — 월간 예산 미채택
+- **날짜**: 2026-06-09
+- **결정**: 예산 기능은 **주 단위(weekly_budget)** 만 제공. 월별 예산/요약 엔드포인트(구 API.md 4-5 `GET /api/budgets/monthly`, `confirmedBudget`)는 **삭제**.
+- **이유**: 본 프로젝트는 '주' 단위 지출 관리에 집중하는 컨셉. 예산을 월 단위로 합산·요약해 보여주는 흐름은 제품 방향과 맞지 않음. 월 단위로 보고 싶은 건 *예산*이 아니라 *지출 통계*임.
+- **영향**: API.md 4-5 섹션 및 요약표의 `/budgets/monthly` 제거. 예산 백엔드는 4개 엔드포인트(4-1~4-4)로 축소, `MonthlySummary` DTO 불필요(`WeeklyBudget` 단일 DTO). 월 단위 지출 집계는 통계 도메인(`/statistics/*`)이 담당(예산과 무관). 알림의 `currentBudget`은 주간예산 기준이라 영향 없음.
+
 
 <!--
 ## DEC-000N · 제목

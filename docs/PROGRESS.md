@@ -7,12 +7,13 @@
 
 | 담당 | 도구 | 작업 | 브랜치 | 비고 |
 |------|------|------|--------|------|
-| 팀원 B | Claude | 카테고리 API (DTO·DAO 완료 → Mapper XML·Service·Controller 진행) | feat/category | 끝나면 즉시 PR 머지 (A 거래등록 선행) |
+| 팀원 B | Claude | 주간예산 백엔드(4종: current/list/post/put) + 프론트 토대(router·axios·레이아웃·토큰) | feat/budget | ⚠️ 계약 변경: 예산 **월간 제거**(DEC-0009) → API.md 4-5 삭제. 예산은 '주' 단위만. A는 홈/거래가 주간예산만 써서 영향 거의 없음. 프론트 토대는 A·B 공용이라 라우트·axios 컨벤션 확정되면 공유 |
 
 ## 완료 (Done)
 
 | 날짜 | 담당 | 도구 | 작업 |
 |------|------|------|------|
+| 2026-06-08 | 팀원 B | Claude | 카테고리 API 완성(DTO·DAO·Mapper XML·Service·Controller) + ErrorCode 카테고리/예산 코드, MyBatisConfig. feat/category PR 머지 완료 |
 | 2026-06-04 | | Claude | 개발 계획 수립(기능 수직 분할·7일 일정·브랜치 전략), 목업 15화면 난이도 평가 후 화면/도메인 A·B 분담 확정, 노션 작업보드 2개(팀원 A/B DB, 각 14행) 생성 + 간트·보드 뷰 구성. 상세는 AGENTS §8 / DECISIONS DEC-0005~0007 / 노션 참고 |
 | 2026-06-03 | | Claude | AGENTS.md / CLAUDE.md 작성, PROGRESS·DECISIONS 템플릿 추가 |
 | 2026-06-?? | | | 백엔드 초기 골격 (Spring Boot 4 + MyBatis), TestController |
