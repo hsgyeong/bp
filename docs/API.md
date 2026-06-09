@@ -228,16 +228,12 @@
 
 ---
 
-### 4-2. 주간 예산 목록 조회
-- **GET** `/api/budgets/weekly`
+### 4-2. 최근 주간 예산 목록 (이번 주 포함 최근 5주)
+- **GET** `/api/budgets/weekly/recent`
 - 인증: 필요
+- 파라미터 없음. **월과 무관하게** 오늘이 속한 주를 포함해 `start_date` 기준 **최근 5개** 주간예산을 반환 (미래 주 제외).
 
-| 쿼리 | 타입 | 설명 |
-|------|------|------|
-| year | int | 연도 |
-| month | int | 월 (해당 월에 속한 주 예산들) |
-
-**Response 200** 주간 예산 배열 (각 항목에 지출/비율 포함)
+**Response 200** 주간 예산 배열 (각 항목에 지출/비율 포함, 과거→현재 순)
 
 ---
 
@@ -264,28 +260,8 @@
 - **Response 200** 수정된 예산
 - 403: 월 수정 횟수 초과 (`{ "error": "이번 달 예산 수정 횟수를 초과했습니다." }`)
 
----
-
-### 4-5. 월별 예산/지출 요약 (집계)
-- **GET** `/api/budgets/monthly`
-- 인증: 필요
-- 별도 테이블 없이 주간 예산 합산 + 거래 집계로 계산
-
-| 쿼리 | 타입 | 필수 |
-|------|------|------|
-| year | int | ✅ |
-| month | int | ✅ |
-
-**Response 200**
-```json
-{
-  "year": 2026, "month": 6,
-  "confirmedBudget": 150000.00,
-  "spentMoney": 120000.00,
-  "ratio": 80.0
-}
-```
-> confirmedBudget = 그 달에 속한 주간 예산들의 합 (설정된 것만)
+> ℹ️ 예산은 **주 단위만** 제공한다. 월 단위 예산/요약 엔드포인트는 두지 않음(DEC-0009).
+> 월 단위 *지출* 집계가 필요하면 통계 도메인(`/statistics/*`)을 사용한다.
 
 ---
 
@@ -401,6 +377,6 @@
 | 사용자 | GET·PUT·DELETE /users/me |
 | 카테고리 | GET·POST /categories, PUT·DELETE /categories/{id} |
 | 거래 | GET·POST /transactions, GET·PUT·DELETE /transactions/{id} |
-| 주간예산 | GET /budgets/weekly/current, GET·POST /budgets/weekly, PUT /budgets/weekly/{id}, GET /budgets/monthly |
+| 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
 | 통계 | GET /statistics/by-category, /statistics/summary |
