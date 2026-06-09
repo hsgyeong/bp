@@ -36,8 +36,8 @@ public class UserController {
     
     @PostMapping("/auth/login")
     public Map<String, Object> login(@RequestBody User user) {
-    	User loginUser = userService.login(user.getEmail(), user.getPassword());
     	
+    	User loginUser = userService.login(user.getEmail(), user.getPassword());
     	String token = jwtUtil.createToken(loginUser.getId(), loginUser.getEmail());
     	
     	return Map.of(
@@ -82,8 +82,7 @@ public class UserController {
     private User getCurrentUser(Authentication authentication) {
     	if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
     		throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
-    	}
-    	
+    	}    	
     	return (User) authentication.getPrincipal();
     }
     

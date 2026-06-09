@@ -17,15 +17,10 @@ import lombok.RequiredArgsConstructor;
 public class UserServiceImpl implements UserService {
 
 	private final UserDao userDao;
-	private final PasswordEncoder passwordEncoder;
-	
-/*	@Override
-	public List<User> getUserList() {
-		return userDao.selectAll();
-	} */
+	private final PasswordEncoder passwordEncoder; 
 
 	@Override
-	@Transactional	// insert가 필요하기 때문에 읽기 전용 설정을 덮어씀
+	@Transactional	// insert가 필요하기 때문에 @Transactional 붙여서 읽기 전용 설정을 덮어씀
 	public User signup(User user) {
 		if (userDao.countByEmail(user.getEmail()) > 0){
 			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);

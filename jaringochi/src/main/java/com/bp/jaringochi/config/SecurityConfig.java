@@ -25,16 +25,16 @@ public class SecurityConfig {
 		http
 			.csrf(csrf -> csrf.disable())
 			.sessionManagement(session -> session
-					.sessionCreationPolicy(SessionCreationPolicy.STATELESS)	// JWT 방식이므로 서버 세션을 만들지 않음
+					.sessionCreationPolicy(SessionCreationPolicy.STATELESS)		// JWT 방식이므로 서버 세션을 만들지 않음
 		)
 		
 		.authorizeHttpRequests(auth -> auth
 				.requestMatchers("/api/auth/signup", "/api/auth/login", "/swagger-ui/**", "/v3/api-docs/**").permitAll()  // 회원가입과 로그인은 토큰 없이 접근 허용
-				.anyRequest().authenticated() // 그 외 모든 요청은 로그인, 즉 JWT 인증 필요
+				.anyRequest().authenticated() 	// 그 외 모든 요청은 로그인, 즉 JWT 인증 필요
 		
 		)
 		
-		.addFilterBefore(		// JWT 필터를 Spring Security 필터 체인에 추가
+		.addFilterBefore(						// JWT 필터를 Spring Security 필터 체인에 추가
 				jwtAuthenticationFilter, 
 				UsernamePasswordAuthenticationFilter.class  // 이 필터보다 먼저 JWT 필터가 실행되게 함
 		);
