@@ -24,6 +24,8 @@ public class SecurityConfig {
 		
 		http
 			.csrf(csrf -> csrf.disable())
+			.formLogin(form -> form.disable())		// Spring Security의 기본 로그인 방식 사용 안 함
+			.httpBasic(basic -> basic.disable())	// Basic 인증 방식 사용 안 함
 			.sessionManagement(session -> session
 					.sessionCreationPolicy(SessionCreationPolicy.STATELESS)		// JWT 방식이므로 서버 세션을 만들지 않음
 		)

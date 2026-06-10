@@ -1,5 +1,6 @@
 package com.bp.jaringochi.domain.user.service;
 
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,12 +23,29 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional	// insert가 필요하기 때문에 @Transactional 붙여서 읽기 전용 설정을 덮어씀
 	public User signup(User user) {
-		if (userDao.countByEmail(user.getEmail()) > 0){
+		
+		if (user == null) {
+		    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		}
+		
+		if(user.getEmail() == null || user.getEmail().isBlank()
+		|| user.getPassword() == null || user.getPassword().isBlank()
+		|| user.getNickname() == null || user.getNickname().isBlank()) {
+			throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		}
+		
+		User existingUser = userDao.findByEmail(user.getEmail());
+		if (existingUser != null){
 			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 		}
 		
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		userDao.insertUser(user);
+		
+		try {
+			userDao.insertUser(user);
+		} catch (DuplicateKeyException e) {
+			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
+		}
 		
 		user.setPassword(null);		// 비밀번호 해시값 노출 방지
 		return user;
@@ -35,6 +53,12 @@ public class UserServiceImpl implements UserService {
 
 	@Override
 	public User login(String email, String password) {
+		
+		if (email == null || email.isBlank()
+				|| password == null || password.isBlank()) {
+			throw new BusinessException(ErrorCode.INVALID_LOGIN);
+		}
+		
 		User user = userDao.findByEmail(email);
 		
 		if (user == null || !passwordEncoder.matches(password, user.getPassword())) {
@@ -44,20 +68,6 @@ public class UserServiceImpl implements UserService {
 		user.setPassword(null);
 		return user;
 	}
-
-	@Override
-	public User findByEmail(String email) {
-		User user = userDao.findByEmail(email);
-		
-		if (user == null) {
-			throw new BusinessException(ErrorCode.USER_NOT_FOUND);
-		}
-		
-		user.setPassword(null);
-		
-		return user;
-	}
-	
 
 	@Override
 	public User findById(Long id) {
@@ -75,6 +85,11 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public User updateUser(Long id, User user) {
+		
+		if (user == null) {
+		    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		}
+		
 		User savedUser = userDao.findById(id);
 		
 		if (savedUser == null) {
@@ -90,8 +105,14 @@ public class UserServiceImpl implements UserService {
 		
 		user.setId(id);
 		
+		if (!hasNickname) {
+			user.setNickname(null);
+		}
+		
 		if (hasPassword) {
 			user.setPassword(passwordEncoder.encode(user.getPassword()));
+		} else {
+			user.setPassword(null);
 		}
 		
 		int result = userDao.updateUser(user);
@@ -100,9 +121,9 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 		}
 		
-		User updateUser = userDao.findById(id);
-		updateUser.setPassword(null);
-		return updateUser;
+		User updatedUser = userDao.findById(id);
+		updatedUser.setPassword(null);
+		return updatedUser;
 	}
 
 	@Override

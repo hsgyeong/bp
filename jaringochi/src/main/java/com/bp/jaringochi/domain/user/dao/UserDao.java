@@ -13,8 +13,6 @@ public interface UserDao {
 	
 	User findById(Long id);
 	
-	int countByEmail(String email);
-	
 	int updateUser(User user);
 	
 	int deleteUser(Long id);

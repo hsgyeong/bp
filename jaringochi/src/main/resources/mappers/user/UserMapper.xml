@@ -20,23 +20,16 @@
 	</insert>
 	
 	<select id="findByEmail" parameterType="String" resultMap="userResultMap">
-		SELECT id, email, password, nickname, created_at, deleted_at
-		FROM `user`
-		WHERE email = #{email}
-		  AND deleted_at IS NULL
+    	SELECT id, email, password, nickname, created_at, deleted_at
+    	FROM `user`
+    	WHERE email = #{email}
+     	  AND deleted_at IS NULL
 	</select>
 	
 	<select id="findById" parameterType="long" resultMap="userResultMap">
 		SELECT id, email, password, nickname, created_at, deleted_at
 		FROM `user`
 		WHERE id = #{id}
-		  AND deleted_at IS NULL
-	</select>
-	
-	<select id="countByEmail" parameterType="String" resultType="int">
-		SELECT COUNT(*)
-		FROM `user`
-		WHERE email = #{email}
 		  AND deleted_at IS NULL
 	</select>
 	
@@ -56,7 +49,8 @@
 	
 	<update id="deleteUser" parameterType="long">
 		UPDATE `user`
-		SET deleted_at = NOW()
+		SET deleted_at = NOW(),
+		    email = CONCAT(email, '#deleted#', id)
 		WHERE id = #{id}
 		  AND deleted_at IS NULL
 	</update>

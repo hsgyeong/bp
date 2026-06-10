@@ -8,8 +8,6 @@ public interface UserService {
 	
 	User login(String email, String password);
 	
-	User findByEmail(String email);
-	
 	User findById(Long id);
 	
 	User updateUser(Long id, User user);
