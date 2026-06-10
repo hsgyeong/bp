@@ -104,7 +104,6 @@ public class TransactionController {
 		return Response.success("거래내역이 삭제되었습니다.");
 	}
 	
-	// JWT 적용 후 실제 로그인 사용자 id로 교체 필요
 	private Long getCurrentUserId(Authentication authentication) {
 		if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
 			throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
