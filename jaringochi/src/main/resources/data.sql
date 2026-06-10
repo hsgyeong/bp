@@ -10,9 +10,9 @@ USE `jaringochi`;
 -- [1] 사용자  (비밀번호는 예시용 평문 — 실제론 암호화 저장)
 -- ─────────────────────────────────────────────
 INSERT INTO `user` (`id`, `email`, `password`, `nickname`, `created_at`, `deleted_at`) VALUES
-(1, 'alice@test.com', 'hashed_pw_1', '앨리스', '2026-05-01 10:00:00', NULL),
-(2, 'bob@test.com',   'hashed_pw_2', '밥',     '2026-05-03 14:20:00', NULL),
-(3, 'carol@test.com', 'hashed_pw_3', '캐롤',   '2026-05-10 09:30:00', '2026-05-28 18:00:00'); -- 탈퇴 회원
+(1, 'alice@test.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '앨리스', '2026-05-01 10:00:00', NULL),
+(2, 'bob@test.com',   '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '밥',     '2026-05-03 14:20:00', NULL),
+(3, 'carol@test.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lhWy', '캐롤',   '2026-05-10 09:30:00', '2026-05-28 18:00:00'); -- 탈퇴 회원
 
 -- ─────────────────────────────────────────────
 -- [2] 카테고리

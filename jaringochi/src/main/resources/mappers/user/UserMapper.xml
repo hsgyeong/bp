@@ -2,5 +2,57 @@
 <!DOCTYPE mapper
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
 <mapper namespace="com.bp.jaringochi.domain.user.dao.UserDao">
+	
+	<resultMap id="userResultMap" type="com.bp.jaringochi.domain.user.dto.User">
+		<id property="id" column="id"/>
+		<result property="email" column="email"/>
+		<result property="password" column="password"/>
+		<result property="nickname" column="nickname"/>
+		<result property="createdAt" column="created_at"/>
+		<result property="deletedAt" column="deleted_at"/>
+	</resultMap>
+	
+	<insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO `user` (email, password, nickname)
+		VALUES (#{email}, #{password}, #{nickname})
+	</insert>
+	
+	<select id="findByEmail" parameterType="String" resultMap="userResultMap">
+    	SELECT id, email, password, nickname, created_at, deleted_at
+    	FROM `user`
+    	WHERE email = #{email}
+     	  AND deleted_at IS NULL
+	</select>
+	
+	<select id="findById" parameterType="long" resultMap="userResultMap">
+		SELECT id, email, password, nickname, created_at, deleted_at
+		FROM `user`
+		WHERE id = #{id}
+		  AND deleted_at IS NULL
+	</select>
+	
+	<update id="updateUser" parameterType="User">
+		UPDATE `user`
+		<set>
+			<if test="nickname != null and nickname != ''">
+				nickname = #{nickname},
+			</if>
+			<if test="password != null and password != ''">
+				password = #{password},
+			</if>
+		</set>
+		WHERE id = #{id}
+		  AND deleted_at IS NULL
+	</update>
+	
+	<update id="deleteUser" parameterType="long">
+		UPDATE `user`
+		SET deleted_at = NOW(),
+		    email = CONCAT(email, '#deleted#', id)
+		WHERE id = #{id}
+		  AND deleted_at IS NULL
+	</update>
+	
 </mapper>
