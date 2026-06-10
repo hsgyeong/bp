@@ -13,12 +13,12 @@ public interface TransactionService {
 									  Integer type,
 									  Long categoryId);
 	
-	Transaction getTransaction(Long id, Long userId);
+	Transaction getTransaction(Long userId, Long id);
 	
 	Transaction addTransaction(Long userId, Transaction transaction);
 	
-	Transaction updateTransaction(Long id, Long userId, Transaction transaction);
+	Transaction updateTransaction(Long userId, Long id, Transaction transaction);
 	
-	void deleteTransaction(Long id, Long userId);
+	void deleteTransaction(Long userId, Long id);
 		
 }

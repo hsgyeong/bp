@@ -16,16 +16,16 @@ public interface TransactionDao {
 									  @Param("startDate") LocalDate startDate,
 									  @Param("endDate") LocalDate endDate,
 									  @Param("type") Integer type,
-									  @Param("categoryId") LocalDate categoryId);
+									  @Param("categoryId") Long categoryId);
 	
 
-	Transaction selectTransactionById(@Param("id") Long id,
-									  @Param("userId") Long userId);
+	Transaction selectTransactionById(@Param("userId") Long userId,
+									  @Param("id") Long id);
 
 	int insertTransaction(Transaction transaction);
 	
 	int updateTransaction(Transaction transaction);
 	
-	int deleteTransaction(@Param("id") Long id,
-						  @Param("userId") Long userId);
+	int deleteTransaction(@Param("userId") Long userId,
+						  @Param("id") Long id);
 }
