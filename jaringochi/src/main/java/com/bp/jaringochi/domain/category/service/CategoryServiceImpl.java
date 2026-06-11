@@ -2,6 +2,7 @@ package com.bp.jaringochi.domain.category.service;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,12 +16,8 @@ public class CategoryServiceImpl implements CategoryService {
 
     private static final String DEFAULT_COLOR = "#F2A33C"; // 기본 색상 - 디폴트 카테고리 색상 등
 
-    private final CategoryDao categoryDao;
-
-    // 생성자 주입 (필드가 final -> 한 번 주입되면 안 바뀜)
-    public CategoryServiceImpl(CategoryDao categoryDao) {
-        this.categoryDao = categoryDao;
-    }
+    @Autowired
+    private CategoryDao categoryDao;
 
     // 1. 목록 조회 - 그냥 DAO에 위임
     @Override
