@@ -2,6 +2,7 @@ package com.bp.jaringochi.domain.category.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,11 +21,8 @@ import com.bp.jaringochi.global.response.Response;
 @RequestMapping("/api/categories")   
 public class CategoryController {
 
-    private final CategoryService categoryService;
-
-    public CategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
-    }
+    @Autowired
+    private CategoryService categoryService;
 
     // 목록 조회 — GET /api/categories?type=2
     @GetMapping
