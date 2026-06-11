@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,13 +20,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bp.jaringochi.domain.transaction.dto.Transaction;
 import com.bp.jaringochi.domain.transaction.service.TransactionService;
-import com.bp.jaringochi.domain.user.dto.User;
 import com.bp.jaringochi.exception.BusinessException;
 import com.bp.jaringochi.exception.ErrorCode;
 import com.bp.jaringochi.global.response.Response;
 
 import lombok.RequiredArgsConstructor;
-
 
 @RestController
 @RequiredArgsConstructor
@@ -105,12 +104,11 @@ public class TransactionController {
 	}
 	
 	private Long getCurrentUserId(Authentication authentication) {
-		if (authentication == null || !(authentication.getPrincipal() instanceof User)) {
+		if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
 			throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
 		}
 		
-		User loginUser = (User) authentication.getPrincipal();
-		return loginUser.getId();
+		return Long.valueOf(jwt.getSubject());
 	}
 	
 }
