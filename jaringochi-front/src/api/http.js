@@ -7,9 +7,8 @@ const http = axios.create({
 
 // -- 요청 인터셉터: 요청이 서버로 나가기 "직전"에 가로채는 자리 --
 http.interceptors.request.use((config) => {
-  // * (JWT 강의 후) 여기서 토큰을 붙일 예정. 지금은 인증 전이라 비워둠.
-  // const token = localStorage.getItem('token')
-  // if (token) config.headers.Authorization = `Bearer ${token}`
+  const token = localStorage.getItem('token')
+  if (token) config.headers.Authorization = `Bearer ${token}`
   return config   // 가로챈 설정을 그대로 통과시킴
 })
 
