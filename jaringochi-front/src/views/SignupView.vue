@@ -9,28 +9,37 @@ const email = ref('')
 const nickname = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+
+// 비밀번호 보기/숨기기 상태
 const showPassword = ref(false)
 const showPasswordConfirm = ref(false)
 
 const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+
+// 회원가입 성공 후 로그인 페이지로 이동하는 타이머 id
 let redirectTimer = null
 
 const trimmedEmail = computed(() => email.value.trim())
 const trimmedNickname = computed(() => nickname.value.trim())
 
+// 이메일 형식 검사
 const isEmailValid = computed(() => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail.value)
 })
 
+// 비밀번호 조건 검사: 8자 이상 + 영문 + 숫자 + 특수문자
 const isPasswordValid = computed(() => {
   return /^(?=.*[A-Za-z])(?=.*\d)(?=.*[^A-Za-z0-9]).{8,}$/.test(password.value)
 })
+
+// 비밀번호와 비밀번호 확인 값이 일치하는지 확인
 const isPasswordMatched = computed(() => {
   return Boolean(passwordConfirm.value && password.value === passwordConfirm.value)
 })
 
+// 비밀번호 확인 입력 중 불일치 메시지 표시
 const passwordConfirmMessage = computed(() => {
   if (!passwordConfirm.value) return ''
   if (!password.value) return ''
@@ -38,6 +47,7 @@ const passwordConfirmMessage = computed(() => {
   return ''
 })
 
+// 가입 버튼 활성화 조건
 const canSubmit = computed(() => {
   return Boolean(
     trimmedEmail.value &&
@@ -50,6 +60,7 @@ const canSubmit = computed(() => {
   )
 })
 
+// 최종 제출 전 입력값 검증
 function validateForm() {
   if (!trimmedEmail.value) return '이메일을 입력해주세요.'
   if (!isEmailValid.value) return '이메일 형식이 올바르지 않습니다.'
@@ -59,6 +70,7 @@ function validateForm() {
   return ''
 }
 
+// 회원가입 제출 처리
 async function submitSignup() {
   if (!canSubmit.value) return
 
@@ -73,6 +85,7 @@ async function submitSignup() {
   successMessage.value = ''
 
   try {
+    // 백엔드 회원가입 API 호출
     await signupApi({
       email: trimmedEmail.value,
       nickname: trimmedNickname.value,
@@ -81,6 +94,7 @@ async function submitSignup() {
 
     successMessage.value = '가입이 완료되었습니다. 로그인 화면으로 이동합니다.'
 
+    // 가입 성공 후 로그인 화면으로 이동
     redirectTimer = window.setTimeout(() => {
       router.replace({ name: 'login' })
     }, 700)
@@ -98,6 +112,7 @@ async function submitSignup() {
   }
 }
 
+// 컴포넌트가 사라질 때 예약된 타이머 정리
 onBeforeUnmount(() => {
   if (redirectTimer) window.clearTimeout(redirectTimer)
 })
@@ -135,6 +150,7 @@ onBeforeUnmount(() => {
         <p>굴비와 함께 절약을 시작해요</p>
       </div>
 
+      <!-- 회원가입 입력 폼 -->
       <form class="signup-form" @submit.prevent="submitSignup">
         <label class="field-group">
           <span>이메일</span>
@@ -155,6 +171,8 @@ onBeforeUnmount(() => {
               autocomplete="new-password"
               placeholder="영문+숫자+특수문자 8자 이상"
             />
+
+            <!-- 비밀번호 보기/숨기기 토글 -->
             <button
               class="password-toggle"
               type="button"
@@ -185,6 +203,8 @@ onBeforeUnmount(() => {
               autocomplete="new-password"
               placeholder="비밀번호 재입력"
             />
+
+            <!-- 비밀번호 확인 보기/숨기기 토글 -->
             <button
               class="password-toggle"
               type="button"
@@ -209,14 +229,19 @@ onBeforeUnmount(() => {
           </p>
         </label>
 
+        <!-- API 실패 또는 검증 실패 메시지 -->
         <p v-if="errorMessage" class="message error-message">{{ errorMessage }}</p>
+
+        <!-- 회원가입 성공 메시지 -->
         <p v-if="successMessage" class="message success-message">{{ successMessage }}</p>
 
+        <!-- 회원가입 제출 버튼 -->
         <button class="signup-button" type="submit" :disabled="!canSubmit">
           {{ loading ? '가입 중...' : '가입하기' }}
         </button>
       </form>
 
+      <!-- 로그인 화면 이동 링크 -->
       <p class="login-guide">
         이미 회원이신가요?
         <RouterLink to="/login">로그인</RouterLink>
