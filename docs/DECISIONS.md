@@ -64,6 +64,20 @@
 - **영향**: DAO `selectWeeklyByMonth(userId,year,month)` → `selectRecentWeeks(userId)`. Mapper는 `WHERE start_date <= CURDATE() ORDER BY start_date DESC LIMIT 5`. Controller 시그니처에서 year/month 파라미터 제거. API.md 4-2 및 요약표 갱신 완료.
 
 
+## DEC-0011 · 알림 - 임계치 넘었을 때 가장 가까운 임계값에 대해서만 알림 발송
+- **날짜**:2026-06-12
+- **결정**:임계치 넘었을 때 가장 가까운 임계값에 대해서만 알림 발송
+- **이유**:예컨대, 50%, 75%를 동시에 넘었을 때 둘 다 알림 발송되는 건 이상함. 75%만 넘도록 하는 것이 사용자 경험상 더 자연스러움
+- **영향**:
+  - 트리거 로직(③, A의 `TransactionService` 지출 등록부에 연결)이 **차집합 방식 → 최댓값 비교 방식**으로 단순화됨:
+    `maxSent = SELECT MAX(threshold) WHERE weekly_budget_id=?` / `crossed = ratio 이하 최대 단계` / `crossed > maxSent`일 때만 `crossed` 1건 INSERT.
+  - 건너뛴 중간 단계(위 예의 50%)는 알림 행이 **남지 않음**. 단계별 행을 요구하는 소비처가 없어 실질 영향 없음(사용률은 예산 화면이 실시간 표시).
+  - 주가 바뀌면 `weekly_budget_id`가 달라져 단계 카운트가 자연히 0부터 리셋(새 주엔 다시 25%부터).
+  - 동시성 대비 `UNIQUE (weekly_budget_id, threshold)` 안전망은 유지(중복 INSERT를 DB가 차단).
+  - §5 조회 API(GET 알림 목록/개수, PATCH 읽음)는 읽기 전용이라 **무영향**.
+
+
+
 <!--
 ## DEC-000N · 제목
 - **날짜**:
