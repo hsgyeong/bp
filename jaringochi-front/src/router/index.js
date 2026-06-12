@@ -7,6 +7,7 @@ import MoreView from '@/views/MoreView.vue'
 import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import CategoryView from '@/views/CategoryView.vue'
+import BudgetView from '@/views/BudgetView.vue'
 
 // 주소 <-> 화면 짝짓는 표
 const routes = [
@@ -17,6 +18,7 @@ const routes = [
   { path: '/login',     name: 'login',    component: LoginView },
   { path: '/signup',    name: 'signup',   component: SignupView },
   { path: '/categories', name: 'categories', component: CategoryView },
+  { path: '/budget',    name: 'budget',   component: BudgetView }, 
 ]
 
 const router = createRouter({
