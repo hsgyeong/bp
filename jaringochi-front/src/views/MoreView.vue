@@ -12,7 +12,12 @@
         분류 관리
         <span class="arr">›</span>
       </router-link>
-      <!-- 앞으로 예산 설정 · 프로필 등 메뉴가 여기에 추가됨 -->
+      <!-- 예산 설정으로 이동 -->
+      <router-link to="/budget" class="menu">
+        <span class="mic">🎯</span>
+        예산 설정
+        <span class="arr">›</span>
+      </router-link>
     </div>
   </div>
 </template>
