@@ -22,6 +22,9 @@ public interface BudgetDao {
                               @Param("startDate") LocalDate startDate);
     WeeklyBudget selectById(Long id);                        // 4-4 수정 보조 : 존재 확인(404) + 소유권(403) + 수정 후 최신본 반환
     
+    // 알림 트리거용: 거래일이 속한 주의 예산(+지출합) 조회 — 없으면 null(예산 안 짠 주)
+    WeeklyBudget selectByDate(@Param("userId") Long userId,
+                              @Param("date") LocalDate date);
     /*
      
     <참고> selectById / selectByWeek는 왜 필요?
