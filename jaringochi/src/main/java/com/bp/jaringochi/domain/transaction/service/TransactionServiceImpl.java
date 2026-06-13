@@ -15,12 +15,15 @@ import com.bp.jaringochi.exception.ErrorCode;
 
 import lombok.RequiredArgsConstructor;
 
+import com.bp.jaringochi.domain.notification.service.NotificationService;
+
 @Service
 @RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 	
 	private final TransactionDao transactionDao;
 	private final CategoryDao categoryDao;
+	private final NotificationService notificationService;
 	
 
 	 // 변수명
@@ -55,14 +58,19 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	@Transactional
 	public Transaction addTransaction(Long userId, Transaction transaction) {
-		validateInput(transaction);
-		validateCategory(userId, transaction);
-		
-		transaction.setUserId(userId);
-		transactionDao.insertTransaction(transaction);
-		
-		Transaction created = transactionDao.selectTransactionById(userId, transaction.getId());
-		return created;
+	    validateInput(transaction);
+	    validateCategory(userId, transaction);
+
+	    transaction.setUserId(userId);
+	    transactionDao.insertTransaction(transaction);
+
+	    // 지출이면 임계치 평가 -> 필요 시 알림 생성 (DEC-0011)
+	    if (transaction.getType() == 2) {
+	        notificationService.evaluateExpense(userId, transaction.getDate());
+	    }
+
+	    Transaction created = transactionDao.selectTransactionById(userId, transaction.getId());
+	    return created;
 	}
 
 	@Override
