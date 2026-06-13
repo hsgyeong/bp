@@ -7,12 +7,16 @@
 
 | 담당 | 도구 | 작업 | 브랜치 | 비고 |
 |------|------|------|--------|------|
+| 팀원 A | Codex | user/auth + transaction 구현·검토 및 잔여 작업 추적 | feat/transaction-front | user/auth: JWT 기반 로그인·회원가입·내정보 API와 로그인/회원가입 화면 연동 진행. transaction: 백엔드 CRUD/필터/소유자 검증 + 카테고리 포함 응답 매핑 구현, 프론트 LedgerView(목록/달력)·TransactionFormView(등록/수정/삭제)·거래 API 모듈 연동 완료. 남은 핵심은 예산/알림 재계산 연동 및 실제 로그인 후 CRUD 실행 검증 |
 | 팀원 B | Claude | 주간예산 백엔드(4종: current/list/post/put) + 프론트 토대(router·axios·레이아웃·토큰) | feat/budget | ⚠️ 계약 변경: 예산 **월간 제거**(DEC-0009) → API.md 4-5 삭제. 예산은 '주' 단위만. A는 홈/거래가 주간예산만 써서 영향 거의 없음. 프론트 토대는 A·B 공용이라 라우트·axios 컨벤션 확정되면 공유 |
 
 ## 완료 (Done)
 
 | 날짜 | 담당 | 도구 | 작업 |
 |------|------|------|------|
+| 2026-06-13 | 팀원 A | Codex | user/auth API 명세 정합성 반영: 실제 백엔드 기준으로 `POST /api/auth/signup`은 공통 `Response<User>`, `POST /api/auth/login`은 raw `LoginResponse(accessToken, tokenType, email, role)`, `POST /api/auth/logout`은 공통 `Response<Void>` 응답으로 API.md 수정 |
+| 2026-06-13 | 팀원 A | Codex | transaction/ledger 프론트 구현 및 검토: `LedgerView.vue` 거래 목록·월 선택·일자별/달력 탭·월 수입/지출/합계·등록/수정 이동 구현, `TransactionFormView.vue` 거래 등록·수정·삭제 및 카테고리 조회 연동, `transaction.js` API 모듈 추가. 백엔드 `TransactionMapper.xml`은 category 조인 결과를 nested `category`로 응답하도록 정리. 백엔드 compile 및 프론트 build 통과 확인 |
+| 2026-06-13 | 팀원 A | Codex | 현재 코드 기준 user/transaction 진행 상태 확인: user/auth 백엔드 JWT 흐름(SecurityConfig·Swagger bearer·Auth/User Controller·Service·DAO·Mapper) 및 프론트 로그인/회원가입 API 연결 확인, transaction 백엔드 Controller·Service·DAO·Mapper CRUD/조회필터 구현 확인 |
 | 2026-06-08 | 팀원 B | Claude | 카테고리 API 완성(DTO·DAO·Mapper XML·Service·Controller) + ErrorCode 카테고리/예산 코드, MyBatisConfig. feat/category PR 머지 완료 |
 | 2026-06-04 | | Claude | 개발 계획 수립(기능 수직 분할·7일 일정·브랜치 전략), 목업 15화면 난이도 평가 후 화면/도메인 A·B 분담 확정, 노션 작업보드 2개(팀원 A/B DB, 각 14행) 생성 + 간트·보드 뷰 구성. 상세는 AGENTS §8 / DECISIONS DEC-0005~0007 / 노션 참고 |
 | 2026-06-03 | | Claude | AGENTS.md / CLAUDE.md 작성, PROGRESS·DECISIONS 템플릿 추가 |
@@ -22,12 +26,27 @@
 
 ## 알려진 이슈 (Known Issues)
 
-- **MyBatis 매퍼 경로 불일치**: `application.properties` 의
-  `mybatis.mapper-locations=classpath:mappers/**/*.xml`(복수 `mappers`)인데
-  실제 XML은 `src/main/resources/mapper/`(단수 `mapper`)에 있음 → 런타임에
-  매퍼 미로딩. 설정값 또는 폴더명을 한쪽으로 통일 필요.
+- **MyBatis 매퍼 경로**: 2026-06-13 현재 `application.properties`의
+  `mybatis.mapper-locations=classpath:mappers/**/*.xml`와 실제 XML 경로
+  `src/main/resources/mappers/`가 일치함. 기존 `mapper/`(단수) 불일치 메모는
+  오래된 이슈로 보이며, 실행 테스트 때 매퍼 로딩 여부만 재확인하면 됨.
 
 ## 다음 할 일 (Backlog)
+
+### 2026-06-13 · user/transaction 확인 필요 (팀원 A)
+
+- [x] **user/auth 응답 계약 정합성 확인** — 백엔드 실제 응답 기준으로 API.md 수정 완료.
+  회원가입·로그아웃은 공통 `Response<T>`, 로그인은 raw `LoginResponse(accessToken, tokenType, email, role)` 기준.
+- [ ] **user 프론트 잔여 화면 연동** — 로그인/회원가입은 API 호출이 연결되어 있으나,
+  내 정보 조회·수정·탈퇴 화면/흐름은 아직 확인 및 연동 필요.
+- [x] **transaction 프론트 연동** — 백엔드 CRUD API 기준으로
+  `LedgerView.vue` 거래 목록/달력 화면, `TransactionFormView.vue` 등록·수정·삭제 화면,
+  `src/api/transaction.js` API 모듈 연결 완료. 백엔드 compile 및 프론트 build 통과 확인.
+- [ ] **transaction 등록·수정 후 예산/알림 연동** — API.md 3-3/3-4의
+  "지출 비율 재계산 및 임계치 알림 생성/재평가"는 거래 서비스에서 아직 별도 연동 확인 필요.
+- [ ] **Swagger 또는 로컬 실행 검증** — 회원가입 → 로그인 → Swagger Authorize →
+  `/api/users/me` → `/api/transactions` CRUD 순서로 실제 동작 확인 필요. 코드 기준 빌드는 통과했지만
+  브라우저/Swagger에서 토큰 포함 실제 등록·수정·삭제까지는 별도 확인 필요.
 
 ### 2026-06-09 · 예산 작업 중 확인 필요 (팀원 B)
 
