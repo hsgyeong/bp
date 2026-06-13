@@ -80,7 +80,7 @@ CREATE TABLE `notification` (
   `id`               BIGINT        PRIMARY KEY AUTO_INCREMENT COMMENT '알림 ID',
   `user_id`          BIGINT        NOT NULL                   COMMENT '받는 사람',
   `weekly_budget_id` BIGINT        NOT NULL                   COMMENT '어느 주 예산 기준',
-  `threshold`        TINYINT       NOT NULL                   COMMENT '25/50/75/100/125/150 (한 행=한 단계)',
+  `threshold`        SMALLINT      NOT NULL                   COMMENT '25/50/75/100/125/150 (한 행=한 단계)',
   `current_budget`   DECIMAL(12,2) NULL                       COMMENT '그 시점 예산',
   `spent_money`      DECIMAL(12,2) NULL                       COMMENT '그 시점 지출 합계',
   `ratio`            DECIMAL(5,2)  NULL                       COMMENT 'spent_money / current_budget (%)',
