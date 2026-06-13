@@ -68,5 +68,15 @@
         FROM weekly_budget wb
         WHERE wb.id = #{id}
     </select>
+    
+    <!-- 알림 기능 관련 추가 -->
+    <!-- 알림 트리거 보조: 거래일이 속한 주의 예산 + 그 주 지출합 (없으면 결과 없음) -->
+	<select id="selectByDate" resultType="WeeklyBudget">
+	    SELECT <include refid="weeklyColumns"/>
+	    FROM weekly_budget wb
+	    WHERE wb.user_id = #{userId}
+	      AND #{date} BETWEEN wb.start_date AND wb.end_date
+	    LIMIT 1
+	</select>
 
 </mapper>

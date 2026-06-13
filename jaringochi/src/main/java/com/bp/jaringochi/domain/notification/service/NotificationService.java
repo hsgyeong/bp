@@ -1,5 +1,6 @@
 package com.bp.jaringochi.domain.notification.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.bp.jaringochi.domain.notification.dto.Notification;
@@ -17,4 +18,7 @@ public interface NotificationService {
 
     // 5-4. 전체 읽음
     void markAllAsRead(Long userId);
+    
+    // 트리거: 지출 등록 시 임계치 평가 후 필요하면 알림 1건 생성 
+    void evaluateExpense(Long userId, LocalDate date);
 }

@@ -25,4 +25,11 @@ public interface NotificationDao {
 
     // 보조: 단건 조회 (존재 404 + 소유권 403 확인용)
     Notification selectById(Long id);
+    
+    // ==== 트리거가 알림을 만들 수 있게 함 ==== //
+    // 트리거: 알림 생성 (id 자동 채움)
+    int insertNotification(Notification n);
+
+    // 트리거: 이 주 예산에 이미 보낸 최고 임계치 (없으면 null)
+    Integer selectMaxThreshold(Long weeklyBudgetId);
 }

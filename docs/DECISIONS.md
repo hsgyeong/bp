@@ -76,7 +76,24 @@
   - 동시성 대비 `UNIQUE (weekly_budget_id, threshold)` 안전망은 유지(중복 INSERT를 DB가 차단).
   - §5 조회 API(GET 알림 목록/개수, PATCH 읽음)는 읽기 전용이라 **무영향**.
 
+## DEC-0012 · 알림 트리거 연결 = 직접 호출 (ApplicationEvent 미채택)
+- **날짜**: 2026-06-13
+- **결정**: 지출 등록 시 알림 평가를 `TransactionServiceImpl.addTransaction`에서 `NotificationService.evaluateExpense(userId, date)` **직접 호출**로 연결. ApplicationEvent 방식은 미채택.
+- **이유**: 2인 MVP에선 직접 호출이 더 명시적이고 디버깅·추적이 쉬움. 이벤트의 느슨한 결합 이점은 현 규모에서 과함.
+- **영향**:
+  - transaction 도메인이 notification 서비스에 의존(import + `final` 필드 + 호출 1줄). `type==2`(지출)일 때만 호출.
+  - `evaluateExpense`는 **`@Transactional`을 의도적으로 안 붙임** -> 거래의 트랜잭션에 그대로 참여해 방금 등록한 지출이 지출합 SUM에 포함됨. 동시에 내부 `try-catch`로 알림 실패(제약 위반 등)가 거래를 롤백시키지 않음(거래는 항상 201).
+  - 거래 수정(`updateTransaction`) 시 재평가는 추후(동일 호출 한 줄, PROGRESS 백로그).
+  - `notification.threshold`는 단계값이 150까지라 `TINYINT`(127 이하)로는 초과 -> **`SMALLINT`** 필요(검증 중 발견·수정).
 
+## DEC-0013 · 컨트롤러 임시인증(1L) -> 실 JWT 전환 (DEC-0006 이행)
+- **날짜**: 2026-06-13
+- **결정**: 컨트롤러 `getCurrentUserId()` `1L` 하드코딩을 토큰 `jwt.getSubject()` 기반으로 전환. 거래(기존 적용)에 더해 **카테고리·예산·알림** 컨트롤러를 동일 패턴(`Authentication` 파라미터)으로 통일.
+- **이유**: 알림 트리거 검증 중 거래(실인증, user4)와 예산·알림(1L=user1)이 엇갈려 트리거가 동작하지 않는 문제 발견. 실제 서비스에서도 사용자별로 깨지므로 통일 필요.
+- **영향**:
+  - 각 핸들러에 `Authentication authentication` 파라미터 추가, `getCurrentUserId(authentication)`로 userId 추출. 미인증 시 `USER_UNAUTHORIZED`(401).
+  - 프론트는 이미 axios 토큰 인터셉터라 영향 적음. `UserController`(내 정보)는 추후 점검(백로그).
+  - DEC-0006의 "임시->실 인증 단일 지점 전환"을 실제로 이행한 항목.
 
 <!--
 ## DEC-000N · 제목
