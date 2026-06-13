@@ -85,7 +85,8 @@ CREATE TABLE `notification` (
   `spent_money`      DECIMAL(12,2) NULL                       COMMENT '그 시점 지출 합계',
   `ratio`            DECIMAL(5,2)  NULL                       COMMENT 'spent_money / current_budget (%)',
   `is_read`          TINYINT       NOT NULL DEFAULT 0         COMMENT '0=안읽음 / 1=읽음',
-  `created_at`       DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '알림 발생 시각'
+  `created_at`       DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '알림 발생 시각',
+  UNIQUE KEY `uq_budget_threshold` (`weekly_budget_id`, `threshold`) -- 앱 로직(mexSent 체크)이 이미 중복을 막지만, 동시 요청 충돌용 DB 안전망
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- ─────────────────────────────────────────────
