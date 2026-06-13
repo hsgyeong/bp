@@ -29,6 +29,14 @@
 
 ## 다음 할 일 (Backlog)
 
+### 2026-06-13 · 알림 트리거 작업 중 메모 (팀원 B)
+
+- [ ] **TransactionServiceImpl 수정 - 거래 수정 시 알림 재평가** - 지금은 `addTransaction`(등록)에만 `evaluateExpense` 호출.
+  `updateTransaction`에도 `if (transaction.getType() == 2) notificationService.evaluateExpense(userId, transaction.getDate());`
+  한 줄을 넣으면 API 3-4 "수정으로 지출 비율이 바뀌면 알림 재평가"가 충족됨.
+  `crossed > already` 로직이 중복/하향 발송을 자동 차단하므로 안전. MVP는 등록만 먼저, 여유 생기면 추가.
+  - (관련: `TransactionServiceImpl.updateTransaction` - A 소유 파일, 협의 필요)
+
 ### 2026-06-09 · 예산 작업 중 확인 필요 (팀원 B)
 
 - [ ] **ErrorCode에 예산 소유권 403 코드 없음** — 현재 예산용은
