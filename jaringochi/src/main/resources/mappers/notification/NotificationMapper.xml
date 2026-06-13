@@ -48,5 +48,22 @@
         FROM notification
         WHERE id = #{id}
     </select>
+    
+    <!-- 트리거가 알림을 만들 수 있게 함 -->
+    <!-- 트리거: 알림 생성 (is_read는 DB 기본값 0, created_at도 DB 기본값) -->
+	<insert id="insertNotification" parameterType="Notification"
+	        useGeneratedKeys="true" keyProperty="id">
+	    INSERT INTO notification
+	        (user_id, weekly_budget_id, threshold, current_budget, spent_money, ratio)
+	    VALUES
+	        (#{userId}, #{weeklyBudgetId}, #{threshold}, #{currentBudget}, #{spentMoney}, #{ratio})
+	</insert>
+
+	<!-- 트리거: 이 주 예산에 이미 발송된 최고 임계치 (행 없으면 NULL) -->
+	<select id="selectMaxThreshold" resultType="java.lang.Integer">
+	    SELECT MAX(threshold)
+	    FROM notification
+	    WHERE weekly_budget_id = #{weeklyBudgetId}
+	</select>
 
 </mapper>
