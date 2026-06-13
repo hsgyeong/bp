@@ -11,11 +11,26 @@ import com.bp.jaringochi.domain.notification.dto.Notification;
 import com.bp.jaringochi.exception.BusinessException;
 import com.bp.jaringochi.exception.ErrorCode;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.time.LocalDate;
+
+import org.springframework.dao.DuplicateKeyException;
+
+import com.bp.jaringochi.domain.budget.dao.BudgetDao;
+import com.bp.jaringochi.domain.budget.dto.WeeklyBudget;
+
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 @Service
 public class NotificationServiceImpl implements NotificationService {
 
     @Autowired
     private NotificationDao notificationDao;
+    
+    @Autowired
+    private BudgetDao budgetDao;
 
     // 5-1. 목록 - 그대로 위임
     @Override
@@ -54,5 +69,68 @@ public class NotificationServiceImpl implements NotificationService {
             throw new BusinessException(ErrorCode.NOTIFICATION_FORBIDDEN);   // 403
         }
         return n;
+    }
+    
+    // 임계 단계 (오름차순)
+    private static final int[] THRESHOLDS = {25, 50, 75, 100, 125, 150};
+
+    // 트리거: 지출 등록 직후 호출됨. @Transactional 의도적으로 없음(위 설계 포인트 참고)
+    @Override
+    public void evaluateExpense(Long userId, LocalDate date) {
+        try {
+            WeeklyBudget wb = budgetDao.selectByDate(userId, date);
+            if (wb == null) {
+                return;                                   // 예산 안 짠 주 -> 평가 대상 아님
+            }
+
+            BigDecimal ratio = calcRatio(wb.getSpentMoney(), wb.getAmount());
+
+            int crossed = highestCrossed(ratio);          // ratio 이하 최대 단계, 없으면 0
+            if (crossed == 0) {
+                return;                                   // 아직 25%도 안 넘음
+            }
+
+            Integer maxSent = notificationDao.selectMaxThreshold(wb.getId());
+            int already = (maxSent == null) ? 0 : maxSent;
+            if (crossed <= already) {
+                return;                                   // 이미 그 단계까지 보냄 (중복 방지)
+            }
+
+            Notification n = new Notification();
+            n.setUserId(userId);
+            n.setWeeklyBudgetId(wb.getId());
+            n.setThreshold(crossed);
+            n.setCurrentBudget(wb.getAmount());           // 스냅샷: 그 시점 예산
+            n.setSpentMoney(wb.getSpentMoney());          // 스냅샷: 그 시점 지출합
+            n.setRatio(ratio);
+            notificationDao.insertNotification(n);
+
+        } catch (DuplicateKeyException e) {
+            // UNIQUE(weekly_budget_id, threshold) 안전망 작동 = 동시성으로 이미 같은 단계 INSERT됨.
+            // 정상 상황이므로 무시.
+        } catch (Exception e) {
+            // 알림 실패가 지출 등록을 망치면 안 됨 → 삼키고 로깅만.
+            log.warn("알림 평가 실패 userId={} date={}", userId, date, e);
+        }
+    }
+
+    // ratio 이하 최대 임계 단계 반환 (어느 단계도 못 넘으면 0)
+    private int highestCrossed(BigDecimal ratio) {
+        int crossed = 0;
+        for (int t : THRESHOLDS) {
+            if (ratio.compareTo(BigDecimal.valueOf(t)) >= 0) {
+                crossed = t;                              // 넘은 단계마다 갱신 -> 마지막 값이 최고 단계
+            }
+        }
+        return crossed;
+    }
+
+    // 사용률 % (spent/amount×100, 2자리 반올림, 0 가드) - budget calcRatio와 동일
+    private BigDecimal calcRatio(BigDecimal spent, BigDecimal amount) {
+        if (amount == null || amount.signum() == 0 || spent == null) {
+            return BigDecimal.ZERO;
+        }
+        return spent.multiply(BigDecimal.valueOf(100))
+                    .divide(amount, 2, RoundingMode.HALF_UP);
     }
 }
