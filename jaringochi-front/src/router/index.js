@@ -8,11 +8,14 @@ import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import CategoryView from '@/views/CategoryView.vue'
 import BudgetView from '@/views/BudgetView.vue'
+import TransactionFormView from '@/views/TransactionFormView.vue'
 
 // 주소 <-> 화면 짝짓는 표
 const routes = [
   { path: '/',          name: 'home',     component: HomeView },
   { path: '/ledger',    name: 'ledger',   component: LedgerView },
+  { path: '/ledger/new', name:'transaction-new', component: TransactionFormView},
+  { path: '/ledger/:id/edit', name: 'transaction-edit', component: TransactionFormView, props: true },
   { path: '/stats',     name: 'stats',    component: StatsView },
   { path: '/more',      name: 'more',     component: MoreView },
   { path: '/login',     name: 'login',    component: LoginView },

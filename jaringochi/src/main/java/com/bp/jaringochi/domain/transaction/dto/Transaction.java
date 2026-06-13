@@ -13,6 +13,7 @@ public class Transaction {
 	private Long id;
 	private Long userId;
 	private Long categoryId;
+	private TransactionCategory category;
 	private BigDecimal amount;
 	private int type;	// 1=수입, 2=지출
 	private String memo;
