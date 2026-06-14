@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
+import NotFoundView from '@/views/NotFoundView.vue'
 import HomeView from '@/views/HomeView.vue'
 import LedgerView from '@/views/LedgerView.vue'
 import StatsView from '@/views/StatsView.vue'
@@ -26,6 +27,7 @@ const routes = [
   { path: '/me/edit', name: 'profile-edit', component: ProfileEditView, meta: { requiresAuth: true } },
   { path: '/categories', name: 'categories', component: CategoryView, meta: { requiresAuth: true } },
   { path: '/budget',    name: 'budget',   component: BudgetView, meta: { requiresAuth: true } }, 
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView,}
 ]
 
 const router = createRouter({

@@ -16,7 +16,9 @@ public interface TransactionDao {
 									  @Param("startDate") LocalDate startDate,
 									  @Param("endDate") LocalDate endDate,
 									  @Param("type") Integer type,
-									  @Param("categoryId") Long categoryId);
+									  @Param("categoryId") Long categoryId,
+									  @Param("keyword") String keyword,
+                                      @Param("sort") String sort);
 	
 
 	Transaction selectTransactionById(@Param("userId") Long userId,

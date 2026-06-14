@@ -50,11 +50,17 @@ public class TransactionController {
 			@RequestParam(required = false)
 			Long categoryId,
 			
+			@RequestParam(required = false)
+	        String keyword,
+	        
+	        @RequestParam(defaultValue = "date_desc")
+	        String sort,
+			
 			Authentication authentication) {
 		
 		Long userId = getCurrentUserId(authentication);
 		
-		List<Transaction> transactions = transactionService.getTransactions(userId, startDate, endDate, type, categoryId);
+		List<Transaction> transactions = transactionService.getTransactions(userId, startDate, endDate, type, categoryId, keyword, sort);
 		return Response.success(transactions);
 	}
 	

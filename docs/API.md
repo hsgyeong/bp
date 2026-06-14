@@ -189,6 +189,13 @@
 | endDate | date | 조회 종료일 |
 | type | int | 1=수입 / 2=지출 |
 | categoryId | int | 특정 카테고리 |
+| keyword | string | 메모 또는 카테고리명 검색어 |
+| sort | string | 정렬 기준: `date_desc`(최신순, 기본값), `date_asc`(오래된순), `amount_desc`(금액 높은순), `amount_asc`(금액 낮은순) |
+
+**Request 예시**
+```http
+GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sort=amount_desc
+```
 
 **Response 200**
 ```json
