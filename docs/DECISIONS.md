@@ -107,6 +107,15 @@
   - 클라이언트는 서버 로그아웃 성공 여부와 관계없이 로컬 `accessToken` / `refreshToken` / `user` 삭제.
   - Access Token 자체는 만료 전까지 즉시 차단하지 않음. 즉시 차단이 필요하면 추후 `jti` 블랙리스트 또는 `/api/auth/refresh` 재발급 흐름 추가.
 
+## DEC-0015 · 거래 목록 검색/정렬은 서버 쿼리 파라미터로 처리
+- **날짜**: 2026-06-14
+- **결정**: 거래 목록 조회 `GET /api/transactions`에 `keyword`와 `sort` 쿼리 파라미터를 추가한다. `keyword`는 메모와 카테고리명을 부분 검색하고, `sort`는 `date_desc`, `date_asc`, `amount_desc`, `amount_asc` 네 값만 허용한다.
+- **이유**: 거래 목록은 월 범위, 카테고리, 수입/지출 조건과 함께 조회되므로 프론트에서 전체 데이터를 받은 뒤 필터링하기보다 백엔드 조회 조건으로 통일하는 편이 API 계약이 명확함. 정렬값은 SQL `ORDER BY`에 영향을 주므로 허용 목록으로 제한해야 안전하다.
+- **영향**:
+  - API.md 거래 목록 조회 명세에 `keyword`, `sort` 추가.
+  - 프론트 거래 목록 화면은 검색어와 정렬값을 `fetchTransactions` 파라미터로 전달하면 됨.
+  - 백엔드는 MyBatis 동적 SQL에서 `keyword` 조건과 `sort`별 `ORDER BY` 분기를 추가해야 함.
+
 <!--
 ## DEC-000N · 제목
 - **날짜**:

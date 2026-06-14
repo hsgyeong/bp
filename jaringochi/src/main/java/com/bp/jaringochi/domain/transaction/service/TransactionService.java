@@ -11,7 +11,9 @@ public interface TransactionService {
 									  LocalDate startDate,
 									  LocalDate endDate,
 									  Integer type,
-									  Long categoryId);
+									  Long categoryId,
+									  String keyword,
+	                                  String sort);
 	
 	Transaction getTransaction(Long userId, Long id);
 	

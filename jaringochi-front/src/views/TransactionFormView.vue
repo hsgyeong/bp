@@ -25,6 +25,9 @@ const deleting = ref(false)
 const categories = ref([])
 const errorMessage = ref('')
 
+// true면 서버가 "해당 거래 없음(404)"을 응답한 상태
+const notFound = ref(false) 
+
 // 저장 버튼 활성화 조건 
 const canSave = computed(() => {
     return (
@@ -96,6 +99,7 @@ async function loadTransaction() {
 
   loading.value = true
   errorMessage.value = ''
+  notFound.value = false
 
   try {
     const res = await fetchTransaction(transactionId.value)
@@ -109,6 +113,21 @@ async function loadTransaction() {
 
     await loadCategories()
   } catch (err) {
+    const status = err.response?.status
+
+    // 404: 수정하려는 거래 자체가 없는 상태
+    if (status === 404) {
+       notFound.value = true
+      errorMessage.value = '거래 내역을 찾을 수 없습니다.'
+      return
+    }
+
+    // 403: 거래는 있지만 현재 사용자가 접근할 권한이 없는 상태
+    if (status === 403) {
+      errorMessage.value = '이 거래 내역에 접근할 권한이 없습니다.'
+      return
+    }
+
     errorMessage.value = err.response?.data?.message || '거래 정보를 불러오지 못했습니다.'
   } finally {
     loading.value = false
@@ -190,7 +209,15 @@ watch(type, loadCategories)
 </script>
 
 <template>
-  <section class="transaction-form-view">
+  <section v-if="notFound" class="not-found-box">
+    <strong>거래 내역을 찾을 수 없습니다.</strong>
+    <span>삭제되었거나 접근할 수 없는 거래입니다.</span>
+
+    <button type="button" @click="goBack">
+      거래 목록으로 돌아가기
+    </button>
+  </section>
+  <section  v-else class="transaction-form-view">
     <header class="topbar">
       <button class="top-action" type="button" aria-label="닫기" @click="goBack">×</button>
       <h1>{{ isEditMode ? '거래 수정' : '거래 등록' }}</h1>
@@ -567,5 +594,38 @@ watch(type, loadCategories)
 .delete-button:disabled {
   opacity: 0.5;
   cursor: default;
+}
+
+.not-found-box {
+  min-height: 260px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  padding: 28px;
+  text-align: center;
+  color: var(--mute);
+}
+
+.not-found-box strong {
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.not-found-box span {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.not-found-box button {
+  height: 44px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--gold);
+  color: #fff;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
 }
 </style>

@@ -12,6 +12,7 @@
 
 | 날짜 | 담당 | 작업 |
 |------|------|------|
+| 2026-06-14 | hsgyeong | **거래 목록 검색·정렬 API 명세 추가** - `GET /api/transactions`에 `keyword`(메모/카테고리명 검색), `sort`(`date_desc`, `date_asc`, `amount_desc`, `amount_asc`) 쿼리 파라미터 문서화 |
 | 2026-06-14 | hsgyeong | **Refresh Token 기반 로그아웃 보완** - 로그인 응답에 `refreshToken` 추가, `refresh_token` 테이블/DAO/Mapper/Service 추가, 로그아웃·회원탈퇴 시 Refresh Token 폐기, 프론트 auth store·로그인·마이페이지·프로필 수정 화면의 토큰 상태 동기화, 로그아웃·회원탈퇴 완료 안내 alert 처리, API.md 인증 명세 갱신 |
 | 2026-06-12 | pearlseo73 | **알림 조회 백엔드 4종**(목록/안읽음수/단건읽음/전체읽음) - DTO·DAO·Mapper·Service·Controller + 소유권 검증(404/403). feat/notification PR#19 머지 |
 | 2026-06-12 | pearlseo73 | **주간예산 화면**(사용률 게이지·최근 5주·설정/수정 폼) + `api/budget.js` + `/budget` 라우트 + 더보기 링크. feat/budget-front PR#16 머지 |

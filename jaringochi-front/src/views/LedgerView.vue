@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchTransactions } from '@/api/transaction'
 
@@ -10,6 +10,17 @@ const viewMode = ref('list')              // 일자별/달력 탭 상태
 const transactions = ref([])              // 거래 목록 데이터
 const loading = ref(false)                // 목록 로딩/에러 상태
 const errorMessage = ref('')              
+const keyword = ref('')              // 검색어: 메모/카테고리명 검색에 사용
+const sort = ref('date_desc')        // 정렬 기준: 기본은 최신순
+
+let searchTimer = null               // 검색어 입력 debounce용 타이머
+let latestRequestId = 0              // 늦게 도착한 이전 응답을 무시하기 위한 요청 번호
+
+// 금액순 정렬인지 확인한다.
+// 금액순일 때는 날짜별 그룹으로 묶으면 서버 정렬 순서가 깨지므로 flat list로 보여준다.
+const isAmountSort = computed(() => {
+  return sort.value === 'amount_desc' || sort.value === 'amount_asc'
+})
 
 // 이번 달 수입 합계
 const totalIncome = computed(() => {
@@ -29,6 +40,8 @@ const totalExpense = computed(() => {
 const totalBalance = computed(() => totalIncome.value - totalExpense.value)
 
 // 거래를 날짜별로 묶는다
+// 날짜 기준 정렬일 때만 이 값을 화면에 사용
+// 금액순 정렬은 날짜 그룹으로 묶으면 전체 금액순이 깨지므로 별도 flat list로 보여준다.
 const groupedTransactions = computed(() => {
   const groups = new Map()
 
@@ -49,9 +62,15 @@ const groupedTransactions = computed(() => {
     group.items.push(item)
   })
 
-  return Array.from(groups.values()).sort((a, b) => {
-    return b.date.localeCompare(a.date)
-  })
+  const grouped = Array.from(groups.values())
+
+  // 날짜 오름차순 선택 시 오래된 날짜부터 보여준다.
+  if (sort.value === 'date_asc') {
+    return grouped.sort((a, b) => a.date.localeCompare(b.date))
+  }
+
+  // 기본은 최신 날짜부터 보여준다.
+  return grouped.sort((a, b) => b.date.localeCompare(a.date))
 })
 
 const monthLabel = computed(() => selectedMonth.value.replace('-', '.'))
@@ -145,19 +164,41 @@ function getDayName(dateText) {
   return dayNames[new Date(year, month - 1, day).getDay()]
 }
 
-// 선택된 월의 거래 목록을 서버에서 가져온다.
+// 선택된 월, 검색어, 정렬 조건을 서버로 보내 거래 목록을 가져온다.
+// requestId를 사용해 이전 요청이 늦게 도착해도 최신 검색 결과를 덮어쓰지 못하게 막는다.
 async function loadTransactions() {
+  const requestId = ++latestRequestId
+
   loading.value = true
   errorMessage.value = ''
 
   try {
-    const res = await fetchTransactions(getMonthRange())
+    const range = getMonthRange()
+
+    const res = await fetchTransactions({
+      ...range,
+
+      keyword: keyword.value.trim() || undefined,
+
+      sort: sort.value,
+    })
+
+    // 이 응답보다 더 최신 요청이 이미 시작되었다면 이 응답은 버린다.
+    if (requestId !== latestRequestId) return
+
     transactions.value = res.data.data || []
   } catch (err) {
+
+     // 오래된 요청의 에러가 최신 화면 상태를 덮지 않게 막는다.
+    if (requestId !== latestRequestId) return
+
     errorMessage.value =
       err.response?.data?.message || '거래 내역을 불러오지 못했습니다.'
   } finally {
-    loading.value = false
+    // 최신 요청일 때만 로딩 상태를 끈다.
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 
@@ -178,8 +219,30 @@ function goEdit(id) {
 // 화면이 처음 열릴 때 거래 목록을 불러온다.
 onMounted(loadTransactions)
 
-// 월이 바뀌면 해당 월 거래 목록을 다시 불러온다.
-watch(selectedMonth, loadTransactions)
+// 검색어는 글자마다 바로 요청하지 않고 300ms 쉬었다가 조회한다.
+// 빠르게 입력할 때 불필요한 API 호출과 응답 순서 꼬임을 줄인다.
+function scheduleSearch() {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+
+  searchTimer = setTimeout(() => {
+    loadTransactions()
+  }, 300)
+}
+
+// 월 또는 정렬 기준은 선택 즉시 다시 조회한다.
+watch([selectedMonth, sort], loadTransactions)
+
+// 검색어는 debounce를 거쳐 조회한다.
+watch(keyword, scheduleSearch)
+
+// 화면을 떠날 때 남아 있는 검색 타이머를 정리한다.
+onBeforeUnmount(() => {
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+})
 </script>
 
 <template>
@@ -222,6 +285,28 @@ watch(selectedMonth, loadTransactions)
       </div>
     </section>
 
+    <!-- 검색/정렬 영역 -->
+    <section class="filter-card">
+      <label class="search-field">
+        <span>검색</span>
+        <input
+          v-model="keyword"
+          type="search"
+          placeholder="메모 또는 카테고리 검색"
+        />
+      </label>
+
+      <label class="sort-field">
+        <span>정렬</span>
+        <select v-model="sort">
+          <option value="date_desc">최신순</option>
+          <option value="date_asc">오래된순</option>
+          <option value="amount_desc">금액 높은순</option>
+          <option value="amount_asc">금액 낮은순</option>
+        </select>
+      </label>
+    </section>
+
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
     <div v-if="loading" class="empty">거래 내역을 불러오는 중입니다.</div>
@@ -250,12 +335,40 @@ watch(selectedMonth, loadTransactions)
       </div>
     </div>
 
-    <div v-else-if="groupedTransactions.length === 0" class="empty">
+    <div v-else-if="transactions.length === 0" class="empty">
       <strong>거래 내역이 없어요</strong>
       <span>오른쪽 아래 + 버튼으로 거래를 등록해보세요.</span>
     </div>
 
-       <!-- 날짜별 거래 목록 -->
+    <!-- 금액순 정렬 목록 -->
+    <div v-else-if="isAmountSort" class="flat-list">
+      <button
+        v-for="item in transactions"
+        :key="item.id"
+        class="txn"
+        type="button"
+        @click="goEdit(item.id)"
+      >
+        <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
+        {{ getCategory(item).icon }}
+        </span>
+
+        <span class="txn-text">
+          <strong>{{ getCategory(item).name }}</strong>
+          <small>
+            {{ item.memo || '메모 없음' }}
+            ·
+            {{ getDateLabel(item.date) }}
+            </small>
+          </span>
+
+          <strong class="amount" :class="item.type === 1 ? 'income' : 'expense'">
+            {{ item.type === 1 ? '+' : '-' }}{{ won(item.amount) }}
+          </strong>
+      </button>
+    </div>
+
+    <!-- 날짜별 거래 목록 -->
     <div v-else class="day-list">
       <section v-for="group in groupedTransactions" :key="group.date" class="day-group">
         <div class="day-head">
@@ -663,5 +776,54 @@ watch(selectedMonth, loadTransactions)
   font-size: 9px;
   font-weight: 900;
   line-height: 1;
+}
+
+.filter-card {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.search-field,
+.sort-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.search-field span,
+.sort-field span {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.search-field input,
+.sort-field select {
+  width: 100%;
+  height: 46px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0 12px;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 800;
+  outline: none;
+}
+
+.search-field input:focus,
+.sort-field select:focus {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(242, 163, 60, 0.18);
+}
+
+@media (max-width: 380px) {
+  .filter-card {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
