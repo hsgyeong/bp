@@ -12,6 +12,7 @@
 
 | 날짜 | 담당 | 작업 |
 |------|------|------|
+| 2026-06-14 | hsgyeong | **Refresh Token 기반 로그아웃 보완** - 로그인 응답에 `refreshToken` 추가, `refresh_token` 테이블/DAO/Mapper/Service 추가, 로그아웃·회원탈퇴 시 Refresh Token 폐기, 프론트 auth store·로그인·마이페이지·프로필 수정 화면의 토큰 상태 동기화, 로그아웃·회원탈퇴 완료 안내 alert 처리, API.md 인증 명세 갱신 |
 | 2026-06-12 | pearlseo73 | **알림 조회 백엔드 4종**(목록/안읽음수/단건읽음/전체읽음) - DTO·DAO·Mapper·Service·Controller + 소유권 검증(404/403). feat/notification PR#19 머지 |
 | 2026-06-12 | pearlseo73 | **주간예산 화면**(사용률 게이지·최근 5주·설정/수정 폼) + `api/budget.js` + `/budget` 라우트 + 더보기 링크. feat/budget-front PR#16 머지 |
 | 2026-06-12 | hsgyeong | 회원가입 화면 구현. feat/signup PR#18 머지 |
@@ -54,8 +55,10 @@
 
 ### 일반
 
-- [x] DB 스키마 DDL 확정 (5개 테이블) - schema.sql
+- [x] DB 스키마 DDL 확정 (6개 테이블) - schema.sql (`refresh_token` 포함)
 - [x] 인증(JWT) 백엔드 구현 - oauth2 resource server
+- [x] Refresh Token DB 저장/로그아웃·회원탈퇴 폐기 흐름 구현 - Access Token 재발급 API는 아직 미구현
 - [x] 카테고리 ErrorCode 추가 / 예산 소유권 403 - `USER_FORBIDDEN`(U403) 재사용으로 정리됨
 - [ ] 목업 -> Vue 이식 - 카테고리·예산·로그인·회원가입 완료 / 홈·통계·프로필·거래 화면 남음
 - [ ] 프론트-백 API 연동 - 진행 중(완료된 화면 단위로 axios 연동)
+- [ ] Access Token 재발급 API(`/api/auth/refresh`) 검토 - Refresh Token 유효성 검증 로직은 준비됐지만 엔드포인트/프론트 재발급 흐름은 미구현

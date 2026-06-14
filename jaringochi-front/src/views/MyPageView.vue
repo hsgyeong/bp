@@ -59,6 +59,7 @@ async function logout() {
   } finally {
     // 프론트에 저장된 accessToken, refreshToken, user 정보 삭제
     authStore.logout()
+    window.alert('로그아웃 되었습니다.')
     router.replace('/login')
   }
 }
@@ -76,12 +77,8 @@ async function withdraw() {
     await deleteMeApi()
 
     authStore.logout()
-    router.replace({
-      path: '/login',
-      query: {
-        message: '회원탈퇴가 완료되었습니다.',
-      },
-    })
+    window.alert('회원탈퇴가 완료되었습니다.')
+    router.replace('/login')
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || '회원탈퇴 중 문제가 발생했습니다.'

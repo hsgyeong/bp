@@ -13,10 +13,6 @@ const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 
-const successMessage = computed(() => {
-  return route.query.message || ''
-})
-
 const canSubmit = computed(() => {
   return email.value.trim() && password.value.trim() && !loading.value
 })
@@ -123,10 +119,6 @@ async function submitLogin() {
           <span>비밀번호</span>
           <input v-model="password" type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요." />    
         </label>
-
-        <p v-if="successMessage" class="success-message">
-          {{ successMessage }}
-        </p>
 
         <p v-if="errorMessage" class="error-message">         <!-- v-if: 조건이 true일 때만 태그를 화면에 만든다. -->
           {{ errorMessage }}                                  <!-- {{ }}: Vue 변수를 화면에 출력하는 문법 -->
@@ -342,13 +334,5 @@ async function submitLogin() {
   }
 }
 
-.success-message {
-  padding: 12px 14px;
-  border-radius: 14px;
-  background: var(--income-soft);
-  color: var(--income);
-  font-size: 13px;
-  font-weight: 700;
-}
 </style>
 

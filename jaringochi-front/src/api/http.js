@@ -32,6 +32,7 @@ http.interceptors.response.use(
 
     if (status === 401 && !isAuthApi) {
       localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
       localStorage.removeItem('user')
 
       const currentPath = window.location.pathname + window.location.search

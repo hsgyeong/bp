@@ -118,6 +118,7 @@
 - **DELETE** `/api/users/me`
 - 인증: 필요
 - 처리: 실제 삭제 X → `deleted_at`에 현재 시각 기록 (soft delete)
+- 비고: 회원 탈퇴 시 해당 사용자의 모든 Refresh Token도 서버 DB에서 폐기한다.
 - **Response 200** `{ "message": "회원 탈퇴가 완료되었습니다." }`
 
 ---
