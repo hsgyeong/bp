@@ -22,6 +22,7 @@ const email = computed(() => {
 
 async function loadMe() {
   const token = localStorage.getItem('token')
+  const refreshToken = localStorage.getItem('refreshToken')
 
   if (!token) return
 
@@ -33,7 +34,7 @@ async function loadMe() {
     const me = res.data.data || res.data
 
     // 새로고침 후 user 정보가 없을 수 있으므로 다시 저장
-    authStore.login(token, me)
+    authStore.login(token, refreshToken, me)
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || '사용자 정보를 불러오지 못했습니다.'
@@ -44,14 +45,21 @@ async function loadMe() {
 
 // 로그아웃
 async function logout() {
+
+  // 로그인할 때 localStorage에 저장해둔 refreshToken을 꺼낸다.
+  const refreshToken = localStorage.getItem('refreshToken')
+
   try {
-    // 백엔드 로그아웃 API 호출
-    // 현재 JWT 구조에서는 서버 세션이 없으므로 실패해도 프론트 로그아웃은 진행
-    await logoutApi()
+    // refreshToken이 있으면 서버에 보내서 DB에서 폐기 처리
+    if (refreshToken) {
+      await logoutApi(refreshToken)
+    }
   } catch {
-    // 로그아웃 API 실패는 화면에 막지 않는다.
+    // 서버 로그아웃 실패와 관계없이 프론트 로그아웃은 진행
   } finally {
+    // 프론트에 저장된 accessToken, refreshToken, user 정보 삭제
     authStore.logout()
+    window.alert('로그아웃 되었습니다.')
     router.replace('/login')
   }
 }
@@ -69,12 +77,8 @@ async function withdraw() {
     await deleteMeApi()
 
     authStore.logout()
-    router.replace({
-      path: '/login',
-      query: {
-        message: '회원탈퇴가 완료되었습니다.',
-      },
-    })
+    window.alert('회원탈퇴가 완료되었습니다.')
+    router.replace('/login')
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || '회원탈퇴 중 문제가 발생했습니다.'

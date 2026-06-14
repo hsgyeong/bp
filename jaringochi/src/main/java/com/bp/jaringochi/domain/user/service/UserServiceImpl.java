@@ -5,6 +5,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bp.jaringochi.domain.user.dao.RefreshTokenDao;
 import com.bp.jaringochi.domain.user.dao.UserDao;
 import com.bp.jaringochi.domain.user.dto.User;
 import com.bp.jaringochi.exception.BusinessException;
@@ -19,6 +20,7 @@ public class UserServiceImpl implements UserService {
 
 	private final UserDao userDao;
 	private final PasswordEncoder passwordEncoder; 
+	private final RefreshTokenDao refreshTokenDao;
 
 	@Override
 	@Transactional	// insert가 필요하기 때문에 @Transactional 붙여서 읽기 전용 설정을 덮어씀
@@ -142,8 +144,10 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public void deleteUser(Long id) {
+		refreshTokenDao.revokeAllByUserId(id);
+
 		int result = userDao.deleteUser(id);
-		
+
 		if (result == 0) {
 			throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 		}

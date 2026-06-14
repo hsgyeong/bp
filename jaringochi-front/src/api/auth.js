@@ -11,8 +11,8 @@ export function signupApi(body) {
 }
 
 // 로그아웃 API
-export function logoutApi() {
-    return http.post('/auth/logout')
+export function logoutApi(refreshToken) {
+  return http.post('/auth/logout', { refreshToken })
 }
 
 // 내 정보 조회 API

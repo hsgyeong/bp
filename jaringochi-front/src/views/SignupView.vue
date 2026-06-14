@@ -210,7 +210,7 @@ onBeforeUnmount(() => {
       <form class="signup-form" @submit.prevent="submitSignup">
         <label class="field-group">
           <span>이메일</span>
-          <input v-model="email" type="email" autocomplete="email" placeholder="example@email.com" />
+          <input v-model="email" type="email" autocomplete="email" placeholder="이메일을 입력해주세요." />
         </label>
 
         <label class="field-group">
@@ -220,7 +220,7 @@ onBeforeUnmount(() => {
                 v-model="nickname"
                 type="text"
                 autocomplete="nickname"
-                placeholder="알뜰이"
+                placeholder="닉네임을 입력해주세요."
                 @input="resetNicknameCheck"
             />
 
@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
               v-model="passwordConfirm"
               :type="showPasswordConfirm ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="비밀번호 재입력"
+              placeholder="비밀번호를 다시 입력해주세요."
             />
 
             <!-- 비밀번호 확인 보기/숨기기 토글 -->

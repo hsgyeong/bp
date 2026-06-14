@@ -1,6 +1,6 @@
 # 자린고치 가계부 API 명세서
 
-> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification` (5개 테이블)
+> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification`, `refresh_token` (6개 테이블)
 > Base URL: `/api`
 > 인증: 로그인 후 발급된 토큰(JWT 등)을 `Authorization: Bearer <token>` 헤더로 전달
 > 공통 응답 형식 / 상태 코드는 문서 하단 참고
@@ -50,19 +50,35 @@
 ```json
 {
   "accessToken": "eyJhbGci...",
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000",
   "tokenType": "Bearer",
   "email": "alice@test.com",
   "role": "ROLE_USER"
 }
 ```
 - 비고: 로그인 응답은 공통 `Response<T>`로 감싸지 않고 `LoginResponse`를 직접 반환한다.
+- `accessToken`: API 요청 시 `Authorization: Bearer <accessToken>` 헤더에 사용한다.
+- `refreshToken`: 로그아웃 시 서버 DB의 Refresh Token을 폐기하기 위해 요청 body로 보낸다.
 - 401: 이메일/비밀번호 불일치
 
 ---
 
 ### 1-3. 로그아웃
 - **POST** `/api/auth/logout`
-- 인증: 필요
+- 인증: Access Token 불필요
+- 비고: 클라이언트가 저장한 `refreshToken`을 서버로 보내면, 서버는 DB의 Refresh Token을 폐기한다. 클라이언트는 응답 성공 여부와 관계없이 로컬의 `accessToken`, `refreshToken`, `user` 정보를 삭제한다.
+
+| 요청 (Body) | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| refreshToken | string | ✅ | 로그인 응답으로 받은 Refresh Token |
+
+**Request**
+```json
+{
+  "refreshToken": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
 - **Response 200**
 ```json
 {
@@ -102,6 +118,7 @@
 - **DELETE** `/api/users/me`
 - 인증: 필요
 - 처리: 실제 삭제 X → `deleted_at`에 현재 시각 기록 (soft delete)
+- 비고: 회원 탈퇴 시 해당 사용자의 모든 Refresh Token도 서버 DB에서 폐기한다.
 - **Response 200** `{ "message": "회원 탈퇴가 완료되었습니다." }`
 
 ---
