@@ -30,7 +30,6 @@ async function submitLogin() {
     })
 
     const body = res.data       // axios 응답의 실제 JSON 본문은 res.data에 들어있음
-
     const token = body.accessToken || body.token    // 현재 백엔드는 accessToken이라는 이름으로 토큰을 준다.
 
     if (!token) {

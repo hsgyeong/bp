@@ -21,7 +21,17 @@
 
 **Response 201**
 ```json
-{ "id": 1, "email": "alice@test.com", "nickname": "앨리스" }
+{
+  "code": "SUCCESS",
+  "message": "회원가입이 완료되었습니다.",
+  "data": {
+    "id": 1,
+    "email": "alice@test.com",
+    "nickname": "앨리스",
+    "createdAt": "2026-05-01T10:00:00",
+    "deletedAt": null
+  }
+}
 ```
 - 409: 이메일 중복
 
@@ -38,8 +48,14 @@
 
 **Response 200**
 ```json
-{ "token": "eyJhbGci...", "user": { "id": 1, "nickname": "앨리스" } }
+{
+  "accessToken": "eyJhbGci...",
+  "tokenType": "Bearer",
+  "email": "alice@test.com",
+  "role": "ROLE_USER"
+}
 ```
+- 비고: 로그인 응답은 공통 `Response<T>`로 감싸지 않고 `LoginResponse`를 직접 반환한다.
 - 401: 이메일/비밀번호 불일치
 
 ---
@@ -47,7 +63,14 @@
 ### 1-3. 로그아웃
 - **POST** `/api/auth/logout`
 - 인증: 필요
-- **Response 200** `{ "message": "로그아웃 되었습니다." }`
+- **Response 200**
+```json
+{
+  "code": "SUCCESS",
+  "message": "로그아웃 되었습니다.",
+  "data": null
+}
+```
 
 ---
 

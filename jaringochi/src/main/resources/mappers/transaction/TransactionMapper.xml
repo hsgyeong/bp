@@ -4,51 +4,78 @@
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.bp.jaringochi.domain.transaction.dao.TransactionDao">
 
-	<select id="selectTransactions" resultType="Transaction">  <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+   <resultMap id="transactionResultMap" type="Transaction">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="categoryId" column="category_id"/>
+        <result property="amount" column="amount"/>
+        <result property="type" column="type"/>
+        <result property="memo" column="memo"/>
+        <result property="date" column="date"/>
+
+        <!-- category 테이블에서 가져온 분류 정보를 TransactionCategory 객체에 담는다. -->
+        <association property="category" javaType="com.bp.jaringochi.domain.transaction.dto.TransactionCategory">
+            <id property="id" column="category_id"/>
+            <result property="name" column="category_name"/>
+            <result property="icon" column="category_icon"/>
+        </association>
+    </resultMap>
+    
+	<select id="selectTransactions" resultMap="transactionResultMap">  <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
 		SELECT 
-			id,
-			user_id,
-			category_id,
-			amount,
-			type,
-			memo,
-			`date`
+			t.id,
+			t.user_id,
+			t.category_id,
+			t.amount,
+			t.type,
+			t.memo,
+			t.`date`,
+            c.name AS category_name,
+            c.icon AS category_icon
 		FROM
-			`transaction`
-		WHERE user_id = #{userId}
+			`transaction` t
+		LEFT JOIN
+            category c
+            ON c.id = t.category_id
+		WHERE t.user_id = #{userId}
 		
 		<if test="startDate != null">
-			AND `date` &gt;= #{startDate}  <!-- &gt;=  비교연산자 >= -->
+			AND t.`date` &gt;= #{startDate}  <!-- &gt;=  비교연산자 >= -->
 		</if>
 		
 		<if test="endDate != null">
-			AND `date` &lt;= #{endDate}    <!-- &lt;=  비교연산자 <= -->
+			AND t.`date` &lt;= #{endDate}    <!-- &lt;=  비교연산자 <= -->
 		</if>
 		
 		<if test="type != null">
-			AND type = #{type}
+			AND t.type = #{type}
 		</if>
 		
 		<if test="categoryId != null">
-			AND category_id = #{categoryId}
+			AND t.category_id = #{categoryId}
 		</if>
 		
-		ORDER BY `date` DESC, id DESC
+		ORDER BY t.`date` DESC, t.id DESC
 	</select>
 	
-	<select id="selectTransactionById" resultType="Transaction">     <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+	<select id="selectTransactionById" resultMap="transactionResultMap">     <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
 		SELECT 
-			id,
-			user_id,
-			category_id,
-			amount,
-			type,
-			memo,
-			`date`
+			t.id,
+			t.user_id,
+			t.category_id,
+			t.amount,
+			t.type,
+			t.memo,
+			t.`date`,
+			c.name AS category_name,
+            c.icon AS category_icon
 		FROM
-			`transaction`
-		WHERE id = #{id}
-		  AND user_id = #{userId}
+			`transaction` t
+		LEFT JOIN
+            category c
+            ON c.id = t.category_id
+		WHERE t.id = #{id}
+		  AND t.user_id = #{userId}
 	</select>
 
 	<insert id="insertTransaction" parameterType="Transaction" useGeneratedKeys="true" keyProperty="id">

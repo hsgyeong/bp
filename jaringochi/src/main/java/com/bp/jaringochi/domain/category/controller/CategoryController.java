@@ -2,6 +2,9 @@ package com.bp.jaringochi.domain.category.controller;
 
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,48 +17,53 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bp.jaringochi.domain.category.dto.Category;
 import com.bp.jaringochi.domain.category.service.CategoryService;
+import com.bp.jaringochi.exception.BusinessException;
+import com.bp.jaringochi.exception.ErrorCode;
 import com.bp.jaringochi.global.response.Response;
 
 @RestController
-@RequestMapping("/api/categories")   
+@RequestMapping("/api/categories")
 public class CategoryController {
 
-    private final CategoryService categoryService;
+    @Autowired
+    private CategoryService categoryService;
 
-    public CategoryController(CategoryService categoryService) {
-        this.categoryService = categoryService;
-    }
-
-    // 목록 조회 — GET /api/categories?type=2
+    // 목록 조회 - GET /api/categories?type=2
     @GetMapping
-    public Response<List<Category>> getCategories(@RequestParam(required = true) Integer type) {
-        List<Category> categories = categoryService.getCategories(getCurrentUserId(), type);
+    public Response<List<Category>> getCategories(@RequestParam(required = true) Integer type,
+                                                  Authentication authentication) {
+        List<Category> categories = categoryService.getCategories(getCurrentUserId(authentication), type);
         return Response.success(categories);
     }
 
-    // 추가 — POST /api/categories
+    // 추가 - POST /api/categories
     @PostMapping
-    public Response<Category> addCategory(@RequestBody Category category) {
-        Category created = categoryService.addCategory(getCurrentUserId(), category);
+    public Response<Category> addCategory(@RequestBody Category category,
+                                          Authentication authentication) {
+        Category created = categoryService.addCategory(getCurrentUserId(authentication), category);
         return Response.success("카테고리가 등록되었습니다.", created);
     }
 
-    // 수정 — PUT /api/categories/{id}
+    // 수정 - PUT /api/categories/{id}
     @PutMapping("/{id}")
-    public Response<Category> updateCategory(@PathVariable Long id, @RequestBody Category category) {
-        Category updated = categoryService.updateCategory(getCurrentUserId(), id, category);
+    public Response<Category> updateCategory(@PathVariable Long id, @RequestBody Category category,
+                                             Authentication authentication) {
+        Category updated = categoryService.updateCategory(getCurrentUserId(authentication), id, category);
         return Response.success("카테고리가 수정되었습니다.", updated);
     }
 
-    // 삭제(소프트) — DELETE /api/categories/{id}
+    // 삭제(소프트) - DELETE /api/categories/{id}
     @DeleteMapping("/{id}")
-    public Response<Void> deleteCategory(@PathVariable Long id) {
-        categoryService.deleteCategory(getCurrentUserId(), id);
+    public Response<Void> deleteCategory(@PathVariable Long id, Authentication authentication) {
+        categoryService.deleteCategory(getCurrentUserId(authentication), id);
         return Response.success("삭제되었습니다.");
     }
 
-    // ===== 임시 인증 (TODO: 6/9 Security/JWT 적용 후 실제 로그인 사용자 id로 교체) =====
-    private Long getCurrentUserId() {
-        return 1L;
+    // ===== 토큰에서 userId 추출 (거래 컨트롤러와 동일 패턴) =====
+    private Long getCurrentUserId(Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof Jwt jwt)) {
+            throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
+        }
+        return Long.valueOf(jwt.getSubject());
     }
 }

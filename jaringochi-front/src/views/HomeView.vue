@@ -179,7 +179,7 @@ onMounted(loadHome)
     <header class="home-head">
       <div>
         <p class="month">{{ monthLabel }}</p>
-        <h1>안녕하세요, {{ greetingText }} 👋</h1>
+        <h1>{{ greetingText }} 👋</h1>
       </div>
 
       <div class="head-icons" aria-hidden="true">
