@@ -8,6 +8,7 @@ import LoginView from '@/views/LoginView.vue'
 import SignupView from '@/views/SignupView.vue'
 import CategoryView from '@/views/CategoryView.vue'
 import MyPageView from '@/views/MyPageView.vue'
+import ProfileEditView from '@/views/ProfileEditView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import TransactionFormView from '@/views/TransactionFormView.vue'
 
@@ -22,6 +23,7 @@ const routes = [
   { path: '/stats',     name: 'stats',    component: StatsView, meta: { requiresAuth: true } },
   { path: '/more',      name: 'more',     component: MoreView, meta: { requiresAuth: true } },
   { path: '/me', name: 'me', component: MyPageView, meta: { requiresAuth: true } },
+  { path: '/me/edit', name: 'profile-edit', component: ProfileEditView, meta: { requiresAuth: true } },
   { path: '/categories', name: 'categories', component: CategoryView, meta: { requiresAuth: true } },
   { path: '/budget',    name: 'budget',   component: BudgetView, meta: { requiresAuth: true } }, 
 ]

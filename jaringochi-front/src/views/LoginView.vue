@@ -13,6 +13,10 @@ const password = ref('')
 const loading = ref(false)
 const errorMessage = ref('')
 
+const successMessage = computed(() => {
+  return route.query.message || ''
+})
+
 const canSubmit = computed(() => {
   return email.value.trim() && password.value.trim() && !loading.value
 })
@@ -118,6 +122,10 @@ async function submitLogin() {
           <input v-model="password" type="password" autocomplete="current-password" placeholder="비밀번호를 입력하세요." />    
         </label>
 
+        <p v-if="successMessage" class="success-message">
+          {{ successMessage }}
+        </p>
+
         <p v-if="errorMessage" class="error-message">         <!-- v-if: 조건이 true일 때만 태그를 화면에 만든다. -->
           {{ errorMessage }}                                  <!-- {{ }}: Vue 변수를 화면에 출력하는 문법 -->
         </p>
@@ -139,20 +147,21 @@ async function submitLogin() {
 /* scoped: 이 스타일이 이 컴포넌트 안에서만 적용되게 함 */
 .login-page {
   min-height: calc(100vh - 76px);
-  padding: 32px 20px;
+  padding: 28px 20px 96px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .login-body {
   width: 100%;
+  padding-top: 12px;
 }
 
 .mascot-wrap {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 8px;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 10px;
 }
 
 .string {
@@ -166,18 +175,61 @@ async function submitLogin() {
 }
 
 .gulbi {
-  width: 120px;
-  height: 120px;
+  width: 104px;
+  height: 104px;
   display: block;
+}
+
+.mascot-speech {
+  position: relative;
+  margin: 0 auto 20px;
+  padding: 15px 16px;
+  border: 1px solid #f6dfb5;
+  border-radius: 20px;
+  background: #fff7e8;
+  color: #6f4c12;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(120, 90, 30, 0.06);
+}
+
+.mascot-speech::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-left: 1px solid #f6dfb5;
+  border-top: 1px solid #f6dfb5;
+  background: #fff7e8;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.mascot-speech strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.mascot-speech span {
+  display: block;
+  color: #8a681f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .login-header h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   color: var(--ink);
   line-height: 1.15;
@@ -193,7 +245,7 @@ async function submitLogin() {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 13px;
 }
 
 .field-group {
@@ -241,7 +293,7 @@ async function submitLogin() {
 
 .login-button {
   height: 54px;
-  margin-top: 8px;
+  margin-top: 6px;
   border: 0;
   border-radius: 18px;
   background: var(--gold);
@@ -260,7 +312,7 @@ async function submitLogin() {
 }
 
 .signup-guide {
-  margin-top: 14px;
+  margin-top: 16px;
   text-align: center;
   color: var(--ink-2);
   font-size: 13px;
@@ -271,6 +323,30 @@ async function submitLogin() {
   color: var(--gold-deep);
   font-weight: 900;
   text-decoration: none;
+}
+
+@media (max-width: 380px) {
+  .login-page {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .mascot-speech strong {
+    font-size: 15px;
+  }
+
+  .mascot-speech span {
+    font-size: 12px;
+  }
+}
+
+.success-message {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: var(--income-soft);
+  color: var(--income);
+  font-size: 13px;
+  font-weight: 700;
 }
 </style>
 

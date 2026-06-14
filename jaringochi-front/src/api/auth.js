@@ -19,3 +19,20 @@ export function logoutApi() {
 export function fetchMeApi() {
   return http.get('/users/me')
 }
+
+// 회원정보 수정 API
+export function updateMeApi(body) {
+  return http.put('/users/me', body)
+}
+
+// 회원탈퇴 API
+export function deleteMeApi() {
+  return http.delete('/users/me')
+}
+
+// 닉네임 중복확인 API
+export function checkNicknameApi(nickname) {
+  return http.get('/auth/check-nickname', {
+    params: { nickname },
+  })
+}

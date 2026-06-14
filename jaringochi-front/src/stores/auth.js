@@ -38,3 +38,8 @@ export const useAuthStore = defineStore('auth', () =>
     return { token, user, login, logout }
 
 })
+
+// 회원탈퇴 API
+export function deleteMeApi() {
+  return http.delete('/users/me')
+}

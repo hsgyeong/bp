@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { fetchMeApi, logoutApi } from '@/api/auth'
+import { fetchMeApi, logoutApi, deleteMeApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
@@ -42,6 +42,7 @@ async function loadMe() {
   }
 }
 
+// 로그아웃
 async function logout() {
   try {
     // 백엔드 로그아웃 API 호출
@@ -53,6 +54,37 @@ async function logout() {
     authStore.logout()
     router.replace('/login')
   }
+}
+
+// 회원 탈퇴
+async function withdraw() {
+  const ok = window.confirm('정말 회원탈퇴 하시겠어요? 탈퇴 후에는 계정 정보를 되돌릴 수 없습니다.')
+
+  if (!ok) return
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    await deleteMeApi()
+
+    authStore.logout()
+    router.replace({
+      path: '/login',
+      query: {
+        message: '회원탈퇴가 완료되었습니다.',
+      },
+    })
+  } catch (err) {
+    errorMessage.value =
+      err.response?.data?.message || '회원탈퇴 중 문제가 발생했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
+
+function goEdit() {
+  router.push({ name: 'profile-edit' })
 }
 
 onMounted(loadMe)
@@ -68,7 +100,7 @@ onMounted(loadMe)
       {{ errorMessage }}
     </p>
 
-    <section class="profile-card">
+    <section class="profile-card">        
       <div class="profile-icon" aria-hidden="true">
         🐟
       </div>
@@ -80,6 +112,11 @@ onMounted(loadMe)
     </section>
 
     <section class="card menu-card">
+      <button class="menu-button action-menu" type="button" @click="goEdit">
+        <span>회원정보 수정</span>
+        <strong>›</strong>
+      </button>
+
       <button class="menu-button" type="button" disabled>
         <span>닉네임</span>
         <strong>{{ nickname }}</strong>
@@ -94,6 +131,12 @@ onMounted(loadMe)
     <button class="logout-button" type="button" :disabled="loading" @click="logout">
       로그아웃
     </button>
+
+    <div class="withdraw-row">
+        <button class="withdraw-button" type="button" :disabled="loading" @click="withdraw">
+        회원탈퇴
+        </button>
+    </div>
   </section>
 </template>
 
@@ -220,5 +263,35 @@ onMounted(loadMe)
 .logout-button:disabled {
   cursor: default;
   opacity: 0.55;
+}
+
+.withdraw-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 10px;
+}
+
+.withdraw-button {
+  border: 0;
+  background: transparent;
+  color: var(--mute);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.withdraw-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.action-menu {
+  cursor: pointer;
+}
+
+.action-menu strong {
+  color: var(--gold-deep);
+  font-size: 22px;
 }
 </style>
