@@ -26,7 +26,6 @@ const loading = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
 
-
 // 이메일은 수정하지 않고 보여주기만 한다.
 const email = computed(() => {
   return authStore.user?.email || '-'
@@ -37,24 +36,21 @@ const isNicknameChanged = computed(() => {
   return nickname.value.trim() !== originalNickname.value
 })
 
-// 닉네임 또는 비밀번호 중 하나라도 입력되어 있고,
-// 요청 중이 아닐 때만 수정 버튼을 활성화한다.
 const canSubmit = computed(() => {
-  const hasNickname = nickname.value.trim()
+  // 닉네임이 변경되었는가
+  const hasNicknameChange = isNicknameChanged.value
   const hasPassword = password.value.trim() || passwordConfirm.value.trim()
 
-  return !loading.value && (hasNickname || hasPassword)
+  return !loading.value && (hasNicknameChange || hasPassword)
 })
 
 // 화면이 처음 열릴 때 현재 사용자 정보를 다시 가져온다.
 // 새로고침 후 store.user가 비어 있을 수 있기 때문이다.
 async function loadMe() {
   const token = localStorage.getItem('token')
+  const refreshToken = localStorage.getItem('refreshToken')
 
   if (!token) return
-
-  nickname.value = me.nickname || ''
-  originalNickname.value = me.nickname || ''
 
   loading.value = true
   errorMessage.value = ''
@@ -64,9 +60,12 @@ async function loadMe() {
     const me = res.data.data || res.data
 
     // 최신 사용자 정보를 store와 localStorage에 다시 저장
-    authStore.login(token, me)
+    authStore.login(token, refreshToken, me)
 
+    // API 응답을 받은 뒤 입력값과 원본값을 같은 기준으로 초기화
     nickname.value = me.nickname || ''
+    originalNickname.value = me.nickname || ''
+    resetNicknameCheck()
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || '사용자 정보를 불러오지 못했습니다.'
@@ -133,25 +132,22 @@ async function submitProfile() {
   errorMessage.value = ''
   successMessage.value = ''
 
-  // 백엔드로 보낼 수정 데이터
   const body = {}
 
-  // 닉네임이 입력되어 있으면 수정 요청에 포함
   if (isNicknameChanged.value) {
     if (!nicknameChecked.value || checkedNickname.value !== nickname.value.trim()) {
-        errorMessage.value = '닉네임 중복확인을 해주세요.'
-        return
+      errorMessage.value = '닉네임 중복확인을 해주세요.'
+      return
     }
 
     if (!nicknameAvailable.value) {
-        errorMessage.value = '이미 사용 중인 닉네임입니다.'
-        return
+      errorMessage.value = '이미 사용 중인 닉네임입니다.'
+      return
     }
 
     body.nickname = nickname.value.trim()
-    }
+  }
 
-  // 비밀번호는 두 칸 중 하나라도 입력되었을 때만 변경 시도
   if (password.value || passwordConfirm.value) {
     if (password.value !== passwordConfirm.value) {
       errorMessage.value = '새 비밀번호가 일치하지 않습니다.'
@@ -168,9 +164,15 @@ async function submitProfile() {
     const updatedUser = res.data.data || res.data
 
     const token = localStorage.getItem('token')
+    const refreshToken = localStorage.getItem('refreshToken')
 
     // 수정된 사용자 정보를 store/localStorage에 반영
-    authStore.login(token, updatedUser)
+    authStore.login(token, refreshToken, updatedUser)
+
+    // 수정 완료 후 현재 닉네임을 새 원본값으로 맞춘다.
+    nickname.value = updatedUser.nickname || nickname.value.trim()
+    originalNickname.value = nickname.value
+    resetNicknameCheck()
 
     // 비밀번호 입력값은 저장하지 않고 비운다.
     password.value = ''
@@ -192,7 +194,6 @@ function goBack() {
 
 onMounted(loadMe)
 </script>
-
 <template>
   <section class="profile-edit-view">
     <header class="page-head">
@@ -202,7 +203,7 @@ onMounted(loadMe)
       <h1>회원정보 수정</h1>
     </header>
 
-    <form class="edit-form" @submit.prevent="submitProfile">      
+    <form class="edit-form" @submit.prevent="submitProfile">
       <label class="field-group">
         <span>이메일</span>
         <input :value="email" type="email" disabled />
@@ -210,31 +211,32 @@ onMounted(loadMe)
 
       <label class="field-group">
         <span>닉네임</span>
-        <div class="nickname-check-row">
-            <input
-                v-model="nickname"
-                type="text"
-                autocomplete="nickname"
-                placeholder="닉네임을 입력하세요."
-                @input="resetNicknameCheck"
-            />
 
-            <button
-                class="check-button"
-                type="button"
-                :disabled="loading || !nickname.trim() || !isNicknameChanged"
-                @click="checkNickname"
-            >
+        <div class="nickname-check-row">
+          <input
+            v-model="nickname"
+            type="text"
+            autocomplete="nickname"
+            placeholder="닉네임을 입력하세요."
+            @input="resetNicknameCheck"
+          />
+
+          <button
+            class="check-button"
+            type="button"
+            :disabled="loading || !nickname.trim() || !isNicknameChanged"
+            @click="checkNickname"
+          >
             중복확인
-            </button>
+          </button>
         </div>
 
         <p
-            v-if="nicknameMessage"
-            class="field-message"
-            :class="nicknameAvailable ? 'available' : 'unavailable'"
+          v-if="nicknameMessage"
+          class="field-message"
+          :class="nicknameAvailable ? 'available' : 'unavailable'"
         >
-            {{ nicknameMessage }}
+          {{ nicknameMessage }}
         </p>
       </label>
 
@@ -346,6 +348,43 @@ onMounted(loadMe)
   box-shadow: 0 0 0 3px rgba(242, 163, 60, 0.18);
 }
 
+.nickname-check-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+}
+
+.check-button {
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.check-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.field-message {
+  margin-top: -2px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field-message.available {
+  color: var(--income);
+}
+
+.field-message.unavailable {
+  color: var(--expense);
+}
+
 .success-message {
   padding: 12px 14px;
   border-radius: 14px;
@@ -382,42 +421,5 @@ onMounted(loadMe)
   cursor: default;
   opacity: 0.55;
   box-shadow: none;
-}
-
-.nickname-check-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 92px;
-  gap: 8px;
-}
-
-.check-button {
-  height: 52px;
-  border: 0;
-  border-radius: 16px;
-  background: var(--gold-soft);
-  color: var(--gold-deep);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 900;
-  cursor: pointer;
-}
-
-.check-button:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-
-.field-message {
-  margin-top: -2px;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.field-message.available {
-  color: var(--income);
-}
-
-.field-message.unavailable {
-  color: var(--expense);
 }
 </style>

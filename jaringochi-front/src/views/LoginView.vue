@@ -35,23 +35,25 @@ async function submitLogin() {
 
     const body = res.data       // axios 응답의 실제 JSON 본문은 res.data에 들어있음
     const token = body.accessToken || body.token    // 현재 백엔드는 accessToken이라는 이름으로 토큰을 준다.
+    const refreshToken = body.refreshToken
 
-    if (!token) {
+    if (!token || !refreshToken) {
       throw new Error('로그인 응답에 토큰이 없습니다.')
     }
 
-    localStorage.setItem('token', token)            // localStorage -> 브라우저 저장소. 새로고침 해도 token이 남아있게 저장
-                                                    // 요청에 토큰이 붙도록 먼저 저장   
+    localStorage.setItem('token', token)              // localStorage -> 브라우저 저장소. 새로고침 해도 token이 남아있게 저장
+    localStorage.setItem('refreshToken', refreshToken) // 요청에 토큰이 붙도록 먼저 저장   
                                                                                                         
     const meRes = await fetchMeApi()                  // 홈 화면에서 사용자 정보를 사용하므로, 
     const user = meRes.data.data || meRes.data        // 내 정보 조회까지 성공해야 로그인 완료로 처리한다.
 
-    authStore.login(token, user)                    // Pinia store에서도 로그인 상태 저장
+    authStore.login(token, refreshToken, user)        // Pinia store에서도 로그인 상태 저장
 
     const redirectPath = route.query.redirect || '/'  // 로그인 전에 가려던 페이지가 있으면 이동하고, 없으면 홈('/')으로 이동
     router.push(String(redirectPath))
   } catch (err) {
     localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
     localStorage.removeItem('user')
 
     const status = err.response?.status

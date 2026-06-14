@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bp.jaringochi.domain.user.dao.RefreshTokenDao">
+
+    <resultMap id="refreshTokenResultMap" type="com.bp.jaringochi.domain.user.dto.RefreshToken">
+        <id property="id" column="id"/>
+        <result property="userId" column="user_id"/>
+        <result property="tokenHash" column="token_hash"/>
+        <result property="expiresAt" column="expires_at"/>
+        <result property="revokedAt" column="revoked_at"/>
+        <result property="createdAt" column="created_at"/>
+    </resultMap>
+
+    <insert id="insertRefreshToken" parameterType="com.bp.jaringochi.domain.user.dto.RefreshToken"
+            useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO refresh_token (user_id, token_hash, expires_at)
+        VALUES (#{userId}, #{tokenHash}, #{expiresAt})
+    </insert>
+
+    <select id="findValidByTokenHash" parameterType="String" resultMap="refreshTokenResultMap">
+        SELECT id, user_id, token_hash, expires_at, revoked_at, created_at
+        FROM refresh_token
+        WHERE token_hash = #{tokenHash}
+          AND revoked_at IS NULL
+          AND expires_at > NOW()
+    </select>
+
+    <update id="revokeByTokenHash" parameterType="String">
+        UPDATE refresh_token
+        SET revoked_at = NOW()
+        WHERE token_hash = #{tokenHash}
+          AND revoked_at IS NULL
+    </update>
+
+    <update id="revokeAllByUserId">
+        UPDATE refresh_token
+        SET revoked_at = NOW()
+        WHERE user_id = #{userId}
+          AND revoked_at IS NULL
+    </update>
+
+</mapper>
