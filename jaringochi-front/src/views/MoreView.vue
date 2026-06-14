@@ -6,6 +6,11 @@
     <h1 class="title">더보기</h1>
 
     <div class="card list">
+      <router-link to="/me" class="menu">
+        <span class="mic">👤</span>
+        마이페이지
+        <span class="arr">›</span>
+      </router-link>
       <!-- 카테고리(분류) 관리로 이동 -->
       <router-link to="/categories" class="menu">
         <span class="mic">🏷️</span>

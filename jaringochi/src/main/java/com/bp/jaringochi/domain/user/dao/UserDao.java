@@ -11,6 +11,8 @@ public interface UserDao {
 	
 	User findByEmail(String email);
 	
+	User findByNickname(String nickname);
+	
 	User findById(Long id);
 	
 	int updateUser(User user);

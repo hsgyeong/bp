@@ -26,6 +26,13 @@
      	  AND deleted_at IS NULL
 	</select>
 	
+	<select id="findByNickname" parameterType="String" resultMap="userResultMap">
+    	SELECT id, email, password, nickname, created_at, deleted_at
+    	FROM `user`
+    	WHERE nickname = #{nickname}
+      	  AND deleted_at IS NULL
+	</select>
+	
 	<select id="findById" parameterType="long" resultMap="userResultMap">
 		SELECT id, email, password, nickname, created_at, deleted_at
 		FROM `user`

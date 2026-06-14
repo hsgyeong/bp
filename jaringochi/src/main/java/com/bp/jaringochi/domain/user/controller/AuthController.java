@@ -2,9 +2,11 @@ package com.bp.jaringochi.domain.user.controller;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -47,6 +49,13 @@ public class AuthController {
     @PostMapping("/logout")
     public Response<Void> logout() {
     	return Response.success("로그아웃 되었습니다.");
+    }
+    
+    // 닉네임 확인
+    @GetMapping("/check-nickname")
+    public Response<Boolean> checkNickname(@RequestParam String nickname) {
+        boolean available = userService.isNicknameAvailable(nickname);
+        return Response.success(available);
     }
 
 }

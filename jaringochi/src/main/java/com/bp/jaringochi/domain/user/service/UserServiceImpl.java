@@ -39,6 +39,11 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
 		}
 		
+		User existingNicknameUser = userDao.findByNickname(user.getNickname());
+		if (existingNicknameUser != null) {
+		    throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		}
+		
 		user.setPassword(passwordEncoder.encode(user.getPassword()));
 		
 		try {
@@ -103,6 +108,14 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.INVALID_REQUEST);
 		}
 		
+		if (hasNickname) {
+		    User nicknameOwner = userDao.findByNickname(user.getNickname());
+
+		    if (nicknameOwner != null && !nicknameOwner.getId().equals(id)) {
+		        throw new BusinessException(ErrorCode.INVALID_REQUEST);
+		    }
+		}
+		
 		user.setId(id);
 		
 		if (!hasNickname) {
@@ -135,6 +148,15 @@ public class UserServiceImpl implements UserService {
 			throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 		}
 		
+	}
+	
+	@Override
+	public boolean isNicknameAvailable(String nickname) {
+	    if (nickname == null || nickname.isBlank()) {
+	        return false;
+	    }
+
+	    return userDao.findByNickname(nickname.trim()) == null;
 	}
 
 }
