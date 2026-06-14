@@ -7,10 +7,35 @@ const http = axios.create({
 
 // -- 요청 인터셉터: 요청이 서버로 나가기 "직전"에 가로채는 자리 --
 http.interceptors.request.use((config) => {
-  // * (JWT 강의 후) 여기서 토큰을 붙일 예정. 지금은 인증 전이라 비워둠.
-  // const token = localStorage.getItem('token')
-  // if (token) config.headers.Authorization = `Bearer ${token}`
-  return config   // 가로챈 설정을 그대로 통과시킴
+  const token = localStorage.getItem('token')
+  const isAuthApi = config.url?.startsWith('/auth/')
+
+  if (token && !isAuthApi) {
+    config.headers.Authorization = `Bearer ${token}`
+  }
+
+  return config
 })
+
+ // 응답 인터셉터: 만료/가짜 토큰이면 로그인 정보 삭제 후 로그인 화면으로 이동
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status
+    const isAuthApi = error.config?.url?.startsWith('/auth/')
+
+    if (status === 401 && !isAuthApi) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+
+      const currentPath = window.location.pathname + window.location.search
+
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+      }
+    }
+    return Promise.reject(error)
+  }
+)
 
 export default http   // 다른 파일에서 import 해서 쓰도록 내보냄
