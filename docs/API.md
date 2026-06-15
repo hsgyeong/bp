@@ -251,10 +251,11 @@
 
 ---
 
-### 4-2. 최근 주간 예산 목록 (이번 주 포함 최근 5주)
+### 4-2. 최근 주간 예산 목록 (이번 주 포함 최근 4주)
 - **GET** `/api/budgets/weekly/recent`
 - 인증: 필요
-- 파라미터 없음. **월과 무관하게** 오늘이 속한 주를 포함해 `start_date` 기준 **최근 5개** 주간예산을 반환 (미래 주 제외).
+- 파라미터 없음. **월과 무관하게** 오늘이 속한 주를 포함해 `start_date` 기준 **최근 4개** 주간예산을 반환 (미래 주 제외).
+- 비고: 통계 '주·단순금액'(예산 vs 지출) 화면(§6)도 이 엔드포인트를 그대로 재사용한다. 각 항목에 `startDate`/`endDate`가 있어 차트 라벨을 실제 날짜범위로 찍을 수 있다.
 
 **Response 200** 주간 예산 배열 (각 항목에 지출/비율 포함, 과거→현재 순)
 
@@ -334,43 +335,68 @@
 
 ## 6. 통계 (Statistics)
 
-> 별도 테이블 없이 transaction 집계로 생성
+> 별도 테이블 없이 transaction 집계로 생성. 통계 탭 = **월**(수입/지출 × 단순금액/카테고리별) + **주**(지출 전용).
+> - 월·단순금액 = `monthly-trend`(6-2) / 월·카테고리별 = `by-category`(6-1)
+> - 주·단순금액(예산 vs 지출 + 달성률) = **§4-2 `/budgets/weekly/recent` 재사용**(통계 전용 엔드포인트 없음)
+> - 주·카테고리별 = `by-category`(6-1, 프론트가 그 주 범위 전달)
 
 ### 6-1. 카테고리별 지출/수입 통계
 - **GET** `/api/statistics/by-category`
 - 인증: 필요
+- 월/주 카테고리별 화면 공용 - 프론트가 해당 **월 또는 주의 startDate~endDate**를 전달. `type`으로 수입/지출 구분.
 
 | 쿼리 | 타입 | 필수 | 설명 |
 |------|------|------|------|
 | startDate | date | ✅ | 시작일 |
 | endDate | date | ✅ | 종료일 |
-| type | int | ❌ | 1=수입 / 2=지출 |
+| type | int | ❌ | 1=수입 / 2=지출 (생략 시 전체) |
+
+- **items 구성**: 금액 내림차순 **상위 4개 + 나머지를 합산한 `기타` 1건**(`categoryId: null`). 카테고리가 4개 이하면 기타 없음.
+- 날짜 역전(end < start) → 400 (`S400`). 거래 없는 기간 → `total: 0`, `items: []`.
 
 **Response 200**
 ```json
 {
-  "total": 250000.00,
+  "total": 600000.00,
   "items": [
-    { "categoryId": 4, "categoryName": "식비", "amount": 80000.00, "ratio": 32.0 },
-    { "categoryId": 6, "categoryName": "교통비", "amount": 56250.00, "ratio": 22.5 }
+    { "categoryId": 4, "categoryName": "식비", "amount": 228000.00, "ratio": 38.0 },
+    { "categoryId": 6, "categoryName": "교통비", "amount": 132000.00, "ratio": 22.0 },
+    { "categoryId": 5, "categoryName": "쇼핑", "amount": 108000.00, "ratio": 18.0 },
+    { "categoryId": 7, "categoryName": "문화생활", "amount": 72000.00, "ratio": 12.0 },
+    { "categoryId": null, "categoryName": "기타", "amount": 60000.00, "ratio": 10.0 }
   ]
 }
 ```
 
 ---
 
-### 6-2. 기간별 수입/지출 합계
-- **GET** `/api/statistics/summary`
+### 6-2. 월별 추이 (단순금액)
+- **GET** `/api/statistics/monthly-trend`
 - 인증: 필요
+- 최근 N개월의 월별 합계(꺾은선) + 전월대비. 월·단순금액 화면 전용. (주 단위 추이는 §4-2 재사용이라 여기 없음)
 
-| 쿼리 | 타입 | 필수 |
-|------|------|------|
-| startDate | date | ✅ |
-| endDate | date | ✅ |
+| 쿼리 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| type | int | ✅ | 1=수입 / 2=지출 |
+| months | int | ❌ | 조회 개월 수 (기본 6) |
+
+- `items`는 과거→현재 순. **거래 없는 달도 `amount: 0`으로 채워** 연속 반환.
+- `diffRatio`: 마지막 달 vs 직전 달 증감률(%). **음수 = 절약(▼)**, 양수 = 증가(▲). 직전 달이 0이면 `null`.
+- `months < 1` → 400 (`S400`).
 
 **Response 200**
 ```json
-{ "income": 3100000.00, "expense": 250000.00, "balance": 2850000.00 }
+{
+  "items": [
+    { "month": "2025-12", "amount": 520000.00 },
+    { "month": "2026-01", "amount": 610000.00 },
+    { "month": "2026-02", "amount": 480000.00 },
+    { "month": "2026-03", "amount": 700000.00 },
+    { "month": "2026-04", "amount": 680000.00 },
+    { "month": "2026-05", "amount": 600000.00 }
+  ],
+  "diffRatio": -11.76
+}
 ```
 
 ---
@@ -402,4 +428,4 @@
 | 거래 | GET·POST /transactions, GET·PUT·DELETE /transactions/{id} |
 | 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
-| 통계 | GET /statistics/by-category, /statistics/summary |
+| 통계 | GET /statistics/by-category, /statistics/monthly-trend |
