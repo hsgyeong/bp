@@ -4,7 +4,7 @@
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.bp.jaringochi.domain.statistics.dao.StatisticsDao">
 
-    <!-- 6-1. 카테고리별 집계 (금액 내림차순). type 없으면 수입+지출 전체 -->
+    <!-- 6-1. 카테고리별 집계 (금액 내림차순). type 없으면 수입+지출 전체. '기타' 묶기는 서비스에서 -->
     <select id="selectByCategory" resultType="CategoryStatItem">
         SELECT
             c.id   AS categoryId,
@@ -21,14 +21,17 @@
         ORDER BY amount DESC
     </select>
 
-    <!-- 6-2. 기간 수입/지출 합계 (balance는 서비스에서 income - expense) -->
-    <select id="selectSummary" resultType="StatisticsSummary">
+    <!-- 6-2. 월별 합계 (해당 type, 기간 내). 거래 있는 달만 'yyyy-MM'으로 반환 -->
+    <select id="selectMonthlyTotals" resultType="MonthlyTrendItem">
         SELECT
-            COALESCE(SUM(CASE WHEN t.type = 1 THEN t.amount END), 0) AS income,
-            COALESCE(SUM(CASE WHEN t.type = 2 THEN t.amount END), 0) AS expense
+            DATE_FORMAT(t.`date`, '%Y-%m') AS month,
+            COALESCE(SUM(t.amount), 0) AS amount
         FROM `transaction` t
         WHERE t.user_id = #{userId}
+          AND t.type = #{type}
           AND t.`date` BETWEEN #{startDate} AND #{endDate}
+        GROUP BY month
+        ORDER BY month
     </select>
 
 </mapper>

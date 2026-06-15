@@ -3,13 +3,13 @@ package com.bp.jaringochi.domain.statistics.service;
 import java.time.LocalDate;
 
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatistics;
-import com.bp.jaringochi.domain.statistics.dto.StatisticsSummary;
+import com.bp.jaringochi.domain.statistics.dto.MonthlyTrend;
 
 public interface StatisticsService {
 
-    // 6-1. 카테고리별 통계 (total + 각 항목 ratio). type 없으면 수입+지출 전체.
+    // 6-1. 카테고리별 통계 (상위 4 + 기타). type 없으면 수입+지출 전체.
     CategoryStatistics getByCategory(Long userId, LocalDate startDate, LocalDate endDate, Integer type);
 
-    // 6-2. 기간 수입/지출/잔액
-    StatisticsSummary getSummary(Long userId, LocalDate startDate, LocalDate endDate);
+    // 6-2. 월별 추이 (최근 months개월 + 전월대비)
+    MonthlyTrend getMonthlyTrend(Long userId, Integer type, Integer months);
 }

@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatItem;
-import com.bp.jaringochi.domain.statistics.dto.StatisticsSummary;
+import com.bp.jaringochi.domain.statistics.dto.MonthlyTrendItem;
 
 @Mapper
 public interface StatisticsDao {
@@ -18,8 +18,9 @@ public interface StatisticsDao {
                                             @Param("endDate") LocalDate endDate,
                                             @Param("type") Integer type);
 
-    // 6-2. 기간 수입/지출 합계 (balance는 서비스에서 뺄셈)
-    StatisticsSummary selectSummary(@Param("userId") Long userId,
-                                    @Param("startDate") LocalDate startDate,
-                                    @Param("endDate") LocalDate endDate);
+    // 6-2. 월별 합계 (거래 있는 달만 'yyyy-MM'으로). 빈 달 채움/전월대비는 서비스에서.
+    List<MonthlyTrendItem> selectMonthlyTotals(@Param("userId") Long userId,
+                                               @Param("type") Integer type,
+                                               @Param("startDate") LocalDate startDate,
+                                               @Param("endDate") LocalDate endDate);
 }
