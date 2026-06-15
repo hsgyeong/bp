@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
-import { signupApi } from '@/api/auth'
+import { signupApi, checkNicknameApi } from '@/api/auth'
 
 const router = useRouter()
 
@@ -9,6 +9,12 @@ const email = ref('')
 const nickname = ref('')
 const password = ref('')
 const passwordConfirm = ref('')
+
+// 닉네임 확인
+const nicknameChecked = ref(false)
+const nicknameAvailable = ref(false)
+const nicknameMessage = ref('')
+const checkedNickname = ref('')
 
 // 비밀번호 보기/숨기기 상태
 const showPassword = ref(false)
@@ -28,6 +34,46 @@ const trimmedNickname = computed(() => nickname.value.trim())
 const isEmailValid = computed(() => {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail.value)
 })
+
+function resetNicknameCheck() {
+  nicknameChecked.value = false
+  nicknameAvailable.value = false
+  nicknameMessage.value = ''
+  checkedNickname.value = ''
+}
+
+// 닉네임 중복확인 함수
+async function checkNickname() {
+  if (!trimmedNickname.value) {
+    nicknameMessage.value = '닉네임을 입력해주세요.'
+    nicknameChecked.value = false
+    nicknameAvailable.value = false
+    return
+  }
+
+  loading.value = true
+  errorMessage.value = ''
+
+  try {
+    const res = await checkNicknameApi(trimmedNickname.value)
+    const available = res.data.data ?? res.data
+
+    nicknameChecked.value = true
+    nicknameAvailable.value = Boolean(available)
+    checkedNickname.value = trimmedNickname.value
+
+    nicknameMessage.value = available
+      ? '사용 가능한 닉네임입니다.'
+      : '이미 사용 중인 닉네임입니다.'
+  } catch (err) {
+    nicknameChecked.value = false
+    nicknameAvailable.value = false
+    nicknameMessage.value =
+      err.response?.data?.message || '닉네임 중복확인 중 문제가 발생했습니다.'
+  } finally {
+    loading.value = false
+  }
+}
 
 // 비밀번호 조건 검사: 8자 이상 + 영문 + 숫자 + 특수문자
 const isPasswordValid = computed(() => {
@@ -52,6 +98,9 @@ const canSubmit = computed(() => {
   return Boolean(
     trimmedEmail.value &&
     trimmedNickname.value &&
+    nicknameChecked.value &&
+    nicknameAvailable.value &&
+    checkedNickname.value === trimmedNickname.value &&
     password.value &&
     passwordConfirm.value &&
     isPasswordMatched.value &&
@@ -67,6 +116,13 @@ function validateForm() {
   if (!trimmedNickname.value) return '닉네임을 입력해주세요.'
   if (!isPasswordValid.value) return '비밀번호는 8자 이상이며 영문, 숫자, 특수문자를 모두 포함해야 합니다.'
   if (!isPasswordMatched.value) return '비밀번호가 서로 일치하지 않습니다.'
+  
+  if (!nicknameChecked.value || checkedNickname.value !== trimmedNickname.value) {
+    return '닉네임 중복확인을 해주세요.'
+  }
+  if (!nicknameAvailable.value) {
+    return '이미 사용 중인 닉네임입니다.'
+  }
   return ''
 }
 
@@ -154,12 +210,37 @@ onBeforeUnmount(() => {
       <form class="signup-form" @submit.prevent="submitSignup">
         <label class="field-group">
           <span>이메일</span>
-          <input v-model="email" type="email" autocomplete="email" placeholder="example@email.com" />
+          <input v-model="email" type="email" autocomplete="email" placeholder="이메일을 입력해주세요." />
         </label>
 
         <label class="field-group">
           <span>닉네임</span>
-          <input v-model="nickname" type="text" autocomplete="nickname" placeholder="알뜰이" />
+          <div class="nickname-check-row">
+            <input
+                v-model="nickname"
+                type="text"
+                autocomplete="nickname"
+                placeholder="닉네임을 입력해주세요."
+                @input="resetNicknameCheck"
+            />
+
+            <button
+                class="check-button"
+                type="button"
+                :disabled="loading || !trimmedNickname"
+                @click="checkNickname"
+            >
+            중복확인
+            </button>
+          </div>
+
+          <p
+            v-if="nicknameMessage"
+            class="field-message"
+            :class="nicknameAvailable ? 'available' : 'unavailable'"
+          >
+          {{ nicknameMessage }}
+          </p>
         </label>
 
         <label class="field-group">
@@ -201,7 +282,7 @@ onBeforeUnmount(() => {
               v-model="passwordConfirm"
               :type="showPasswordConfirm ? 'text' : 'password'"
               autocomplete="new-password"
-              placeholder="비밀번호 재입력"
+              placeholder="비밀번호를 다시 입력해주세요."
             />
 
             <!-- 비밀번호 확인 보기/숨기기 토글 -->
@@ -448,6 +529,43 @@ onBeforeUnmount(() => {
   color: var(--expense);
   font-size: 12px;
   font-weight: 700;
+}
+
+.nickname-check-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 92px;
+  gap: 8px;
+}
+
+.check-button {
+  height: 52px;
+  border: 0;
+  border-radius: 16px;
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.check-button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.field-message {
+  margin-top: -2px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.field-message.available {
+  color: var(--income);
+}
+
+.field-message.unavailable {
+  color: var(--expense);
 }
 
 </style>

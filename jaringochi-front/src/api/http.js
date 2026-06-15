@@ -23,4 +23,26 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+ // 응답 인터셉터: 만료/가짜 토큰이면 로그인 정보 삭제 후 로그인 화면으로 이동
+http.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error.response?.status
+    const isAuthApi = error.config?.url?.startsWith('/auth/')
+
+    if (status === 401 && !isAuthApi) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('refreshToken')
+      localStorage.removeItem('user')
+
+      const currentPath = window.location.pathname + window.location.search
+
+      if (!window.location.pathname.startsWith('/login')) {
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`
+      }
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default http   // 다른 파일에서 import 해서 쓰도록 내보냄

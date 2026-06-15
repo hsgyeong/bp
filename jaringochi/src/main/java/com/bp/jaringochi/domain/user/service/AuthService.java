@@ -28,6 +28,7 @@ public class AuthService {
 	private final AuthenticationManager authenticationManager;	 // Spring Security 인증 관리자
 	private final JwtTokenProvider jwtTokenProvider;			 // JWT Access Token 발급 전용 컴포넌트
 	private final UserDao userDao;
+	private final RefreshTokenService refreshTokenService;
 	
 	public LoginResponse login(LoginRequest request) {
 		
@@ -42,14 +43,22 @@ public class AuthService {
 				throw new BusinessException(ErrorCode.USER_NOT_FOUND);
 			}
 		
-			String token = jwtTokenProvider.generateToken(authentication, user.getId());	// userId를 subject로 넣은 JWT를 발급
-		
-			String role = authentication.getAuthorities().stream()		// 현재 로그인한 사용자의 권한 목록을 가져옴
-					.map(GrantedAuthority::getAuthority)				// 객체에서 실제 권한 문자열만 꺼냄
-					.filter(authority -> authority.startsWith("ROLE_"))
-					.findFirst().orElse("ROLE_USER");					 // findFirst() 결과가 있으면 그 값을 쓰고, 없으면 기본값으로 "ROLE_USER"를 사용
+			String accessToken = jwtTokenProvider.generateToken(authentication, user.getId());
+			String refreshToken = refreshTokenService.createRefreshToken(user.getId());
 
-			return new LoginResponse(token, "Bearer", authentication.getName(), role);		// 클라이언트에 Access Token과 기본 로그인 정보를 반환
+			String role = authentication.getAuthorities().stream()
+			        .map(GrantedAuthority::getAuthority)
+			        .filter(authority -> authority.startsWith("ROLE_"))
+			        .findFirst()
+			        .orElse("ROLE_USER");
+
+			return new LoginResponse(
+			        accessToken,
+			        refreshToken,
+			        "Bearer",
+			        authentication.getName(),
+			        role
+			);
 			
 		} catch (AuthenticationException e) {
 			throw new BusinessException(ErrorCode.INVALID_LOGIN);

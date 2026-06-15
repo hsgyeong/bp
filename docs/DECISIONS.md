@@ -96,7 +96,29 @@
   - 프론트는 이미 axios 토큰 인터셉터라 영향 적음. `UserController`(내 정보)는 추후 점검(백로그).
   - DEC-0006의 "임시->실 인증 단일 지점 전환"을 실제로 이행한 항목.
 
-## DEC-0014 · 통계 도메인 목업 기준 재설계 (summary 제거 · 추이 추가)
+
+## DEC-0014 · Refresh Token DB 저장/폐기로 로그아웃 보완
+- **날짜**: 2026-06-14
+- **결정**: 로그인 응답에 `refreshToken`을 추가하고, 서버 DB `refresh_token`에는 원문이 아닌 SHA-256 해시값만 저장한다. 로그아웃 시 클라이언트가 보낸 `refreshToken`을 해시해 해당 행의 `revoked_at`을 기록하고, 회원탈퇴 시 해당 사용자의 모든 Refresh Token을 폐기한다.
+- **이유**: JWT Access Token은 서버가 상태를 저장하지 않아 클라이언트 토큰 삭제만으로는 서버 측 폐기 기록이 남지 않음. MVP에서는 Access Token 블랙리스트보다 Refresh Token 재사용 권한을 DB에서 끊는 방식이 단순하고 설명하기 좋음. 토큰 원문은 DB 유출 시 바로 악용될 수 있어 저장하지 않음.
+- **영향**:
+  - `schema.sql` 테이블이 5개 -> 6개로 증가(`refresh_token` 추가). `application.properties`에 `jwt.refresh-expiration` 추가.
+  - `LoginResponse`에 `refreshToken` 필드 추가. 프론트 auth store와 API.md도 함께 갱신.
+  - `/api/auth/logout`은 Access Token 대신 요청 body의 `refreshToken`으로 폐기 대상을 찾음.
+  - `/api/users/me` 회원탈퇴 시 해당 userId의 모든 Refresh Token을 함께 폐기함.
+  - 클라이언트는 서버 로그아웃 성공 여부와 관계없이 로컬 `accessToken` / `refreshToken` / `user` 삭제.
+  - Access Token 자체는 만료 전까지 즉시 차단하지 않음. 즉시 차단이 필요하면 추후 `jti` 블랙리스트 또는 `/api/auth/refresh` 재발급 흐름 추가.
+
+## DEC-0015 · 거래 목록 검색/정렬은 서버 쿼리 파라미터로 처리
+- **날짜**: 2026-06-14
+- **결정**: 거래 목록 조회 `GET /api/transactions`에 `keyword`와 `sort` 쿼리 파라미터를 추가한다. `keyword`는 메모와 카테고리명을 부분 검색하고, `sort`는 `date_desc`, `date_asc`, `amount_desc`, `amount_asc` 네 값만 허용한다.
+- **이유**: 거래 목록은 월 범위, 카테고리, 수입/지출 조건과 함께 조회되므로 프론트에서 전체 데이터를 받은 뒤 필터링하기보다 백엔드 조회 조건으로 통일하는 편이 API 계약이 명확함. 정렬값은 SQL `ORDER BY`에 영향을 주므로 허용 목록으로 제한해야 안전하다.
+- **영향**:
+  - API.md 거래 목록 조회 명세에 `keyword`, `sort` 추가.
+  - 프론트 거래 목록 화면은 검색어와 정렬값을 `fetchTransactions` 파라미터로 전달하면 됨.
+  - 백엔드는 MyBatis 동적 SQL에서 `keyword` 조건과 `sort`별 `ORDER BY` 분기를 추가해야 함.
+
+## DEC-0016 · 통계 도메인 목업 기준 재설계 (summary 제거 · 추이 추가)
 - **날짜**: 2026-06-16
 - **결정**: 1차 통계(`by-category` + `summary`)를 목업(03 월·단순금액, 06 월·카테고리별, 07 주) + 원본 기획 기준으로 재설계.
   - `summary`(income/expense/balance) **제거** - 어느 통계 화면에도 안 쓰임(balance 3종은 통계가 아니라 홈 성격).

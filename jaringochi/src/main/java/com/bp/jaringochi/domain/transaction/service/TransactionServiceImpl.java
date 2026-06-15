@@ -2,6 +2,7 @@ package com.bp.jaringochi.domain.transaction.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,6 +11,7 @@ import com.bp.jaringochi.domain.category.dao.CategoryDao;
 import com.bp.jaringochi.domain.category.dto.Category;
 import com.bp.jaringochi.domain.transaction.dao.TransactionDao;
 import com.bp.jaringochi.domain.transaction.dto.Transaction;
+import com.bp.jaringochi.domain.user.dao.UserDao;
 import com.bp.jaringochi.exception.BusinessException;
 import com.bp.jaringochi.exception.ErrorCode;
 
@@ -24,6 +26,13 @@ public class TransactionServiceImpl implements TransactionService {
 	private final TransactionDao transactionDao;
 	private final CategoryDao categoryDao;
 	private final NotificationService notificationService;
+	private final UserDao userDao;
+	private static final Set<String> ALLOWED_SORTS = Set.of(
+	        "date_desc",
+	        "date_asc",
+	        "amount_desc",
+	        "amount_asc"
+	);
 	
 
 	 // 변수명
@@ -37,8 +46,10 @@ public class TransactionServiceImpl implements TransactionService {
 											 LocalDate startDate, 
 											 LocalDate endDate, 
 											 Integer type,
-											 Long categoryId) {	
-		
+											 Long categoryId,
+											 String keyword,
+	                                         String sort) {	
+		validateUser(userId);
 		if (type != null && type != 1 && type != 2) {
 		    throw new BusinessException(ErrorCode.TRANSACTION_INVALID_INPUT);
 		}
@@ -47,17 +58,34 @@ public class TransactionServiceImpl implements TransactionService {
 		    throw new BusinessException(ErrorCode.TRANSACTION_INVALID_INPUT);
 		}
 		
-		return transactionDao.selectTransactions(userId, startDate, endDate, type, categoryId);
+		// 빈 문자열이면 검색 조건을 적용하지 않도록 null로 바꾼다.
+		String normalizedKeyword = null;
+	    if (keyword != null && !keyword.trim().isEmpty()) {
+	        normalizedKeyword = keyword.trim();
+	    }
+	    
+	    // sort가 비어 있으면 기본 정렬을 사용
+	    String normalizedSort = (sort == null || sort.isBlank()) ? "date_desc" : sort;
+	    
+	    // 허용하지 않은 정렬값은 SQL로 넘기지 않는다.
+	    // MyBatis에서 ORDER BY를 안전하게 분기하기 위한 방어 코드
+	    if (!ALLOWED_SORTS.contains(normalizedSort)) {
+	        throw new BusinessException(ErrorCode.TRANSACTION_INVALID_INPUT);
+	    }
+	    
+		return transactionDao.selectTransactions(userId, startDate, endDate, type, categoryId, normalizedKeyword, normalizedSort);
 	}
 
 	@Override
 	public Transaction getTransaction(Long userId, Long id) {
+		validateUser(userId);
 		return findOwned(userId, id);
 	}
 
 	@Override
 	@Transactional
 	public Transaction addTransaction(Long userId, Transaction transaction) {
+		validateUser(userId);
 	    validateInput(transaction);
 	    validateCategory(userId, transaction);
 
@@ -76,6 +104,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	@Transactional
 	public Transaction updateTransaction(Long userId, Long id, Transaction transaction) {
+		validateUser(userId);
 		findOwned(userId, id);
 		validateInput(transaction);
 		validateCategory(userId, transaction);
@@ -92,6 +121,7 @@ public class TransactionServiceImpl implements TransactionService {
 	@Override
 	@Transactional
 	public void deleteTransaction(Long userId, Long id) {
+		validateUser(userId);
 		findOwned(userId, id);
 		transactionDao.deleteTransaction(userId, id);
 	}
@@ -139,6 +169,13 @@ public class TransactionServiceImpl implements TransactionService {
 		if (category.getType() == null || category.getType() != transaction.getType()) {
 			throw new BusinessException(ErrorCode.TRANSACTION_INVALID_INPUT);
 		}
+	}
+	
+	// 검증 메서드 추가
+	private void validateUser(Long userId) {
+	    if (userId == null || userDao.findById(userId) == null) {
+	        throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
+	    }
 	}
 
 }

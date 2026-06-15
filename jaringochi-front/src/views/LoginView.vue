@@ -1,7 +1,7 @@
 <script setup>
 import { computed, ref } from 'vue'                           // computed: 어떤 값이 바뀌면 자동으로 다시 계산되는 값 / ref: Vue가 화면 변화를 감지할 수 있는 반응형 함수
 import { RouterLink, useRoute, useRouter } from 'vue-router'  // RouterLink: 새로고침 없이 다른 화면으로 이동하는 링크 컴포넌트 / useRoute: 현재 주소 정보 확인 / useRouter: 코드로 화면 이동할 때 사용
-import { loginApi } from '@/api/auth'  
+import { loginApi, fetchMeApi } from '@/api/auth'  // fetchMeApi: 로그인 성공 후 사용자 정보 조회
 import { useAuthStore } from '@/stores/auth'      // 로그인 토큰과 유저 정보를 저장하는 Pinia store
 
 const router = useRouter()          // 페이지 이동용
@@ -30,23 +30,28 @@ async function submitLogin() {
     })
 
     const body = res.data       // axios 응답의 실제 JSON 본문은 res.data에 들어있음
-
     const token = body.accessToken || body.token    // 현재 백엔드는 accessToken이라는 이름으로 토큰을 준다.
-    const user = body.user || {                     // 현재 백엔드는 user 객체 대신 email, role을 준다. 그래서 user 객체가 없으면 직접 만들어 둔다.
-      email: body.email,
-      role: body.role,
-    }
+    const refreshToken = body.refreshToken
 
-    if (!token) {
+    if (!token || !refreshToken) {
       throw new Error('로그인 응답에 토큰이 없습니다.')
     }
 
-    localStorage.setItem('token', token)            // localStorage -> 브라우저 저장소. 새로고침 해도 token이 남아있게 저장
-    authStore.login(token, user)                    // Pinia store에서도 로그인 상태 저장
+    localStorage.setItem('token', token)              // localStorage -> 브라우저 저장소. 새로고침 해도 token이 남아있게 저장
+    localStorage.setItem('refreshToken', refreshToken) // 요청에 토큰이 붙도록 먼저 저장   
+                                                                                                        
+    const meRes = await fetchMeApi()                  // 홈 화면에서 사용자 정보를 사용하므로, 
+    const user = meRes.data.data || meRes.data        // 내 정보 조회까지 성공해야 로그인 완료로 처리한다.
+
+    authStore.login(token, refreshToken, user)        // Pinia store에서도 로그인 상태 저장
 
     const redirectPath = route.query.redirect || '/'  // 로그인 전에 가려던 페이지가 있으면 이동하고, 없으면 홈('/')으로 이동
     router.push(String(redirectPath))
   } catch (err) {
+    localStorage.removeItem('token')
+    localStorage.removeItem('refreshToken')
+    localStorage.removeItem('user')
+
     const status = err.response?.status
     const serverMessage = err.response?.data?.message   // ?. : optional chaining(옵셔널 체이닝): 있으면 들어가고, 없으면 멈추게 하는 안전장치 
                                                         //      서버가 꺼져 있거나 네트워크 문제면 response 자체가 없을 수 있기 때문
@@ -96,6 +101,11 @@ async function submitLogin() {
         </svg>
       </div>
 
+      <div class="mascot-speech">
+        <strong>주 단위로 지출을 관리하실 수 있게 도와드려요!</strong>
+        <span>로그인하면 이번 주 예산과 지출 흐름을 바로 확인할 수 있어요.</span>
+      </div>
+
       <header class="login-header">
         <h1>자린고비 가계부</h1>
       </header>
@@ -131,20 +141,21 @@ async function submitLogin() {
 /* scoped: 이 스타일이 이 컴포넌트 안에서만 적용되게 함 */
 .login-page {
   min-height: calc(100vh - 76px);
-  padding: 32px 20px;
+  padding: 28px 20px 96px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .login-body {
   width: 100%;
+  padding-top: 12px;
 }
 
 .mascot-wrap {
   position: relative;
-  width: 120px;
-  height: 120px;
-  margin: 0 auto 8px;
+  width: 104px;
+  height: 104px;
+  margin: 0 auto 10px;
 }
 
 .string {
@@ -158,18 +169,61 @@ async function submitLogin() {
 }
 
 .gulbi {
-  width: 120px;
-  height: 120px;
+  width: 104px;
+  height: 104px;
   display: block;
+}
+
+.mascot-speech {
+  position: relative;
+  margin: 0 auto 20px;
+  padding: 15px 16px;
+  border: 1px solid #f6dfb5;
+  border-radius: 20px;
+  background: #fff7e8;
+  color: #6f4c12;
+  text-align: center;
+  box-shadow: 0 6px 16px rgba(120, 90, 30, 0.06);
+}
+
+.mascot-speech::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 14px;
+  height: 14px;
+  border-left: 1px solid #f6dfb5;
+  border-top: 1px solid #f6dfb5;
+  background: #fff7e8;
+  transform: translateX(-50%) rotate(45deg);
+}
+
+.mascot-speech strong {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 1.35;
+  word-break: keep-all;
+}
+
+.mascot-speech span {
+  display: block;
+  color: #8a681f;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.45;
+  word-break: keep-all;
 }
 
 .login-header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 22px;
 }
 
 .login-header h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 900;
   color: var(--ink);
   line-height: 1.15;
@@ -185,7 +239,7 @@ async function submitLogin() {
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 13px;
 }
 
 .field-group {
@@ -233,7 +287,7 @@ async function submitLogin() {
 
 .login-button {
   height: 54px;
-  margin-top: 8px;
+  margin-top: 6px;
   border: 0;
   border-radius: 18px;
   background: var(--gold);
@@ -252,7 +306,7 @@ async function submitLogin() {
 }
 
 .signup-guide {
-  margin-top: 14px;
+  margin-top: 16px;
   text-align: center;
   color: var(--ink-2);
   font-size: 13px;
@@ -264,4 +318,21 @@ async function submitLogin() {
   font-weight: 900;
   text-decoration: none;
 }
+
+@media (max-width: 380px) {
+  .login-page {
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .mascot-speech strong {
+    font-size: 15px;
+  }
+
+  .mascot-speech span {
+    font-size: 12px;
+  }
+}
+
 </style>
+

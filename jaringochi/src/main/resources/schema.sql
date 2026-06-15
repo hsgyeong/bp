@@ -17,6 +17,8 @@ USE `jaringochi`;
 -- FK 체크를 잠시 꺼서 순서 상관없이 DROP
 -- ─────────────────────────────────────────────
 SET FOREIGN_KEY_CHECKS = 0;
+-- refresh_token은 user를 참조하므로 user보다 먼저 삭제해야 한다.
+DROP TABLE IF EXISTS `refresh_token`;
 DROP TABLE IF EXISTS `notification`;
 DROP TABLE IF EXISTS `transaction`;
 DROP TABLE IF EXISTS `weekly_budget`;
@@ -88,6 +90,22 @@ CREATE TABLE `notification` (
   `created_at`       DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '알림 발생 시각',
   UNIQUE KEY `uq_budget_threshold` (`weekly_budget_id`, `threshold`) -- 앱 로직(mexSent 체크)이 이미 중복을 막지만, 동시 요청 충돌용 DB 안전망
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Refresh Token 저장
+CREATE TABLE refresh_token (
+  id BIGINT PRIMARY KEY AUTO_INCREMENT,
+  user_id BIGINT NOT NULL,
+  token_hash VARCHAR(100) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  revoked_at DATETIME NULL,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+
+  UNIQUE KEY uq_refresh_token_hash (token_hash),
+  INDEX idx_refresh_token_user_id (user_id),
+
+  CONSTRAINT fk_refresh_token_user
+    FOREIGN KEY (user_id) REFERENCES `user`(id)
+);
 
 -- ─────────────────────────────────────────────
 -- [3] 외래키(FK) 연결
