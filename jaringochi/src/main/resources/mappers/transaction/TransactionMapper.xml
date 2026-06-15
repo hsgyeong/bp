@@ -21,7 +21,8 @@
         </association>
     </resultMap>
     
-	<select id="selectTransactions" resultMap="transactionResultMap">  <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+    <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+	<select id="selectTransactions" resultMap="transactionResultMap">  
 		SELECT 
 			t.id,
 			t.user_id,
@@ -55,10 +56,40 @@
 			AND t.category_id = #{categoryId}
 		</if>
 		
-		ORDER BY t.`date` DESC, t.id DESC
+		<!--
+        	keyword가 있으면 메모 또는 카테고리명에서 검색한다.
+        	CONCAT('%', #{keyword}, '%') 형태를 사용해서 부분 일치 검색을 한다.
+        	#{keyword}는 MyBatis가 바인딩하므로 SQL Injection 위험이 낮다.
+	    -->
+    	<if test="keyword != null and keyword != ''">
+        	AND (
+            	t.memo LIKE CONCAT('%', #{keyword}, '%')
+            	OR c.name LIKE CONCAT('%', #{keyword}, '%')
+        	)
+    	</if>
+
+   	 	<!--
+        	정렬은 ${sort}로 직접 꽂지 않고 choose로 분기
+        	ORDER BY에 사용자 입력을 직접 넣으면 SQL Injection 위험이 있기 때문
+    	-->
+    	<choose>
+        	<when test="sort == 'date_asc'">
+            	ORDER BY t.`date` ASC, t.id ASC
+        	</when>
+        	<when test="sort == 'amount_desc'">
+            	ORDER BY t.amount DESC, t.`date` DESC, t.id DESC
+        	</when>
+        	<when test="sort == 'amount_asc'">
+            	ORDER BY t.amount ASC, t.`date` DESC, t.id DESC
+        	</when>
+        	<otherwise>
+            	ORDER BY t.`date` DESC, t.id DESC
+        	</otherwise>
+    	</choose>
 	</select>
 	
-	<select id="selectTransactionById" resultMap="transactionResultMap">     <!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+	<!-- DAO에서 다중 @Param을 넘기므로 parameterType을 제거 -->
+	<select id="selectTransactionById" resultMap="transactionResultMap">     
 		SELECT 
 			t.id,
 			t.user_id,
