@@ -3,7 +3,7 @@ import { ref, onMounted } from 'vue'
 import { getCurrentWeek, getRecentWeeks, createWeeklyBudget, updateWeeklyBudget } from '@/api/budget'
 
 const current = ref(null)   // 이번 주 예산 (없으면 null)
-const weeks   = ref([])     // 최근 5주 목록
+const weeks   = ref([])     // 최근 4주 목록
 const amount  = ref('')     // 폼 입력 금액
 
 // 두 API를 같이 불러 화면 상태를 채운다
@@ -88,7 +88,7 @@ async function onSave() {
       {{ current ? '예산 수정' : '예산 저장' }}
     </button>
 
-    <!-- 최근 5주 -->
+    <!-- 최근 4주 -->
     <div class="label" style="margin-top:24px">최근 주간 예산</div>
     <div class="card list">
       <div class="menu" v-for="w in weeks" :key="w.id">
