@@ -36,7 +36,10 @@ public enum ErrorCode {
 	
 	// ===== 알림 =====
 	NOTIFICATION_NOT_FOUND(HttpStatus.NOT_FOUND, "N404", "해당 알림을 찾을 수 없습니다."),
-	NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "N403", "해당 알림에 접근할 권한이 없습니다.");
+	NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "N403", "해당 알림에 접근할 권한이 없습니다."),
+
+	// ===== 통계 =====
+	STATISTICS_INVALID_INPUT(HttpStatus.BAD_REQUEST, "S400", "통계 조회 입력값이 올바르지 않습니다.");
 	
 	
 	

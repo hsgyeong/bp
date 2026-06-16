@@ -62,6 +62,7 @@
 - **결정**: 4-2를 `GET /api/budgets/weekly?year=&month=`(해당 월 주들) → **`GET /api/budgets/weekly/recent`**(파라미터 없음)으로 변경. 오늘이 속한 주를 포함해 `start_date` 기준 **최근 5개** 주간예산 반환(미래 주 제외, 과거→현재 순).
 - **이유**: 제품이 '월' 단위가 아닌 '주' 단위 흐름에 집중(→ DEC-0009와 같은 맥락). 화면에서 필요한 건 "이번 주 포함 최근 몇 주 추이"이지 특정 달의 주 목록이 아님. 경로도 4-1 `/weekly/current`과 짝이 맞게 `/weekly/recent`로.
 - **영향**: DAO `selectWeeklyByMonth(userId,year,month)` → `selectRecentWeeks(userId)`. Mapper는 `WHERE start_date <= CURDATE() ORDER BY start_date DESC LIMIT 5`. Controller 시그니처에서 year/month 파라미터 제거. API.md 4-2 및 요약표 갱신 완료.
+- **⚠️ 갱신(2026-06-16, DEC-0014)**: 통계 '주' 화면과 데이터를 공유하기 위해 **최근 5주 → 4주**로 변경(`LIMIT 5` → `LIMIT 4`). 예산 화면 "최근 주간 예산" 목록도 4줄로 줄어듦.
 
 
 ## DEC-0011 · 알림 - 임계치 넘었을 때 가장 가까운 임계값에 대해서만 알림 발송
@@ -95,6 +96,7 @@
   - 프론트는 이미 axios 토큰 인터셉터라 영향 적음. `UserController`(내 정보)는 추후 점검(백로그).
   - DEC-0006의 "임시->실 인증 단일 지점 전환"을 실제로 이행한 항목.
 
+
 ## DEC-0014 · Refresh Token DB 저장/폐기로 로그아웃 보완
 - **날짜**: 2026-06-14
 - **결정**: 로그인 응답에 `refreshToken`을 추가하고, 서버 DB `refresh_token`에는 원문이 아닌 SHA-256 해시값만 저장한다. 로그아웃 시 클라이언트가 보낸 `refreshToken`을 해시해 해당 행의 `revoked_at`을 기록하고, 회원탈퇴 시 해당 사용자의 모든 Refresh Token을 폐기한다.
@@ -115,6 +117,20 @@
   - API.md 거래 목록 조회 명세에 `keyword`, `sort` 추가.
   - 프론트 거래 목록 화면은 검색어와 정렬값을 `fetchTransactions` 파라미터로 전달하면 됨.
   - 백엔드는 MyBatis 동적 SQL에서 `keyword` 조건과 `sort`별 `ORDER BY` 분기를 추가해야 함.
+
+## DEC-0016 · 통계 도메인 목업 기준 재설계 (summary 제거 · 추이 추가)
+- **날짜**: 2026-06-16
+- **결정**: 1차 통계(`by-category` + `summary`)를 목업(03 월·단순금액, 06 월·카테고리별, 07 주) + 원본 기획 기준으로 재설계.
+  - `summary`(income/expense/balance) **제거** - 어느 통계 화면에도 안 쓰임(balance 3종은 통계가 아니라 홈 성격).
+  - `by-category`는 유지하되 **상위 4개 + 나머지 합산 '기타' 1건**(categoryId=null)으로 묶어 반환(목업 06). 월/주 카테고리별 공용(프론트가 기간 전달), `type`으로 수입/지출.
+  - **`monthly-trend` 신규** - 월별 합계 추이(꺾은선) + **전월대비 `diffRatio`**(목업 03). 빈 달은 0으로 채워 연속.
+  - 통계 '주·단순금액'(예산 vs 지출 막대 + 달성률)은 **별도 엔드포인트 없이 §4-2 `/budgets/weekly/recent` 재사용**. 주는 **지출 전용**(수입 그래프 없음).
+- **이유**: 1차는 목업을 안 보고 API 계약만 보고 만들어 화면 요구(시계열·전월대비·예산비교)와 어긋남. UI 우선으로 역산해 계약을 다시 맞춤. 통계·예산 모두 pearlseo73 단독 소유라 함께 조정 가능.
+- **영향**:
+  - API.md §6 개편(summary 삭제, by-category 기타 묶기 명시, monthly-trend 추가), §4-2 5주→4주(DEC-0010 갱신).
+  - 코드: `StatisticsSummary` DTO·selectSummary·getSummary·`/summary` 제거. `getByCategory`에 기타 묶기. `monthly-trend` 일습(DTO/DAO/Mapper/Service/Controller) 신규. `BudgetMapper.selectRecentWeeks` `LIMIT 4`.
+  - ErrorCode `STATISTICS_INVALID_INPUT(S400)`은 유지(by-category·monthly-trend 입력검증에 계속 사용).
+  - 통계 프론트(`StatsView.vue` 차트)는 별도 후속 작업.
 
 <!--
 ## DEC-000N · 제목

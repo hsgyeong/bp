@@ -3,4 +3,35 @@
     PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
     "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
 <mapper namespace="com.bp.jaringochi.domain.statistics.dao.StatisticsDao">
+
+    <!-- 6-1. 카테고리별 집계 (금액 내림차순). type 없으면 수입+지출 전체. '기타' 묶기는 서비스에서 -->
+    <select id="selectByCategory" resultType="CategoryStatItem">
+        SELECT
+            c.id   AS categoryId,
+            c.name AS categoryName,
+            COALESCE(SUM(t.amount), 0) AS amount
+        FROM `transaction` t
+        JOIN category c ON c.id = t.category_id
+        WHERE t.user_id = #{userId}
+          AND t.`date` BETWEEN #{startDate} AND #{endDate}
+        <if test="type != null">
+          AND t.type = #{type}
+        </if>
+        GROUP BY c.id, c.name
+        ORDER BY amount DESC
+    </select>
+
+    <!-- 6-2. 월별 합계 (해당 type, 기간 내). 거래 있는 달만 'yyyy-MM'으로 반환 -->
+    <select id="selectMonthlyTotals" resultType="MonthlyTrendItem">
+        SELECT
+            DATE_FORMAT(t.`date`, '%Y-%m') AS month,
+            COALESCE(SUM(t.amount), 0) AS amount
+        FROM `transaction` t
+        WHERE t.user_id = #{userId}
+          AND t.type = #{type}
+          AND t.`date` BETWEEN #{startDate} AND #{endDate}
+        GROUP BY month
+        ORDER BY month
+    </select>
+
 </mapper>

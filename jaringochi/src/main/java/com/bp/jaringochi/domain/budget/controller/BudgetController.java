@@ -33,7 +33,7 @@ public class BudgetController {
         return Response.success(weeklyBudget);
     }
 
-    // 4-2. 최근 5주
+    // 4-2. 최근 4주 (통계 주 화면도 재사용)
     @GetMapping("/weekly/recent")
     public Response<List<WeeklyBudget>> getRecentWeeks(Authentication authentication) {
         List<WeeklyBudget> weeks = budgetService.getRecentWeeks(getCurrentUserId(authentication));

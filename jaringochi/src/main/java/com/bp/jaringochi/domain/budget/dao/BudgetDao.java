@@ -13,7 +13,7 @@ public interface BudgetDao {
 
     // ===== 엔드포인트 =====
     WeeklyBudget selectCurrentWeek(Long userId);          // 4-1. 현재 주 예산
-    List<WeeklyBudget> selectRecentWeeks(Long userId);    // 4-2. 최근 5주
+    List<WeeklyBudget> selectRecentWeeks(Long userId);    // 4-2. 최근 4주 (통계 주 화면 공용)
     int insertWeeklyBudget(WeeklyBudget budget);          // 4-3. 등록
     int updateWeeklyBudget(WeeklyBudget budget);          // 4-4. 수정
 
