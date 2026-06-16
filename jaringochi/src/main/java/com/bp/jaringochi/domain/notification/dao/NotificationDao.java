@@ -32,4 +32,7 @@ public interface NotificationDao {
 
     // 트리거: 이 주 예산에 이미 보낸 최고 임계치 (없으면 null)
     Integer selectMaxThreshold(Long weeklyBudgetId);
+
+    // 예산 수정 시: 그 주 예산의 알림 전부 삭제 (기준 리셋용, DEC-0017)
+    int deleteByWeeklyBudgetId(Long weeklyBudgetId);
 }

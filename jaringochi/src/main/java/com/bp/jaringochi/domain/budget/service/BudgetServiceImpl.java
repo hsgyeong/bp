@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.bp.jaringochi.domain.budget.dao.BudgetDao;
 import com.bp.jaringochi.domain.budget.dto.WeeklyBudget;
+import com.bp.jaringochi.domain.notification.service.NotificationService;
 import com.bp.jaringochi.exception.BusinessException;
 import com.bp.jaringochi.exception.ErrorCode;
 
@@ -19,6 +20,9 @@ public class BudgetServiceImpl implements BudgetService {
 
     @Autowired
     private BudgetDao budgetDao;
+
+    @Autowired
+    private NotificationService notificationService;
 
     // 4-1. 현재 주 예산
     @Override
@@ -73,6 +77,10 @@ public class BudgetServiceImpl implements BudgetService {
         budgetDao.updateWeeklyBudget(weeklyBudget);                          // amount + update_count +1
         WeeklyBudget updated = budgetDao.selectById(id);
         updated.setRatio(calcRatio(updated.getSpentMoney(), updated.getAmount()));
+
+        // 예산 기준이 바뀌었으므로 그 주 알림 리셋 후 새 금액 기준으로 재평가 (DEC-0017)
+        notificationService.reevaluateOnBudgetChange(userId, id, updated.getStartDate());
+
         return updated;
     }
 
