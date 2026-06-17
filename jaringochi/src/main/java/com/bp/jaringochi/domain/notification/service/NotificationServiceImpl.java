@@ -114,6 +114,18 @@ public class NotificationServiceImpl implements NotificationService {
         }
     }
 
+    // 예산 수정 시: 그 주 알림 전부 삭제(기준 리셋) -> 새 금액 기준 재평가 (DEC-0017)
+    // @Transactional 없음: 예산 수정 트랜잭션에 참여하되, 알림 실패가 예산 수정을 롤백시키지 않게 try-catch로 삼킴
+    @Override
+    public void reevaluateOnBudgetChange(Long userId, Long weeklyBudgetId, LocalDate weekDate) {
+        try {
+            notificationDao.deleteByWeeklyBudgetId(weeklyBudgetId);   // 이전 단계 기록 리셋
+            evaluateExpense(userId, weekDate);                        // 새 기준의 최고 1건 재평가
+        } catch (Exception e) {
+            log.warn("예산 수정 알림 재평가 실패 userId={} weeklyBudgetId={}", userId, weeklyBudgetId, e);
+        }
+    }
+
     // ratio 이하 최대 임계 단계 반환 (어느 단계도 못 넘으면 0)
     private int highestCrossed(BigDecimal ratio) {
         int crossed = 0;

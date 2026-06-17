@@ -132,6 +132,16 @@
   - ErrorCode `STATISTICS_INVALID_INPUT(S400)`은 유지(by-category·monthly-trend 입력검증에 계속 사용).
   - 통계 프론트(`StatsView.vue` 차트)는 별도 후속 작업.
 
+## DEC-0017 · 예산 수정 시 그 주 알림 리셋 후 재평가
+- **날짜**: 2026-06-16
+- **결정**: 주간 예산 수정(PUT `/api/budgets/weekly/{id}`) 시, 그 `weekly_budget_id`의 알림을 **전부 삭제(기준 리셋)** 한 뒤 새 금액 기준으로 **재평가**한다. 재평가는 기존 트리거(`evaluateExpense`)를 그대로 써서 **새 비율의 최고 단계 1건만** 생성(DEC-0011 유지).
+- **이유**: 알림 중복 차단이 `weekly_budget_id` 기준(`selectMaxThreshold`)이라, 예산 금액만 바꾸면 같은 id가 유지돼 이미 보낸 단계가 "보냄"으로 남아 새 기준에서 재발송이 막혔다. 예산을 낮춰 이미 초과 상태가 돼도 경고가 안 뜨는 문제. "예산 기준이 바뀌면 그 기준으로 다시 평가"가 자연스러운 UX라 판단.
+- **영향**:
+  - `NotificationDao.deleteByWeeklyBudgetId` + Mapper `<delete>` 신규. `NotificationService.reevaluateOnBudgetChange(userId, weeklyBudgetId, weekDate)` 신규(삭제 -> `evaluateExpense` 호출, try-catch로 알림 실패가 예산 수정을 롤백 안 시킴).
+  - `BudgetServiceImpl.updateWeeklyBudget`이 `NotificationService`에 의존(주입 + 호출 1줄). 순환 의존 없음(알림은 BudgetDao만 의존).
+  - 단계별 여러 건이 아니라 **최고 1건**만 재생성(DEC-0011 철학 유지). 거래 수정 시 재평가(`updateTransaction`)는 여전히 백로그.
+  - API.md §4-4에 재평가 동작 명시.
+
 <!--
 ## DEC-000N · 제목
 - **날짜**:

@@ -19,6 +19,9 @@ public interface NotificationService {
     // 5-4. 전체 읽음
     void markAllAsRead(Long userId);
     
-    // 트리거: 지출 등록 시 임계치 평가 후 필요하면 알림 1건 생성 
+    // 트리거: 지출 등록 시 임계치 평가 후 필요하면 알림 1건 생성
     void evaluateExpense(Long userId, LocalDate date);
+
+    // 예산 수정 시: 그 주 알림 리셋 후 새 금액 기준 재평가 (DEC-0017)
+    void reevaluateOnBudgetChange(Long userId, Long weeklyBudgetId, LocalDate weekDate);
 }

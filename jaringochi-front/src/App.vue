@@ -12,6 +12,8 @@ src/router/index.js 참고
 -->
 
 <script setup>
+import NotificationBell from '@/components/NotificationBell.vue'
+
 // 하단 탭 정의 — 반복 마크업을 줄이려고 배열로 관리 (아래에서 v-for 사용)
 const tabs = [
   { to: '/',       label: '홈',     icon: '🏠' },
@@ -22,6 +24,9 @@ const tabs = [
 </script>
 
 <template>
+  <!-- 전역 알림 종 + 드롭다운 (우상단 고정, 로그인 시에만 표시) -->
+  <NotificationBell />
+
   <main class="content">
     <router-view />    <!-- 현재 주소에 맞는 화면이 여기 끼워짐 -->
   </main>

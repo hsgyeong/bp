@@ -66,4 +66,10 @@
 	    WHERE weekly_budget_id = #{weeklyBudgetId}
 	</select>
 
+	<!-- 예산 수정 시: 그 주 예산의 알림 전부 삭제 (기준 리셋 -> 재평가 전 호출, DEC-0017) -->
+	<delete id="deleteByWeeklyBudgetId">
+	    DELETE FROM notification
+	    WHERE weekly_budget_id = #{weeklyBudgetId}
+	</delete>
+
 </mapper>
