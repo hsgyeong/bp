@@ -2,8 +2,10 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { listNotifications, getUnreadCount, markRead, markAllRead } from '@/api/notification'
+import { useTheme } from '@/composables/useTheme'
 
 const route = useRoute()
+const { theme } = useTheme()
 
 const open = ref(false)     // 드롭다운 열림 여부
 const count = ref(0)        // 안 읽은 개수 (배지)
@@ -78,7 +80,8 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
   <div v-if="visible" class="noti">
     <!-- 종 + 배지 -->
     <button class="bell" @click="toggle" aria-label="알림">
-      🔔
+      <i v-if="theme === 'paint'" class="ti ti-bell" aria-hidden="true"></i>
+      <template v-else>🔔</template>
       <span v-if="count > 0" class="badge">{{ count > 99 ? '99+' : count }}</span>
     </button>
 
@@ -218,4 +221,11 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
 .meta { margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--mute); }
 
 .empty { padding: 28px 16px; text-align: center; color: var(--mute); font-weight: 600; font-size: 13px; }
+
+/* ── paint(그림판) 테마 ── */
+/* 종 테두리는 전역 button::before(wobble)가 그려줌 → 원형 모서리만 맞춤 */
+:root[data-theme="paint"] .bell { border-radius: 50%; }
+:root[data-theme="paint"] .bell::before { border-radius: 50% !important; }
+:root[data-theme="paint"] .panel { border: 2.5px solid var(--ink); border-radius: 5px; }
+:root[data-theme="paint"] .item.unread { background: #F2F2F2; }
 </style>
