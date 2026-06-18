@@ -17,6 +17,10 @@ const errorMessage = ref('')
 const transactions = ref([])
 const weeklyBudget = ref(null)
 
+const hasWeeklyBudget = computed(() => {
+  return weeklyBudget.value != null
+})
+
 // 표시할 닉네임 (기본값: '알뜰')
 const nickname = computed(() => {
   return authStore.user?.nickname || ''
@@ -156,6 +160,10 @@ function goCreate() {
   router.push({ name: 'transaction-new' })
 }
 
+function goBudget() {
+  router.push({ name: 'budget' })
+}
+
 async function loadHome() {
   loading.value = true
   errorMessage.value = ''
@@ -204,7 +212,7 @@ onMounted(loadHome)
 
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
-    <section class="mascot-card">
+    <section class="mascot-card" :class="{ 'no-budget': !hasWeeklyBudget }">
       <!-- paint 테마: 표정 굴비 사진 / classic 테마: 기존 골드 SVG 굴비 -->
       <GulbiMascot v-if="theme === 'paint'" :mood="mascotMood" :size="92" />
       <svg v-else class="gulbi" viewBox="0 0 120 80" aria-hidden="true">
@@ -218,9 +226,17 @@ onMounted(loadHome)
         <path d="M90 43 Q96 46 90 50" stroke="#7A5418" stroke-width="2" fill="none" stroke-linecap="round" />
       </svg>
 
-      <div>
+      <div v-if="hasWeeklyBudget">
         <strong>이번 주 예산의 {{ budgetRate }}% 썼어요.</strong>
         <p>{{ mascotMessage }}</p>
+      </div>
+
+      <div v-else class="budget-empty">
+        <strong class="budget-empty-title">아직 이번주 예산을 설정하지 않았어요.</strong>
+        <div class="budget-empty-action">
+          <p>지금 바로 예산을 설정해볼까요?</p>
+          <button class="budget-link" type="button" @click="goBudget">예산 설정하기</button>
+        </div>
       </div>
     </section>
 
@@ -284,7 +300,10 @@ onMounted(loadHome)
         </span>
 
         <span class="recent-text">
-          <strong>{{ getCategory(transaction).name }} · {{ transaction.memo || '메모 없음' }}</strong>
+          <span class="recent-title">
+            <strong>{{ getCategory(transaction).name }}</strong>
+            <span>· {{ transaction.memo || '메모 없음' }}</span>
+          </span>
           <small>{{ formatDate(transaction.date) }}</small>
         </span>
 
@@ -363,6 +382,10 @@ onMounted(loadHome)
   height: 70px;
 }
 
+.mascot-card.no-budget {
+  grid-template-columns: 82px minmax(0, 1fr);
+}
+
 .mascot-card strong {
   display: block;
   margin-bottom: 8px;
@@ -379,6 +402,34 @@ onMounted(loadHome)
   font-weight: 800;
   line-height: 1.35;
   word-break: keep-all;
+}
+
+.mascot-card .budget-empty-title {
+  white-space: nowrap;
+  font-size: 17px;
+}
+
+.budget-empty-action {
+  display: inline-block;
+}
+
+.budget-empty-action p {
+  white-space: nowrap;
+}
+
+.budget-link {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 14px;
+  padding: 12px 16px;
+  background: var(--gold-deep);
+  color: #fff;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
 }
 
 .budget-card,
@@ -554,16 +605,20 @@ onMounted(loadHome)
   gap: 6px;
 }
 
-.recent-text strong,
+.recent-title,
 .recent-text small {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.recent-text strong {
+.recent-title {
   color: var(--ink);
   font-size: 18px;
+  font-weight: 500;
+}
+
+.recent-title strong {
   font-weight: 900;
 }
 
@@ -658,8 +713,16 @@ onMounted(loadHome)
     padding: 18px;
   }
 
+  .mascot-card.no-budget {
+    display: block;
+  }
+
   .gulbi {
     width: 76px;
+  }
+
+  .mascot-card.no-budget .gulbi {
+    margin-bottom: 12px;
   }
 
   .mascot-card strong {
