@@ -3,9 +3,12 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { listCategories } from '@/api/category'
 import { createTransaction, fetchTransaction, updateTransaction, deleteTransaction } from '@/api/transaction';
+import { useTheme } from '@/composables/useTheme'
+import { categoryTablerIcon } from '@/utils/categoryIcon'
 
 const route = useRoute()
 const router = useRouter()
+const { theme } = useTheme()   // paint 테마: 카테고리/날짜 이모지 → Tabler 라인 아이콘
 
 // /ledger/:id/edit 로 들어오면 수정, /ledger/new 로 들어오면 등록
 const transactionId = computed(() => route.params.id)
@@ -247,14 +250,16 @@ watch(type, loadCategories)
           <span>원</span>
         </div>
 
-        <input
-          id="amount"
-          :value="amount"
-          type="text"
-          inputmode="numeric"
-          placeholder="0"
-          @input="onAmountInput"
-        />
+        <span class="paint-field">
+          <input
+            id="amount"
+            :value="amount"
+            type="text"
+            inputmode="numeric"
+            placeholder="0"
+            @input="onAmountInput"
+          />
+        </span>
       </section>
 
       <div class="field-block">
@@ -273,7 +278,15 @@ watch(type, loadCategories)
             :class="{ on: categoryId === category.id }"
             @click="categoryId = category.id"
           >
-            <span>{{ category.icon || '📦' }}</span>
+            <span>
+              <i
+                v-if="theme === 'paint'"
+                class="ti"
+                :class="categoryTablerIcon(category.name, type)"
+                aria-hidden="true"
+              ></i>
+              <template v-else>{{ category.icon || '📦' }}</template>
+            </span>
             {{ category.name }}
           </button>
         </div>
@@ -281,16 +294,21 @@ watch(type, loadCategories)
 
       <div class="field-block">
         <label class="label" for="date">날짜</label>
-        <label class="date-field">
+        <label class="date-field paint-box">
           <span>{{ formatDateLabel(date) }}</span>
-          <small>📅</small>
+          <small>
+            <i v-if="theme === 'paint'" class="ti ti-calendar" aria-hidden="true"></i>
+            <template v-else>📅</template>
+          </small>
           <input id="date" v-model="date" type="date" />
         </label>
       </div>
 
       <div class="field-block">
         <label class="label" for="memo">메모</label>
-        <input id="memo" v-model="memo" class="field" type="text" placeholder="메모를 입력하세요." />
+        <span class="paint-field">
+          <input id="memo" v-model="memo" class="field" type="text" placeholder="메모를 입력하세요." />
+        </span>
       </div>
 
       <button class="submit-button" type="submit" :disabled="!canSave">
@@ -628,4 +646,21 @@ watch(type, loadCategories)
   font-weight: 900;
   cursor: pointer;
 }
+
+/* ── paint(그림판) 테마 보정 ───────────────────────────────────────────── */
+/* 상단 액션(×, 저장)은 텍스트/아이콘 버튼 → 전역 button wobble 테두리 제외 */
+:root[data-theme="paint"] .top-action::before,
+:root[data-theme="paint"] .save-link::before {
+  display: none;
+}
+/* 분류 칩: 선택 시 흑백 반전으로 또렷하게 (gold-soft 회색 대신) */
+:root[data-theme="paint"] .chip.on {
+  background: var(--ink);
+  color: #fff;
+}
+/* 저장 버튼: 골드 그라데이션 → 검은 채움(테두리는 전역 wobble) */
+:root[data-theme="paint"] .submit-button {
+  background: var(--ink);
+}
+/* 날짜칸은 .paint-box 유틸로 손그림 테두리 (template 에 클래스만 부착) */
 </style>

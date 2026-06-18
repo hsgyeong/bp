@@ -43,6 +43,11 @@ const { theme, cycle: cycleTheme } = useTheme()
         <feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="2" seed="4" result="n" />
         <feDisplacementMap in="SourceGraphic" in2="n" scale="2.6" xChannelSelector="R" yChannelSelector="G" />
       </filter>
+      <!-- 긴 가로/세로 선용: 얇은 선도 손그림처럼 또렷이 울렁이게 (잦은 진동 + 큰 진폭) -->
+      <filter id="paintWobbleLine" x="-15%" y="-60%" width="130%" height="220%">
+        <feTurbulence type="fractalNoise" baseFrequency="0.028" numOctaves="2" seed="9" result="n" />
+        <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G" />
+      </filter>
     </defs>
   </svg>
 
@@ -58,8 +63,8 @@ const { theme, cycle: cycleTheme } = useTheme()
     <router-view />    <!-- 현재 주소에 맞는 화면이 여기 끼워짐 -->
   </main>
 
-  <!-- 하단 4탭 바 -->
-  <nav class="tabbar">
+  <!-- 하단 4탭 바 (paint: paint-hline 유틸로 윗선을 손그림 가로선으로) -->
+  <nav class="tabbar paint-hline">
     <router-link
       v-for="tab in tabs"
       :key="tab.to"
@@ -108,6 +113,13 @@ const { theme, cycle: cycleTheme } = useTheme()
 /* 현재 선택한 탭만 강조('exact') */
 .tab.router-link-exact-active {
   color: var(--gold-deep);
+}
+
+/* paint 테마: 탭바 윗선은 .paint-hline 유틸(style.css)이 손그림 가로선으로 그림.
+   여기선 기존 직선 border만 숨기고 선 두께만 지정. */
+:root[data-theme="paint"] .tabbar {
+  border-top-color: transparent;
+  --hand-line-w: 2.5px;
 }
 
 /* 테마 전환 토글 — 화면 우하단 고정 (탭바 위) */

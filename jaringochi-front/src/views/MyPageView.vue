@@ -3,7 +3,9 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchMeApi, logoutApi, deleteMeApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
+import { useTheme } from '@/composables/useTheme'
 
+const { theme } = useTheme()   // paint 테마: 프로필 🐟 → Tabler 라인 아이콘
 const router = useRouter()
 const authStore = useAuthStore()
 
@@ -104,9 +106,10 @@ onMounted(loadMe)
       {{ errorMessage }}
     </p>
 
-    <section class="profile-card">        
+    <section class="profile-card paint-box">
       <div class="profile-icon" aria-hidden="true">
-        🐟
+        <i v-if="theme === 'paint'" class="ti ti-fish"></i>
+        <template v-else>🐟</template>
       </div>
 
       <div class="profile-info">
@@ -116,12 +119,12 @@ onMounted(loadMe)
     </section>
 
     <section class="card menu-card">
-      <button class="menu-button action-menu" type="button" @click="goEdit">
+      <button class="menu-button action-menu paint-hline-b" type="button" @click="goEdit">
         <span>회원정보 수정</span>
         <strong>›</strong>
       </button>
 
-      <button class="menu-button" type="button" disabled>
+      <button class="menu-button paint-hline-b" type="button" disabled>
         <span>닉네임</span>
         <strong>{{ nickname }}</strong>
       </button>
@@ -298,4 +301,13 @@ onMounted(loadMe)
   color: var(--gold-deep);
   font-size: 22px;
 }
+
+/* ── paint(그림판) 테마 보정 ── */
+/* 프로필 카드: 크림 배경 → 흰 배경(테두리는 .paint-box), 🐟 아이콘 박스 배경 제거 */
+:root[data-theme="paint"] .profile-card { background: var(--card); }
+:root[data-theme="paint"] .profile-icon { background: transparent; font-size: 34px; }
+/* 메뉴/탈퇴 버튼은 행·텍스트 버튼이라 전역 button wobble 박스 제외, 구분선은 .paint-hline-b */
+:root[data-theme="paint"] .menu-button::before,
+:root[data-theme="paint"] .withdraw-button::before { display: none; }
+:root[data-theme="paint"] .menu-button { border-bottom-color: transparent; }
 </style>

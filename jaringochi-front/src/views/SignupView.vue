@@ -2,7 +2,10 @@
 import { computed, onBeforeUnmount, ref } from 'vue'
 import { RouterLink, useRouter } from 'vue-router'
 import { signupApi, checkNicknameApi } from '@/api/auth'
+import { useTheme } from '@/composables/useTheme'  // paint 테마: 컬러 SVG 굴비 → 흑백 GulbiMascot
+import GulbiMascot from '@/components/GulbiMascot.vue'
 
+const { theme } = useTheme()
 const router = useRouter()
 
 const email = ref('')
@@ -185,7 +188,8 @@ onBeforeUnmount(() => {
       </header>
 
       <div class="intro" aria-hidden="true">
-        <svg class="gulbi" viewBox="0 0 120 120">
+        <GulbiMascot v-if="theme === 'paint'" mood="hello" :size="78" class="gulbi" />
+        <svg v-else class="gulbi" viewBox="0 0 120 120">
           <defs>
             <linearGradient id="signupGold" x1="0" y1="0" x2="1" y2="1">
               <stop offset="0" stop-color="#FFD37A" />
@@ -210,19 +214,23 @@ onBeforeUnmount(() => {
       <form class="signup-form" @submit.prevent="submitSignup">
         <label class="field-group">
           <span>이메일</span>
-          <input v-model="email" type="email" autocomplete="email" placeholder="이메일을 입력해주세요." />
+          <span class="paint-field">
+            <input v-model="email" type="email" autocomplete="email" placeholder="이메일을 입력해주세요." />
+          </span>
         </label>
 
         <label class="field-group">
           <span>닉네임</span>
           <div class="nickname-check-row">
-            <input
-                v-model="nickname"
-                type="text"
-                autocomplete="nickname"
-                placeholder="닉네임을 입력해주세요."
-                @input="resetNicknameCheck"
-            />
+            <span class="paint-field">
+              <input
+                  v-model="nickname"
+                  type="text"
+                  autocomplete="nickname"
+                  placeholder="닉네임을 입력해주세요."
+                  @input="resetNicknameCheck"
+              />
+            </span>
 
             <button
                 class="check-button"
@@ -246,12 +254,14 @@ onBeforeUnmount(() => {
         <label class="field-group">
           <span>비밀번호</span>
           <div class="password-input-wrap">
-            <input
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="영문+숫자+특수문자 8자 이상"
-            />
+            <span class="paint-field">
+              <input
+                v-model="password"
+                :type="showPassword ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="영문+숫자+특수문자 8자 이상"
+              />
+            </span>
 
             <!-- 비밀번호 보기/숨기기 토글 -->
             <button
@@ -278,12 +288,14 @@ onBeforeUnmount(() => {
         <label class="field-group">
           <span>비밀번호 확인</span>
           <div class="password-input-wrap">
-            <input
-              v-model="passwordConfirm"
-              :type="showPasswordConfirm ? 'text' : 'password'"
-              autocomplete="new-password"
-              placeholder="비밀번호를 다시 입력해주세요."
-            />
+            <span class="paint-field">
+              <input
+                v-model="passwordConfirm"
+                :type="showPasswordConfirm ? 'text' : 'password'"
+                autocomplete="new-password"
+                placeholder="비밀번호를 다시 입력해주세요."
+              />
+            </span>
 
             <!-- 비밀번호 확인 보기/숨기기 토글 -->
             <button
@@ -568,5 +580,8 @@ onBeforeUnmount(() => {
   color: var(--expense);
 }
 
+/* ── paint(그림판) 테마 보정 ── */
+/* 비밀번호 보기 토글은 아이콘 버튼이라 전역 button wobble 박스 제외 */
+:root[data-theme="paint"] .password-toggle::before { display: none; }
 </style>
 

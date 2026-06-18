@@ -159,3 +159,104 @@ body {
   filter: url(#paintWobble);
   pointer-events: none;
 }
+
+/* =========================================================================
+   paint 재사용 유틸리티 — 다른 화면에서도 "클래스만 붙여" 쓰는 손그림 프리미티브.
+   (직선 요소를 손그림으로 바꿀 때 화면마다 ::before 블록을 복붙하지 말 것)
+
+   ● .paint-hline / .paint-hline-b : 직선 구분선/테두리 대신 울렁이는 손그림 가로선.
+     - .paint-hline 은 요소 상단(top), .paint-hline-b 는 하단(bottom)에 ::before 로 깔린다.
+       (border-top 자리엔 .paint-hline, border-bottom 자리엔 .paint-hline-b)
+     - 두께는 --hand-line-w (기본 1.5px).
+     - 요소의 기존 직선 border 는 각 화면에서 border-*-color:transparent 로 숨길 것
+       (classic 에선 그대로 둬야 하므로 paint 게이트로만).
+     - 예) <nav class="tabbar paint-hline">  /  <div class="day-head paint-hline-b">
+
+   ● .paint-sketch : 작은 도형/아이콘을 손그림처럼 살짝 떨리게(작은 wobble).
+     - 예) 범례 색칩, 작은 배지 등. <i class="paint-sketch">
+
+   ● .paint-field : <input>/<select>/<textarea> 는 ::before 가 안 먹어 손그림 테두리를
+     못 그림 → 이 래퍼로 감싸면 래퍼에 wobble 테두리가 그려지고 내부 컨트롤의 직선
+     테두리는 투명 처리된다.
+     - 예) <span class="paint-field"><input ...></span>  (classic 에선 그냥 블록 래퍼)
+
+   ● .paint-box : 카드가 아닌 임의의 박스(label/div 등)에 카드 같은 손그림 테두리.
+     기존 직선 border 는 투명 처리되고 ::before 로 wobble 테두리를 그린다.
+     ('-card' 류는 전역 자동 처리되므로 그 외 박스에만 사용)
+     - 예) <label class="date-field paint-box">  /  <div class="gulbi-msg paint-box">
+
+   classic 테마에선 모두 무효(규칙이 [data-theme="paint"] 로 게이트됨).
+   긴-선 필터 #paintWobbleLine / 아이콘 필터 #paintWobbleSmall 은 App.vue defs 에 정의.
+   ========================================================================= */
+/* :where 로 0-specificity → 요소 자신의 position(fixed/absolute)을 안 깨뜨림 */
+:where(:root[data-theme="paint"] .paint-hline),
+:where(:root[data-theme="paint"] .paint-hline-b) { position: relative; }
+:root[data-theme="paint"] .paint-hline::before,
+:root[data-theme="paint"] .paint-hline-b::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 14px;
+  background: linear-gradient(var(--ink), var(--ink)) center / 100% var(--hand-line-w, 1.5px) no-repeat;
+  filter: url(#paintWobbleLine);
+  pointer-events: none;
+}
+:root[data-theme="paint"] .paint-hline::before   { top: 0;    transform: translateY(-50%); }
+:root[data-theme="paint"] .paint-hline-b::before  { bottom: 0; transform: translateY(50%); }
+:root[data-theme="paint"] .paint-sketch { filter: url(#paintWobbleSmall); }
+
+/* 입력칸 래퍼: classic 에선 레이아웃 안 깨지게 블록만, paint 에서만 손그림 테두리 */
+.paint-field { display: block; }
+:where(:root[data-theme="paint"] .paint-field) { position: relative; }
+:root[data-theme="paint"] .paint-field > input,
+:root[data-theme="paint"] .paint-field > select,
+:root[data-theme="paint"] .paint-field > textarea {
+  border-color: transparent !important;   /* 직선 테두리 자리만 남기고 숨김 → ::before 가 대신 그림 */
+}
+:root[data-theme="paint"] .paint-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  filter: url(#paintWobble);
+  pointer-events: none;
+}
+
+/* 카드가 아닌 박스에 손그림 테두리 (label·div 등). 기존 직선 border 는 투명 처리. */
+:where(:root[data-theme="paint"] .paint-box) { position: relative; }
+:root[data-theme="paint"] .paint-box { border-color: transparent !important; }
+:root[data-theme="paint"] .paint-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: 2.5px solid var(--ink);
+  border-radius: 6px;
+  filter: url(#paintWobble);
+  pointer-events: none;
+}
+
+/* 세그먼트 토글 칩(div 형 .seg .s — 통계/분류 화면 공용): 흰 칩+검은 wobble, 선택 시 반전.
+   글자는 안 흔들리게 ::before(z-index:-1)에 칠하고 isolation 으로 칩 안에 가둔다.
+   (button 형 .seg button 은 전역 button 규칙이 처리하므로 :has(.s) 로 div 형만 겨냥) */
+:root[data-theme="paint"] .seg:has(.s) { background: transparent; padding: 0; gap: 6px; }
+:root[data-theme="paint"] .seg .s {
+  position: relative;
+  isolation: isolate;
+  background: transparent;
+  color: var(--ink);
+}
+:root[data-theme="paint"] .seg .s::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 4px;
+  filter: url(#paintWobble);
+  z-index: -1;
+  pointer-events: none;
+}
+:root[data-theme="paint"] .seg .s.on { color: #fff; }
+:root[data-theme="paint"] .seg .s.on::before { background: var(--ink); }
