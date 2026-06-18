@@ -11,6 +11,7 @@ const transactions = ref([])              // 거래 목록 데이터
 const loading = ref(false)                // 목록 로딩/에러 상태
 const errorMessage = ref('')              
 const keyword = ref('')              // 검색어: 메모/카테고리명 검색에 사용
+const transactionType = ref('all')    // 거래 유형 필터: 전체/수입/지출
 const sort = ref('date_desc')        // 정렬 기준: 기본은 최신순
 
 let searchTimer = null               // 검색어 입력 debounce용 타이머
@@ -180,6 +181,8 @@ async function loadTransactions() {
 
       keyword: keyword.value.trim() || undefined,
 
+      type: transactionType.value === 'all' ? undefined : Number(transactionType.value),
+
       sort: sort.value,
     })
 
@@ -231,8 +234,8 @@ function scheduleSearch() {
   }, 300)
 }
 
-// 월 또는 정렬 기준은 선택 즉시 다시 조회한다.
-watch([selectedMonth, sort], loadTransactions)
+// 월, 거래 유형, 정렬 기준은 선택 즉시 다시 조회한다.
+watch([selectedMonth, transactionType, sort], loadTransactions)
 
 // 검색어는 debounce를 거쳐 조회한다.
 watch(keyword, scheduleSearch)
@@ -286,7 +289,7 @@ onBeforeUnmount(() => {
     </section>
 
     <!-- 검색/정렬 영역 -->
-    <section class="filter-card">
+    <section class="filter-card" :class="{ 'calendar-filter': viewMode === 'calendar' }">
       <label class="search-field">
         <span>검색</span>
         <input
@@ -296,7 +299,16 @@ onBeforeUnmount(() => {
         />
       </label>
 
-      <label class="sort-field">
+      <label class="type-field">
+        <span>유형</span>
+        <select v-model="transactionType">
+          <option value="all">전체</option>
+          <option value="1">수입</option>
+          <option value="2">지출</option>
+        </select>
+      </label>
+
+      <label v-if="viewMode !== 'calendar'" class="sort-field">
         <span>정렬</span>
         <select v-model="sort">
           <option value="date_desc">최신순</option>
@@ -307,83 +319,44 @@ onBeforeUnmount(() => {
       </label>
     </section>
 
-    <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
+    <div class="ledger-scroll">
+      <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
 
-    <div v-if="loading" class="empty">거래 내역을 불러오는 중입니다.</div>
+      <div v-if="loading" class="empty">거래 내역을 불러오는 중입니다.</div>
 
-    <div v-else-if="viewMode === 'calendar'" class="calendar-wrap">
-      <div class="calendar-card">
-        <div class="calendar-head">
-          <span>일</span>
-          <span>월</span>
-          <span>화</span>
-          <span>수</span>
-          <span>목</span>
-          <span>금</span>
-          <span>토</span>
-        </div>
+      <div v-else-if="viewMode === 'calendar'" class="calendar-wrap">
+        <div class="calendar-card">
+          <div class="calendar-head">
+            <span>일</span>
+            <span>월</span>
+            <span>화</span>
+            <span>수</span>
+            <span>목</span>
+            <span>금</span>
+            <span>토</span>
+          </div>
 
-        <div class="calendar-grid">
-          <button v-for="day in calendarDays" :key="day.key" class="calendar-cell" :class="{ empty: day.empty }" type="button">
-            <template v-if="!day.empty">
-              <strong>{{ day.day }}</strong>
-              <small v-if="day.income" class="income">+{{ shortWon(day.income) }}</small>
-              <small v-if="day.expense" class="expense">-{{ shortWon(day.expense) }}</small>
-            </template>
-          </button>
+          <div class="calendar-grid">
+            <button v-for="day in calendarDays" :key="day.key" class="calendar-cell" :class="{ empty: day.empty }" type="button">
+              <template v-if="!day.empty">
+                <strong>{{ day.day }}</strong>
+                <small v-if="day.income" class="income">+{{ shortWon(day.income) }}</small>
+                <small v-if="day.expense" class="expense">-{{ shortWon(day.expense) }}</small>
+              </template>
+            </button>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div v-else-if="transactions.length === 0" class="empty">
-      <strong>거래 내역이 없어요</strong>
-      <span>오른쪽 아래 + 버튼으로 거래를 등록해보세요.</span>
-    </div>
+      <div v-else-if="transactions.length === 0" class="empty">
+        <strong>거래 내역이 없어요</strong>
+        <span>오른쪽 아래 + 버튼으로 거래를 등록해보세요.</span>
+      </div>
 
-    <!-- 금액순 정렬 목록 -->
-    <div v-else-if="isAmountSort" class="flat-list">
-      <button
-        v-for="item in transactions"
-        :key="item.id"
-        class="txn"
-        type="button"
-        @click="goEdit(item.id)"
-      >
-        <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
-        {{ getCategory(item).icon }}
-        </span>
-
-        <span class="txn-text">
-          <strong>{{ getCategory(item).name }}</strong>
-          <small>
-            {{ item.memo || '메모 없음' }}
-            ·
-            {{ getDateLabel(item.date) }}
-            </small>
-          </span>
-
-          <strong class="amount" :class="item.type === 1 ? 'income' : 'expense'">
-            {{ item.type === 1 ? '+' : '-' }}{{ won(item.amount) }}
-          </strong>
-      </button>
-    </div>
-
-    <!-- 날짜별 거래 목록 -->
-    <div v-else class="day-list">
-      <section v-for="group in groupedTransactions" :key="group.date" class="day-group">
-        <div class="day-head">
-          <span>
-            {{ getDateLabel(group.date) }}
-            <small>{{ getDayName(group.date) }}</small>
-          </span>
-
-          <strong :class="group.dayTotal >= 0 ? 'income' : 'expense'">
-            {{ signedWon(group.dayTotal) }}
-          </strong>
-        </div>
-
+      <!-- 금액순 정렬 목록 -->
+      <div v-else-if="isAmountSort" class="flat-list">
         <button
-          v-for="item in group.items"
+          v-for="item in transactions"
           :key="item.id"
           class="txn"
           type="button"
@@ -395,14 +368,55 @@ onBeforeUnmount(() => {
 
           <span class="txn-text">
             <strong>{{ getCategory(item).name }}</strong>
-            <small>{{ item.memo || '메모 없음' }}</small>
+            <small>
+              {{ item.memo || '메모 없음' }}
+              ·
+              {{ getDateLabel(item.date) }}
+            </small>
           </span>
 
           <strong class="amount" :class="item.type === 1 ? 'income' : 'expense'">
             {{ item.type === 1 ? '+' : '-' }}{{ won(item.amount) }}
           </strong>
         </button>
-      </section>
+      </div>
+
+      <!-- 날짜별 거래 목록 -->
+      <div v-else class="day-list">
+        <section v-for="group in groupedTransactions" :key="group.date" class="day-group">
+          <div class="day-head">
+            <span>
+              {{ getDateLabel(group.date) }}
+              <small>{{ getDayName(group.date) }}</small>
+            </span>
+
+            <strong :class="group.dayTotal >= 0 ? 'income' : 'expense'">
+              {{ signedWon(group.dayTotal) }}
+            </strong>
+          </div>
+
+          <button
+            v-for="item in group.items"
+            :key="item.id"
+            class="txn"
+            type="button"
+            @click="goEdit(item.id)"
+          >
+            <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
+              {{ getCategory(item).icon }}
+            </span>
+
+            <span class="txn-text">
+              <strong>{{ getCategory(item).name }}</strong>
+              <small>{{ item.memo || '메모 없음' }}</small>
+            </span>
+
+            <strong class="amount" :class="item.type === 1 ? 'income' : 'expense'">
+              {{ item.type === 1 ? '+' : '-' }}{{ won(item.amount) }}
+            </strong>
+          </button>
+        </section>
+      </div>
     </div>
 
     <button class="fab" type="button" @click="goCreate">+</button>
@@ -411,8 +425,11 @@ onBeforeUnmount(() => {
 
 <style scoped>
 .ledger-view {
-  min-height: calc(100vh - 76px);
-  padding: 34px 20px 112px;
+  height: calc(100vh - 76px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 34px 20px 0;
   background: var(--cream);
   position: relative;
 }
@@ -550,6 +567,19 @@ onBeforeUnmount(() => {
 .empty strong {
   color: var(--ink);
   font-size: 16px;
+}
+
+.ledger-scroll {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 112px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ledger-scroll::-webkit-scrollbar {
+  display: none;
 }
 
 .day-list {
@@ -780,12 +810,17 @@ onBeforeUnmount(() => {
 
 .filter-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px;
+  grid-template-columns: minmax(0, 1fr) 104px 132px;
   gap: 10px;
   margin-bottom: 18px;
 }
 
+.filter-card.calendar-filter {
+  grid-template-columns: minmax(0, 1fr) 104px;
+}
+
 .search-field,
+.type-field,
 .sort-field {
   min-width: 0;
   display: flex;
@@ -794,6 +829,7 @@ onBeforeUnmount(() => {
 }
 
 .search-field span,
+.type-field span,
 .sort-field span {
   color: var(--ink-2);
   font-size: 12px;
@@ -801,6 +837,7 @@ onBeforeUnmount(() => {
 }
 
 .search-field input,
+.type-field select,
 .sort-field select {
   width: 100%;
   height: 46px;
@@ -816,6 +853,7 @@ onBeforeUnmount(() => {
 }
 
 .search-field input:focus,
+.type-field select:focus,
 .sort-field select:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(242, 163, 60, 0.18);
