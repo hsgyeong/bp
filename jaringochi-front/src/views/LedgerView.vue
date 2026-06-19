@@ -2,8 +2,11 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchTransactions } from '@/api/transaction'
+import { useTheme } from '@/composables/useTheme'
+import { categoryTablerIcon } from '@/utils/categoryIcon'
 
 const router = useRouter()
+const { theme } = useTheme()   // paint 테마: 카테고리 이모지 → Tabler 라인 아이콘
 
 const selectedMonth = ref(getThisMonth()) // 현재 선택된 월
 const viewMode = ref('list')              // 일자별/달력 탭 상태
@@ -292,30 +295,36 @@ onBeforeUnmount(() => {
     <section class="filter-card" :class="{ 'calendar-filter': viewMode === 'calendar' }">
       <label class="search-field">
         <span>검색</span>
-        <input
-          v-model="keyword"
-          type="search"
-          placeholder="메모 또는 카테고리 검색"
-        />
+        <span class="paint-field">
+          <input
+            v-model="keyword"
+            type="search"
+            placeholder="메모 또는 카테고리 검색"
+          />
+        </span>
       </label>
 
       <label class="type-field">
         <span>유형</span>
-        <select v-model="transactionType">
-          <option value="all">전체</option>
-          <option value="1">수입</option>
-          <option value="2">지출</option>
-        </select>
+        <span class="paint-field">
+          <select v-model="transactionType">
+            <option value="all">전체</option>
+            <option value="1">수입</option>
+            <option value="2">지출</option>
+          </select>
+        </span>
       </label>
 
       <label v-if="viewMode !== 'calendar'" class="sort-field">
         <span>정렬</span>
-        <select v-model="sort">
-          <option value="date_desc">최신순</option>
-          <option value="date_asc">오래된순</option>
-          <option value="amount_desc">금액 높은순</option>
-          <option value="amount_asc">금액 낮은순</option>
-        </select>
+        <span class="paint-field">
+          <select v-model="sort">
+            <option value="date_desc">최신순</option>
+            <option value="date_asc">오래된순</option>
+            <option value="amount_desc">금액 높은순</option>
+            <option value="amount_asc">금액 낮은순</option>
+          </select>
+        </span>
       </label>
     </section>
 
@@ -363,7 +372,13 @@ onBeforeUnmount(() => {
           @click="goEdit(item.id)"
         >
           <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
-            {{ getCategory(item).icon }}
+            <i
+              v-if="theme === 'paint'"
+              class="ti"
+              :class="categoryTablerIcon(getCategory(item).name, item.type)"
+              aria-hidden="true"
+            ></i>
+            <template v-else>{{ getCategory(item).icon }}</template>
           </span>
 
           <span class="txn-text">
@@ -384,7 +399,7 @@ onBeforeUnmount(() => {
       <!-- 날짜별 거래 목록 -->
       <div v-else class="day-list">
         <section v-for="group in groupedTransactions" :key="group.date" class="day-group">
-          <div class="day-head">
+          <div class="day-head paint-hline-b">
             <span>
               {{ getDateLabel(group.date) }}
               <small>{{ getDayName(group.date) }}</small>
@@ -403,7 +418,13 @@ onBeforeUnmount(() => {
             @click="goEdit(item.id)"
           >
             <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
-              {{ getCategory(item).icon }}
+              <i
+                v-if="theme === 'paint'"
+                class="ti"
+                :class="categoryTablerIcon(getCategory(item).name, item.type)"
+                aria-hidden="true"
+              ></i>
+              <template v-else>{{ getCategory(item).icon }}</template>
             </span>
 
             <span class="txn-text">
@@ -863,5 +884,39 @@ onBeforeUnmount(() => {
   .filter-card {
     grid-template-columns: 1fr;
   }
+}
+
+/* ── paint(그림판) 테마 보정 ───────────────────────────────────────────── */
+/* 카테고리 아이콘: 회색 배경 박스 제거하고 라인 아이콘만 (HomeView와 동일 컨벤션) */
+:root[data-theme="paint"] .cat-ic {
+  background: transparent !important;
+  border-radius: 0;
+  font-size: 30px;
+}
+/* 날짜 헤더 구분선은 .paint-hline-b 유틸이 손그림 선으로 그림 → 직선 border만 숨김 */
+:root[data-theme="paint"] .day-head {
+  border-bottom-color: transparent;
+}
+/* 거래 행(버튼)은 전역 규칙으로 손그림 박스가 됨 → 서로 안 겹치게 간격/패딩 부여 */
+:root[data-theme="paint"] .txn {
+  padding: 12px 14px;
+  margin: 8px 0 12px;
+  border-radius: 6px;
+}
+/* 검색/정렬 묶음은 '-card' 라 전역 손그림 테두리가 붙지만 카드가 아니므로 테두리 제거 */
+:root[data-theme="paint"] .filter-card::before {
+  display: none;
+}
+/* + 버튼: 흑백 반전(흰 배경·검은 +) + 크기 축소, 테두리는 전역 wobble */
+:root[data-theme="paint"] .fab {
+  width: 58px;
+  height: 58px;
+  background: var(--card) !important;
+  color: var(--ink);
+  font-size: 32px;
+}
+/* 캘린더 토요일 색(하드코딩 파랑) → 흑백 톤으로 */
+:root[data-theme="paint"] .calendar-head span:last-child {
+  color: var(--ink-2);
 }
 </style>

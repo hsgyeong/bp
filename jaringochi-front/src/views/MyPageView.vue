@@ -3,8 +3,15 @@ import { computed, onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchMeApi, logoutApi, deleteMeApi } from '@/api/auth'
 import { useAuthStore } from '@/stores/auth'
+import { useTheme } from '@/composables/useTheme'
+import AppModal from '@/components/AppModal.vue'
 
+const { theme } = useTheme()   // paint 테마: 프로필 🐟 → Tabler 라인 아이콘
 const router = useRouter()
+
+const logoutDoneOpen = ref(false)       // 로그아웃 완료 알림
+const withdrawConfirmOpen = ref(false)  // 회원탈퇴 확인
+const withdrawDoneOpen = ref(false)     // 회원탈퇴 완료 알림
 const authStore = useAuthStore()
 
 const loading = ref(false)
@@ -59,16 +66,24 @@ async function logout() {
   } finally {
     // 프론트에 저장된 accessToken, refreshToken, user 정보 삭제
     authStore.logout()
-    window.alert('로그아웃 되었습니다.')
-    router.replace('/login')
+    logoutDoneOpen.value = true   // 완료 알림 모달 (확인 시 로그인 화면으로)
   }
 }
 
-// 회원 탈퇴
-async function withdraw() {
-  const ok = window.confirm('정말 회원탈퇴 하시겠어요? 탈퇴 후에는 계정 정보를 되돌릴 수 없습니다.')
+// 로그아웃 완료 알림 확인 → 로그인 화면으로
+function finishLogout() {
+  logoutDoneOpen.value = false
+  router.replace('/login')
+}
 
-  if (!ok) return
+// 회원 탈퇴 — 확인 모달 열기
+function withdraw() {
+  withdrawConfirmOpen.value = true
+}
+
+// 모달에서 탈퇴 확인 시 실제 탈퇴 수행
+async function doWithdraw() {
+  withdrawConfirmOpen.value = false
 
   loading.value = true
   errorMessage.value = ''
@@ -77,14 +92,19 @@ async function withdraw() {
     await deleteMeApi()
 
     authStore.logout()
-    window.alert('회원탈퇴가 완료되었습니다.')
-    router.replace('/login')
+    withdrawDoneOpen.value = true   // 완료 알림 모달
   } catch (err) {
     errorMessage.value =
       err.response?.data?.message || '회원탈퇴 중 문제가 발생했습니다.'
   } finally {
     loading.value = false
   }
+}
+
+// 회원탈퇴 완료 알림 확인 → 로그인 화면으로
+function finishWithdraw() {
+  withdrawDoneOpen.value = false
+  router.replace('/login')
 }
 
 function goEdit() {
@@ -104,9 +124,10 @@ onMounted(loadMe)
       {{ errorMessage }}
     </p>
 
-    <section class="profile-card">        
+    <section class="profile-card paint-box">
       <div class="profile-icon" aria-hidden="true">
-        🐟
+        <i v-if="theme === 'paint'" class="ti ti-fish"></i>
+        <template v-else>🐟</template>
       </div>
 
       <div class="profile-info">
@@ -116,12 +137,12 @@ onMounted(loadMe)
     </section>
 
     <section class="card menu-card">
-      <button class="menu-button action-menu" type="button" @click="goEdit">
+      <button class="menu-button action-menu paint-hline-b" type="button" @click="goEdit">
         <span>회원정보 수정</span>
         <strong>›</strong>
       </button>
 
-      <button class="menu-button" type="button" disabled>
+      <button class="menu-button paint-hline-b" type="button" disabled>
         <span>닉네임</span>
         <strong>{{ nickname }}</strong>
       </button>
@@ -141,6 +162,37 @@ onMounted(loadMe)
         회원탈퇴
         </button>
     </div>
+
+    <!-- 로그아웃 완료 알림 -->
+    <AppModal
+      v-if="logoutDoneOpen"
+      message="로그아웃 되었습니다."
+      hide-cancel
+      confirm-text="확인"
+      @confirm="finishLogout"
+      @cancel="finishLogout"
+    />
+
+    <!-- 회원탈퇴 확인 -->
+    <AppModal
+      v-if="withdrawConfirmOpen"
+      title="회원탈퇴"
+      message="정말 회원탈퇴 하시겠어요? 탈퇴 후에는 계정 정보를 되돌릴 수 없습니다."
+      confirm-text="탈퇴"
+      danger
+      @confirm="doWithdraw"
+      @cancel="withdrawConfirmOpen = false"
+    />
+
+    <!-- 회원탈퇴 완료 알림 -->
+    <AppModal
+      v-if="withdrawDoneOpen"
+      message="회원탈퇴가 완료되었습니다."
+      hide-cancel
+      confirm-text="확인"
+      @confirm="finishWithdraw"
+      @cancel="finishWithdraw"
+    />
   </section>
 </template>
 
@@ -298,4 +350,13 @@ onMounted(loadMe)
   color: var(--gold-deep);
   font-size: 22px;
 }
+
+/* ── paint(그림판) 테마 보정 ── */
+/* 프로필 카드: 크림 배경 → 흰 배경(테두리는 .paint-box), 🐟 아이콘 박스 배경 제거 */
+:root[data-theme="paint"] .profile-card { background: var(--card); }
+:root[data-theme="paint"] .profile-icon { background: transparent; font-size: 34px; }
+/* 메뉴/탈퇴 버튼은 행·텍스트 버튼이라 전역 button wobble 박스 제외, 구분선은 .paint-hline-b */
+:root[data-theme="paint"] .menu-button::before,
+:root[data-theme="paint"] .withdraw-button::before { display: none; }
+:root[data-theme="paint"] .menu-button { border-bottom-color: transparent; }
 </style>

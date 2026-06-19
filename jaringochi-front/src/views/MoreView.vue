@@ -1,4 +1,14 @@
 <script setup>
+import { useTheme } from '@/composables/useTheme'
+
+const { theme } = useTheme()   // paint 테마: 메뉴 이모지 → Tabler 라인 아이콘
+
+// 더보기 메뉴 — 반복 마크업을 줄이려고 배열로 관리 (ti: paint 라인 아이콘)
+const menus = [
+  { to: '/me',         label: '마이페이지', emoji: '👤',  ti: 'ti-user' },
+  { to: '/categories', label: '분류 관리',  emoji: '🏷️', ti: 'ti-tag' },
+  { to: '/budget',     label: '예산 설정',  emoji: '🎯',  ti: 'ti-target' },
+]
 </script>
 
 <template>
@@ -6,21 +16,13 @@
     <h1 class="title">더보기</h1>
 
     <div class="card list">
-      <router-link to="/me" class="menu">
-        <span class="mic">👤</span>
-        마이페이지
-        <span class="arr">›</span>
-      </router-link>
-      <!-- 카테고리(분류) 관리로 이동 -->
-      <router-link to="/categories" class="menu">
-        <span class="mic">🏷️</span>
-        분류 관리
-        <span class="arr">›</span>
-      </router-link>
-      <!-- 예산 설정으로 이동 -->
-      <router-link to="/budget" class="menu">
-        <span class="mic">🎯</span>
-        예산 설정
+      <router-link v-for="(m, i) in menus" :key="m.to" :to="m.to" class="menu"
+        :class="{ 'paint-hline-b': i < menus.length - 1 }">
+        <span class="mic">
+          <i v-if="theme === 'paint'" class="ti" :class="m.ti" aria-hidden="true"></i>
+          <template v-else>{{ m.emoji }}</template>
+        </span>
+        {{ m.label }}
         <span class="arr">›</span>
       </router-link>
     </div>

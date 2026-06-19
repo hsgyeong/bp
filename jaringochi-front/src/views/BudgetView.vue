@@ -1,6 +1,12 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { getCurrentWeek, getRecentWeeks, createWeeklyBudget, updateWeeklyBudget } from '@/api/budget'
+import { useTheme } from '@/composables/useTheme'
+import AppModal from '@/components/AppModal.vue'
+
+const { theme } = useTheme()   // paint 테마: 🐟 이모지 → Tabler 라인 아이콘
+
+const invalidOpen = ref(false)   // 금액 미입력 알림 모달
 
 const current = ref(null)   // 이번 주 예산 (없으면 null)
 const weeks   = ref([])     // 최근 4주 목록
@@ -35,7 +41,7 @@ function thisWeekRange() {
 // 저장: 이번 주 예산이 있으면 수정(PUT), 없으면 등록(POST)
 async function onSave() {
   const value = Number(amount.value)
-  if (!value || value <= 0) return alert('금액을 입력하세요')
+  if (!value || value <= 0) { invalidOpen.value = true; return }
   const { startDate, endDate } = thisWeekRange()
   if (current.value) {
     await updateWeeklyBudget(current.value.id, { amount: value, startDate, endDate })
@@ -52,8 +58,12 @@ async function onSave() {
     <h1 class="title">예산</h1>
 
     <!-- 굴비 한마디 -->
-    <div class="gulbi-msg" v-if="current">
-      <div class="bubble-text">이번 주 예산의 <b>{{ Math.round(current.ratio) }}%</b> 썼어요. 🐟</div>
+    <div class="gulbi-msg paint-box" v-if="current">
+      <div class="bubble-text">
+        이번 주 예산의 <b>{{ Math.round(current.ratio) }}%</b> 썼어요.
+        <i v-if="theme === 'paint'" class="ti ti-fish" aria-hidden="true"></i>
+        <template v-else>🐟</template>
+      </div>
     </div>
 
     <!-- 이번 주 사용률 -->
@@ -79,7 +89,9 @@ async function onSave() {
     <!-- 예산 설정/수정 폼 -->
     <div class="label" style="margin-top:20px">이번 주 예산 {{ current ? '수정' : '설정' }}</div>
     <div class="card">
-      <input class="field" type="number" v-model="amount" placeholder="금액 입력 (원)" />
+      <span class="paint-field">
+        <input class="field" type="number" v-model="amount" placeholder="금액 입력 (원)" />
+      </span>
       <p v-if="current && !current.updatable" class="muted" style="font-size:12px;font-weight:700;margin:10px 2px 0">
         이번 달 수정 횟수(2회)를 모두 사용했어요.
       </p>
@@ -91,13 +103,24 @@ async function onSave() {
     <!-- 최근 4주 -->
     <div class="label" style="margin-top:24px">최근 주간 예산</div>
     <div class="card list">
-      <div class="menu" v-for="w in weeks" :key="w.id">
+      <div class="menu" :class="{ 'paint-hline-b': i < weeks.length - 1 }" v-for="(w, i) in weeks" :key="w.id">
         <span class="period">{{ w.startDate }} ~ {{ w.endDate }}</span>
         <span class="ratio">{{ Math.round(w.ratio) }}%</span>
         <b class="amt">{{ won(w.amount) }}원</b>
       </div>
       <div v-if="weeks.length === 0" class="empty">예산 기록이 없어요</div>
     </div>
+
+    <!-- 금액 미입력 알림 모달 -->
+    <AppModal
+      v-if="invalidOpen"
+      title="예산 입력"
+      message="금액을 입력해주세요."
+      hide-cancel
+      confirm-text="확인"
+      @confirm="invalidOpen = false"
+      @cancel="invalidOpen = false"
+    />
   </div>
 </template>
 
@@ -123,4 +146,15 @@ async function onSave() {
 .ratio { color: var(--gold-deep); }
 .amt { margin-left: auto; font-size: 14px; }
 .empty { padding: 24px; text-align: center; color: var(--mute); font-weight: 600; }
+
+/* ── paint(그림판) 테마 보정 ───────────────────────────────────────────── */
+/* 굴비 한마디: 크림 그라데이션 → 흰 배경(테두리는 .paint-box), 하드코딩 갈색 글씨 → 흑백 */
+:root[data-theme="paint"] .gulbi-msg { background: var(--card); }
+:root[data-theme="paint"] .bubble-text { color: var(--ink); }
+/* 진행바 채움: 골드 그라데이션 → 검은 채움 */
+:root[data-theme="paint"] .bar-fill { background: var(--ink); }
+/* 저장 버튼: 골드 그라데이션 → 검은 채움(테두리는 전역 button wobble) */
+:root[data-theme="paint"] .btn-primary { background: var(--ink); }
+/* 최근 주간 구분선: .paint-hline-b 가 손그림 선을 그림 → 직선 border 는 숨김 */
+:root[data-theme="paint"] .menu { border-bottom-color: transparent; }
 </style>

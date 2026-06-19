@@ -2,6 +2,10 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { getByCategory, getMonthlyTrend } from '@/api/statistics'
 import { getRecentWeeks } from '@/api/budget'
+import { useTheme } from '@/composables/useTheme'
+
+// paint 테마일 때만 차트를 '색연필' 톤으로 칠한다(앱 크롬은 흑백 유지).
+const { theme } = useTheme()
 
 // 3단 토글
 const period = ref('month')  // 'month' | 'week'
@@ -14,6 +18,20 @@ const cat   = ref(null)      // by-category: { total, items:[{categoryId,categor
 const weeks = ref([])        // budgets/weekly/recent (과거->현재, 최대 4주)
 
 const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']
+
+// paint 전용 색연필 팔레트(채도 낮은 파스텔 톤). 통계에선 수입/지출도 색 허용.
+const PENCIL = {
+  income:  '#7FBE96',  // 연한 초록
+  expense: '#E08A72',  // 연한 코랄
+  budget:  '#94B8E6',  // 연한 파랑
+  rate:    '#B197D0',  // 연한 보라
+  donut: ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96'],
+}
+const isPaint = computed(() => theme.value === 'paint')
+const donutColors = computed(() => (isPaint.value ? PENCIL.donut : DONUT_COLORS))
+const barBudgetFill = computed(() => (isPaint.value ? PENCIL.budget : 'var(--gold-soft)'))
+const barSpentFill  = computed(() => (isPaint.value ? PENCIL.expense : 'var(--gold-deep)'))
+const rateColor     = computed(() => (isPaint.value ? PENCIL.rate : 'var(--income)'))
 
 const won = (n) => Number(n || 0).toLocaleString()
 
@@ -68,7 +86,10 @@ onMounted(load)
 watch([period, type, view], load)
 
 // ===== 월 단순금액: 꺾은선 =====
-const lineColor = computed(() => (type.value === 1 ? 'var(--income)' : 'var(--expense)'))
+const lineColor = computed(() => {
+  if (isPaint.value) return type.value === 1 ? PENCIL.income : PENCIL.expense
+  return type.value === 1 ? 'var(--income)' : 'var(--expense)'
+})
 
 const trendChart = computed(() => {
   if (!trend.value || !trend.value.items.length) return null
@@ -110,7 +131,7 @@ const donut = computed(() => {
   const segs = cat.value.items.map((it, i) => {
     const seg = (Number(it.ratio) / 100) * circ
     const s = {
-      color: DONUT_COLORS[i % DONUT_COLORS.length],
+      color: donutColors.value[i % donutColors.value.length],
       dash: `${seg.toFixed(1)} ${(circ - seg).toFixed(1)}`,
       offset: (-acc).toFixed(1),
     }
@@ -122,7 +143,7 @@ const donut = computed(() => {
 const legend = computed(() =>
   (cat.value?.items || []).map((it, i) => ({
     ...it,
-    color: DONUT_COLORS[i % DONUT_COLORS.length],
+    color: donutColors.value[i % donutColors.value.length],
   }))
 )
 
@@ -163,6 +184,17 @@ const rateChart = computed(() => {
 
 <template>
   <div class="stats-view">
+    <!-- 색연필 빗금(hatch) 패턴 — paint 차트에서 컬러 채움 위에 덧칠한다.
+         id는 문서 전역에서 url(#statsHatch)로 참조됨. -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <pattern id="statsHatch" width="6" height="6" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(0,0,0,.16)" stroke-width="1.4" />
+        </pattern>
+      </defs>
+    </svg>
+
     <h1 class="title">통계</h1>
 
     <!-- 기간 -->
@@ -191,11 +223,15 @@ const rateChart = computed(() => {
         <svg v-if="trendChart" viewBox="0 0 300 160" class="chart">
           <line x1="30" y1="20" x2="30" y2="130" stroke="var(--line)" />
           <line x1="30" y1="130" x2="290" y2="130" stroke="var(--line)" />
-          <polygon :fill="lineColor" opacity="0.08" :points="trendChart.area" />
-          <polyline fill="none" :stroke="lineColor" stroke-width="3" stroke-linejoin="round"
-                    stroke-linecap="round" :points="trendChart.pts" />
-          <g :fill="lineColor">
-            <circle v-for="(d, i) in trendChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
+          <!-- paint: area·hatch·선·점을 한 그룹으로 묶어 같은 wobble 필터 → 정렬 유지하며 삐뚤빼뚤 -->
+          <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
+            <polygon :fill="lineColor" :opacity="isPaint ? 0.4 : 0.08" :points="trendChart.area" />
+            <polygon v-if="isPaint" fill="url(#statsHatch)" :points="trendChart.area" />
+            <polyline fill="none" :stroke="lineColor" stroke-width="3" stroke-linejoin="round"
+                      stroke-linecap="round" :points="trendChart.pts" />
+            <g :fill="lineColor">
+              <circle v-for="(d, i) in trendChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
+            </g>
           </g>
           <g fill="var(--mute)" font-size="11" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in trendChart.labels" :key="i" :x="l.x" y="148">{{ l.t }}</text>
@@ -229,13 +265,24 @@ const rateChart = computed(() => {
         </div>
         <div class="donut-wrap" v-if="donut">
           <svg viewBox="0 0 160 160" class="donut">
-            <circle v-for="(s, i) in donut.segs" :key="i" cx="80" cy="80" :r="donut.r"
-                    fill="none" :stroke="s.color" stroke-width="26"
-                    :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+            <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
+              <!-- 컬러 채움 세그먼트 -->
+              <circle v-for="(s, i) in donut.segs" :key="'c' + i" cx="80" cy="80" :r="donut.r"
+                      fill="none" :stroke="s.color" stroke-width="26"
+                      :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+              <!-- paint: 빗금 덧칠 + 안팎 검은 테두리 링으로 손그림 느낌 -->
+              <template v-if="isPaint">
+                <circle v-for="(s, i) in donut.segs" :key="'h' + i" cx="80" cy="80" :r="donut.r"
+                        fill="none" stroke="url(#statsHatch)" stroke-width="26"
+                        :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+                <circle cx="80" cy="80" :r="donut.r + 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+                <circle cx="80" cy="80" :r="donut.r - 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+              </template>
+            </g>
           </svg>
         </div>
-        <div class="legend" v-for="it in legend" :key="it.categoryId ?? 'etc'">
-          <span class="lg"><i :style="{ background: it.color }"></i>{{ it.categoryName }}</span>
+        <div class="legend paint-hline" v-for="it in legend" :key="it.categoryId ?? 'etc'">
+          <span class="lg"><i class="paint-sketch" :style="{ background: it.color }"></i>{{ it.categoryName }}</span>
           <b>{{ won(it.amount) }}</b>
           <span class="lp">{{ Number(it.ratio).toFixed(0) }}%</span>
         </div>
@@ -248,14 +295,24 @@ const rateChart = computed(() => {
       <div class="card">
         <b style="font-size:15px">주별 예산 vs 지출</b>
         <div class="bar-legend">
-          <span><i style="background:var(--gold-soft)"></i>예산</span>
-          <span><i style="background:var(--gold-deep)"></i>지출</span>
+          <span><i class="paint-sketch" :style="{ background: barBudgetFill }"></i>예산</span>
+          <span><i class="paint-sketch" :style="{ background: barSpentFill }"></i>지출</span>
         </div>
         <svg v-if="barChart" viewBox="0 0 300 150" class="chart">
           <line x1="20" y1="120" x2="290" y2="120" stroke="var(--line)" />
           <template v-for="(b, i) in barChart.bars" :key="i">
-            <rect :x="b.budget.x" :y="b.budget.y" width="18" :height="b.budget.h" rx="4" fill="var(--gold-soft)" />
-            <rect :x="b.spent.x" :y="b.spent.y" width="18" :height="b.spent.h" rx="4" fill="var(--gold-deep)" />
+            <rect :x="b.budget.x" :y="b.budget.y" width="18" :height="b.budget.h" :rx="isPaint ? 0 : 4"
+                  :fill="barBudgetFill" :stroke="isPaint ? 'var(--ink)' : 'none'" :stroke-width="isPaint ? 2 : 0"
+                  :filter="isPaint ? 'url(#paintWobble)' : undefined" />
+            <rect :x="b.spent.x" :y="b.spent.y" width="18" :height="b.spent.h" :rx="isPaint ? 0 : 4"
+                  :fill="barSpentFill" :stroke="isPaint ? 'var(--ink)' : 'none'" :stroke-width="isPaint ? 2 : 0"
+                  :filter="isPaint ? 'url(#paintWobble)' : undefined" />
+            <template v-if="isPaint">
+              <rect :x="b.budget.x" :y="b.budget.y" width="18" :height="b.budget.h" fill="url(#statsHatch)"
+                    filter="url(#paintWobble)" />
+              <rect :x="b.spent.x" :y="b.spent.y" width="18" :height="b.spent.h" fill="url(#statsHatch)"
+                    filter="url(#paintWobble)" />
+            </template>
           </template>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(b, i) in barChart.bars" :key="i" :x="b.labelX" y="138">{{ b.label }}</text>
@@ -270,10 +327,12 @@ const rateChart = computed(() => {
           <line x1="30" y1="95" x2="290" y2="95" stroke="var(--line)" />
           <line x1="30" :y1="rateChart.y100" x2="290" :y2="rateChart.y100" stroke="var(--cream-2)" stroke-dasharray="3 3" />
           <text x="2" :y="Number(rateChart.y100) + 4" fill="var(--mute)" font-size="10" font-weight="700">100%</text>
-          <polyline fill="none" stroke="var(--income)" stroke-width="3" stroke-linejoin="round"
-                    stroke-linecap="round" :points="rateChart.pts" />
-          <g fill="var(--income)">
-            <circle v-for="(d, i) in rateChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
+          <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
+            <polyline fill="none" :stroke="rateColor" stroke-width="3" stroke-linejoin="round"
+                      stroke-linecap="round" :points="rateChart.pts" />
+            <g :fill="rateColor">
+              <circle v-for="(d, i) in rateChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
+            </g>
           </g>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in rateChart.labels" :key="i" :x="l.x" y="113">{{ l.t }}</text>
@@ -316,4 +375,17 @@ const rateChart = computed(() => {
 .bar-legend i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
 
 .empty { padding: 24px; text-align: center; color: var(--mute); font-weight: 600; }
+
+/* ── paint(그림판) 테마: 범례 칩을 흑백 손그림 톤으로 (.seg .s 칩은 전역 규칙) ── */
+/* 컬러 칩(범례)은 색연필 팔레트 유지하되 검은 네모 테두리 — 손그림 떨림은 .paint-sketch 유틸이 담당 */
+:root[data-theme="paint"] .legend .lg i,
+:root[data-theme="paint"] .bar-legend i {
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+}
+/* 범례 구분선: .paint-hline 유틸이 손그림 가로선을 그림. 여기선 직선 border만 숨기고 두께만 지정 */
+:root[data-theme="paint"] .legend {
+  border-top-color: transparent;
+  --hand-line-w: 1px;
+}
 </style>

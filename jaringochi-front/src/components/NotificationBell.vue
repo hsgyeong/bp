@@ -2,8 +2,10 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { listNotifications, getUnreadCount, markRead, markAllRead } from '@/api/notification'
+import { useTheme } from '@/composables/useTheme'
 
 const route = useRoute()
+const { theme } = useTheme()
 
 const open = ref(false)     // 드롭다운 열림 여부
 const count = ref(0)        // 안 읽은 개수 (배지)
@@ -56,11 +58,24 @@ async function onReadAll() {
 }
 
 // threshold -> 문구 조립 (DB엔 문구 없음, 프론트가 조립 - 관심사 분리)
+// 끝에 붙는 아이콘은 분리: classic=이모지 / paint=Tabler 라인 아이콘
 function message(n) {
   const t = n.threshold
-  if (t >= 125) return `이번 주 예산을 ${t - 100}% 초과했어요 😱`
+  if (t >= 125) return `이번 주 예산을 ${t - 100}% 초과했어요`
   if (t >= 100) return `이번 주 예산을 다 썼어요!`
-  return `이번 주 예산의 ${t}%를 썼어요 🐟`
+  return `이번 주 예산의 ${t}%를 썼어요`
+}
+function messageEmoji(n) {
+  const t = n.threshold
+  if (t >= 125) return '😱'
+  if (t >= 100) return ''
+  return '🐟'
+}
+function messageTi(n) {
+  const t = n.threshold
+  if (t >= 125) return 'ti-alert-triangle'
+  if (t >= 100) return ''
+  return 'ti-fish'
 }
 
 // "2026-06-14T19:00:00" -> "6/14 19:00"
@@ -78,7 +93,8 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
   <div v-if="visible" class="noti">
     <!-- 종 + 배지 -->
     <button class="bell" @click="toggle" aria-label="알림">
-      🔔
+      <i v-if="theme === 'paint'" class="ti ti-bell" aria-hidden="true"></i>
+      <template v-else>🔔</template>
       <span v-if="count > 0" class="badge">{{ count > 99 ? '99+' : count }}</span>
     </button>
 
@@ -102,14 +118,22 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
           >
             <span class="dot" :class="{ on: n.isRead === 0 }"></span>
             <div class="item-body">
-              <div class="msg">{{ message(n) }}</div>
+              <div class="msg">
+                {{ message(n) }}
+                <i v-if="theme === 'paint' && messageTi(n)" class="ti" :class="messageTi(n)" aria-hidden="true"></i>
+                <template v-else-if="messageEmoji(n)">{{ messageEmoji(n) }}</template>
+              </div>
               <div class="meta">
                 {{ fmtDate(n.createdAt) }}
                 <span v-if="n.ratio != null"> · {{ Number(n.ratio).toFixed(0) }}%</span>
               </div>
             </div>
           </div>
-          <div v-if="items.length === 0" class="empty">알림이 없어요 🐟</div>
+          <div v-if="items.length === 0" class="empty">
+            알림이 없어요
+            <i v-if="theme === 'paint'" class="ti ti-fish" aria-hidden="true"></i>
+            <template v-else>🐟</template>
+          </div>
         </template>
       </div>
     </template>
@@ -218,4 +242,11 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
 .meta { margin-top: 4px; font-size: 12px; font-weight: 600; color: var(--mute); }
 
 .empty { padding: 28px 16px; text-align: center; color: var(--mute); font-weight: 600; font-size: 13px; }
+
+/* ── paint(그림판) 테마 ── */
+/* 종 테두리는 전역 button::before(wobble)가 그려줌 → 원형 모서리만 맞춤 */
+:root[data-theme="paint"] .bell { border-radius: 50%; }
+:root[data-theme="paint"] .bell::before { border-radius: 50% !important; }
+:root[data-theme="paint"] .panel { border: 2.5px solid var(--ink); border-radius: 5px; }
+:root[data-theme="paint"] .item.unread { background: #F2F2F2; }
 </style>
