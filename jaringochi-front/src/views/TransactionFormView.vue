@@ -5,10 +5,13 @@ import { listCategories } from '@/api/category'
 import { createTransaction, fetchTransaction, updateTransaction, deleteTransaction } from '@/api/transaction';
 import { useTheme } from '@/composables/useTheme'
 import { categoryTablerIcon } from '@/utils/categoryIcon'
+import AppModal from '@/components/AppModal.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { theme } = useTheme()   // paint 테마: 카테고리/날짜 이모지 → Tabler 라인 아이콘
+
+const deleteConfirmOpen = ref(false)   // 거래 삭제 확인 모달
 
 // /ledger/:id/edit 로 들어오면 수정, /ledger/new 로 들어오면 등록
 const transactionId = computed(() => route.params.id)
@@ -176,12 +179,15 @@ async function saveTransaction() {
   }
 }
 
-// 거래내역 삭제
-async function removeTransaction() {
+// 거래내역 삭제 — 확인 모달을 연다
+function removeTransaction() {
   if (!isEditMode.value || deleting.value || saving.value) return
+  deleteConfirmOpen.value = true
+}
 
-  const confirmed = window.confirm('이 거래를 삭제할까요?')
-  if (!confirmed) return
+// 모달에서 '삭제' 확인 시 실제 삭제 수행
+async function doRemoveTransaction() {
+  deleteConfirmOpen.value = false
 
   deleting.value = true
   errorMessage.value = ''
@@ -319,6 +325,17 @@ watch(type, loadCategories)
         {{ deleting ? '삭제 중...' : '삭제하기' }}
       </button>
     </form>
+
+    <!-- 거래 삭제 확인 모달 -->
+    <AppModal
+      v-if="deleteConfirmOpen"
+      title="거래 삭제"
+      message="이 거래를 삭제할까요?"
+      confirm-text="삭제"
+      danger
+      @confirm="doRemoveTransaction"
+      @cancel="deleteConfirmOpen = false"
+    />
   </section>
 </template>
 

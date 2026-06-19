@@ -2,8 +2,11 @@
 import { ref, onMounted } from 'vue'
 import { getCurrentWeek, getRecentWeeks, createWeeklyBudget, updateWeeklyBudget } from '@/api/budget'
 import { useTheme } from '@/composables/useTheme'
+import AppModal from '@/components/AppModal.vue'
 
 const { theme } = useTheme()   // paint 테마: 🐟 이모지 → Tabler 라인 아이콘
+
+const invalidOpen = ref(false)   // 금액 미입력 알림 모달
 
 const current = ref(null)   // 이번 주 예산 (없으면 null)
 const weeks   = ref([])     // 최근 4주 목록
@@ -38,7 +41,7 @@ function thisWeekRange() {
 // 저장: 이번 주 예산이 있으면 수정(PUT), 없으면 등록(POST)
 async function onSave() {
   const value = Number(amount.value)
-  if (!value || value <= 0) return alert('금액을 입력하세요')
+  if (!value || value <= 0) { invalidOpen.value = true; return }
   const { startDate, endDate } = thisWeekRange()
   if (current.value) {
     await updateWeeklyBudget(current.value.id, { amount: value, startDate, endDate })
@@ -107,6 +110,17 @@ async function onSave() {
       </div>
       <div v-if="weeks.length === 0" class="empty">예산 기록이 없어요</div>
     </div>
+
+    <!-- 금액 미입력 알림 모달 -->
+    <AppModal
+      v-if="invalidOpen"
+      title="예산 입력"
+      message="금액을 입력해주세요."
+      hide-cancel
+      confirm-text="확인"
+      @confirm="invalidOpen = false"
+      @cancel="invalidOpen = false"
+    />
   </div>
 </template>
 
