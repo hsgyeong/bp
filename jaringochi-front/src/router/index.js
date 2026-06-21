@@ -12,6 +12,7 @@ import MyPageView from '@/views/MyPageView.vue'
 import ProfileEditView from '@/views/ProfileEditView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import TransactionFormView from '@/views/TransactionFormView.vue'
+import ReportView from '@/views/ReportView.vue'
 
 // 주소 <-> 화면 짝짓는 표
 const routes = [
@@ -26,7 +27,8 @@ const routes = [
   { path: '/me', name: 'me', component: MyPageView, meta: { requiresAuth: true } },
   { path: '/me/edit', name: 'profile-edit', component: ProfileEditView, meta: { requiresAuth: true } },
   { path: '/categories', name: 'categories', component: CategoryView, meta: { requiresAuth: true } },
-  { path: '/budget',    name: 'budget',   component: BudgetView, meta: { requiresAuth: true } }, 
+  { path: '/budget',    name: 'budget',   component: BudgetView, meta: { requiresAuth: true } },
+  { path: '/report',    name: 'report',   component: ReportView, meta: { requiresAuth: true } },
   { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView,}
 ]
 

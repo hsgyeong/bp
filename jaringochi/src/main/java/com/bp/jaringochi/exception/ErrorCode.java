@@ -39,7 +39,13 @@ public enum ErrorCode {
 	NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "N403", "해당 알림에 접근할 권한이 없습니다."),
 
 	// ===== 통계 =====
-	STATISTICS_INVALID_INPUT(HttpStatus.BAD_REQUEST, "S400", "통계 조회 입력값이 올바르지 않습니다.");
+	STATISTICS_INVALID_INPUT(HttpStatus.BAD_REQUEST, "S400", "통계 조회 입력값이 올바르지 않습니다."),
+
+	// ===== 월간 레포트 =====
+	REPORT_INVALID_INPUT(HttpStatus.BAD_REQUEST, "R400", "레포트 조회 입력값이 올바르지 않습니다."),
+	REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "R404", "해당 월의 레포트를 찾을 수 없습니다."),
+	REPORT_ALREADY_REPLIED(HttpStatus.CONFLICT, "R409", "이번 달 굴비와의 한 마디는 이미 사용했어요."),
+	REPORT_AI_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "R503", "굴비가 지금 답을 떠올리지 못했어요. 잠시 후 다시 시도해 주세요.");
 	
 	
 	

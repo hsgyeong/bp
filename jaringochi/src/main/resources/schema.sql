@@ -19,6 +19,7 @@ USE `jaringochi`;
 SET FOREIGN_KEY_CHECKS = 0;
 -- refresh_token은 user를 참조하므로 user보다 먼저 삭제해야 한다.
 DROP TABLE IF EXISTS `refresh_token`;
+DROP TABLE IF EXISTS `monthly_report`;
 DROP TABLE IF EXISTS `notification`;
 DROP TABLE IF EXISTS `transaction`;
 DROP TABLE IF EXISTS `weekly_budget`;
@@ -91,6 +92,33 @@ CREATE TABLE `notification` (
   UNIQUE KEY `uq_budget_threshold` (`weekly_budget_id`, `threshold`) -- 앱 로직(mexSent 체크)이 이미 중복을 막지만, 동시 요청 충돌용 DB 안전망
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- AI 월간 레포트 (월 1회 생성 후 저장)
+CREATE TABLE `monthly_report` (
+  `id`               BIGINT        PRIMARY KEY AUTO_INCREMENT COMMENT '레포트 ID',
+  `user_id`          BIGINT        NOT NULL                   COMMENT '소유자',
+  `report_year`      INT           NOT NULL                   COMMENT '대상 연도',
+  `report_month`     INT           NOT NULL                   COMMENT '대상 월(1~12)',
+  -- 통계 스냅샷 (생성 시점 고정)
+  `total_expense`    DECIMAL(12,2) NULL                       COMMENT '그 달 총 지출',
+  `prev_expense`     DECIMAL(12,2) NULL                       COMMENT '전월 총 지출',
+  `diff_ratio`       DECIMAL(7,2)  NULL                       COMMENT '전월 대비 %, prev=0이면 NULL',
+  `success_weeks`    INT           NULL                       COMMENT '예산 성공 주 수(ratio<=100)',
+  `total_weeks`      INT           NULL                       COMMENT '그 달에 걸친 주간예산 수',
+  `top_category`     VARCHAR(50)   NULL                       COMMENT '가장 많이 쓴 카테고리명',
+  `category_json`    TEXT          NULL                       COMMENT '카테고리 breakdown(이름/금액/비율/전월대비) JSON',
+  -- AI 생성 텍스트
+  `one_liner`        VARCHAR(255)  NULL                       COMMENT '굴비 한줄평',
+  `mood`             VARCHAR(20)   NULL                       COMMENT 'hello|warn|happy|sad|hungry|sulk|angry',
+  `category_comment` VARCHAR(500)  NULL                       COMMENT '카테고리 분석 코멘트',
+  `advice`           VARCHAR(500)  NULL                       COMMENT '다음 달 절약 조언',
+  -- 굴비에게 한 마디 (월 1회)
+  `user_message`     VARCHAR(255)  NULL                       COMMENT '사용자가 굴비에게 건넨 말',
+  `gulbi_reply`      VARCHAR(500)  NULL                       COMMENT '굴비의 응답',
+  `replied_at`       DATETIME      NULL                       COMMENT '응답 시각(=한 마디 사용 여부)',
+  `generated_at`     DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '레포트 생성 시각',
+  UNIQUE KEY `uq_report_user_month` (`user_id`, `report_year`, `report_month`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Refresh Token 저장
 CREATE TABLE refresh_token (
   id BIGINT PRIMARY KEY AUTO_INCREMENT,
@@ -116,3 +144,4 @@ ALTER TABLE `transaction`   ADD FOREIGN KEY (`category_id`)      REFERENCES `cat
 ALTER TABLE `weekly_budget` ADD FOREIGN KEY (`user_id`)          REFERENCES `user` (`id`);
 ALTER TABLE `notification`  ADD FOREIGN KEY (`user_id`)          REFERENCES `user` (`id`);
 ALTER TABLE `notification`  ADD FOREIGN KEY (`weekly_budget_id`) REFERENCES `weekly_budget` (`id`);
+ALTER TABLE `monthly_report` ADD FOREIGN KEY (`user_id`)          REFERENCES `user` (`id`);

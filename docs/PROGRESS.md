@@ -6,6 +6,7 @@
 
 | 담당 | 작업 | 브랜치 | 비고 |
 |------|------|--------|------|
+| pearlseo73 | **AI 월간 레포트 + 굴비 한 마디** 풀스택 | feat/report | 신규 `monthly_report` 테이블 + `domain/report`(controller/service/dao/dto/client) + OpenAI `RestClient` 연동(`gpt-4o-mini`). `GET /reports/monthly`(없으면 생성·저장, 월1회 캐싱), `POST /reports/monthly/talk`(월1회). 프론트 `views/ReportView.vue`·`api/report.js`·`/report` 라우트·더보기 진입. 숫자는 기존 통계 재사용, AI는 텍스트만. **공유 필요**: `schema.sql`(monthly_report 추가), `application.properties`(`openai.*`), 키는 환경변수 `OPENAI_API_KEY`. 굴비 옷 뽑기는 hsgyeong 별도 진행(AI 이미지 생성) |
 | pearlseo73 | 알림 트리거(생성) 백엔드 + 컨트롤러 실인증 통일 + threshold 버그픽스 | feat/notification-trigger | **PR 대기**. 지출 등록 시 임계치 알림 자동 생성(DEC-0011·0012). Swagger 검증 완료: 25~150 단계 생성·같은 단계 중복차단·다단계 점프 시 최고 1건. hsgyeong 공유 필요: `schema.sql` 2곳(UNIQUE 안전망 + threshold `TINYINT`->`SMALLINT`), `TransactionServiceImpl.addTransaction` 연결 1줄 |
 
 ## 완료 (Done)

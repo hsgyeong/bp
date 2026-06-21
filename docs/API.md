@@ -1,6 +1,6 @@
 # 자린고치 가계부 API 명세서
 
-> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification`, `refresh_token` (6개 테이블)
+> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification`, `refresh_token`, `monthly_report` (7개 테이블)
 > Base URL: `/api`
 > 인증: 로그인 후 발급된 토큰(JWT 등)을 `Authorization: Bearer <token>` 헤더로 전달
 > 공통 응답 형식 / 상태 코드는 문서 하단 참고
@@ -426,6 +426,78 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 ---
 
+## 7. AI 월간 레포트 (Monthly Report)
+
+> 신규 테이블 `monthly_report`. 기존 통계(transaction 집계)로 숫자를 정확히 계산하고, **OpenAI(gpt-4o-mini)** 가 굴비 페르소나의 해석·코멘트·조언 텍스트만 생성한다.
+> - **월 1회 생성 후 저장(캐싱)**: 같은 (user, year, month) 재요청 시 재생성 없이 저장본 반환.
+> - **지출 중심**: type=2(지출)만 집계.
+> - OpenAI 키는 환경변수 `OPENAI_API_KEY` 로 주입. **키 미설정·호출 실패 시 숫자 + 폴백 문구**로 정상 응답(앱 안 죽음).
+
+### 7-1. 월간 레포트 조회 (없으면 생성)
+- **GET** `/api/reports/monthly`
+- 인증: 필요
+
+| 쿼리 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| year | int | ✅ | 대상 연도 |
+| month | int | ✅ | 대상 월(1~12) |
+
+- 미래 월 / 잘못된 month → 400 (`R400`).
+- `diffRatio`: 전월 대비 %(음수=절약). 전월 지출 0이면 `null`.
+- `mood`: `hello|warn|happy|sad|hungry|sulk|angry` 중 하나(GulbiMascot 표정).
+- `categories[]`: 이번 달 카테고리별(상위 4 + 기타) + 전월 대비 증감(`prevAmount`, `diffAmount`).
+- `userMessage`/`gulbiReply`/`repliedAt`: "한 마디" 미사용 시 `null`.
+
+**Response 200**
+```json
+{
+  "code": "SUCCESS",
+  "message": "요청이 성공적으로 처리되었습니다.",
+  "data": {
+    "id": 12,
+    "reportYear": 2026,
+    "reportMonth": 6,
+    "totalExpense": 600000.00,
+    "prevExpense": 680000.00,
+    "diffRatio": -11.76,
+    "successWeeks": 3,
+    "totalWeeks": 4,
+    "topCategory": "식비",
+    "oneLiner": "지난달보다 아꼈구나, 굴비도 흐뭇하다!",
+    "mood": "happy",
+    "categoryComment": "'식비'가 전월보다 줄었어. 이 페이스 유지하자!",
+    "advice": "다음 달엔 외식 횟수를 한 번만 줄여도 큰 도움이 돼.",
+    "categories": [
+      { "categoryName": "식비", "amount": 228000.00, "ratio": 38.0, "prevAmount": 250000.00, "diffAmount": -22000.00 }
+    ],
+    "userMessage": null,
+    "gulbiReply": null,
+    "repliedAt": null,
+    "generatedAt": "2026-06-20T10:00:00"
+  }
+}
+```
+
+---
+
+### 7-2. 굴비에게 한 마디 (월 1회)
+- **POST** `/api/reports/monthly/talk`
+- 인증: 필요
+- 해당 월 레포트에 사용자 메시지 1개를 보내면 굴비가 페르소나로 응답. **월 1회만** 가능.
+
+| 요청 (Body) | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| year | int | ✅ | 대상 연도 |
+| month | int | ✅ | 대상 월 |
+| message | string | ✅ | 굴비에게 건넬 말(최대 200자) |
+
+- 해당 월 레포트가 없으면 → 404 (`R404`). 먼저 7-1로 생성되어 있어야 함.
+- 이미 한 마디를 사용했으면 → 409 (`R409`).
+- AI 응답 실패 시 → 503 (`R503`). **이 경우 1회 기회를 소모하지 않으므로 재시도 가능**.
+- 성공 시 `userMessage`/`gulbiReply`/`repliedAt`가 채워진 레포트 반환(7-1과 동일 구조).
+
+---
+
 ## 공통 사항
 
 ### 응답 상태 코드
@@ -454,3 +526,4 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 | 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
 | 통계 | GET /statistics/by-category, /statistics/monthly-trend |
+| 월간레포트 | GET /reports/monthly, POST /reports/monthly/talk |
