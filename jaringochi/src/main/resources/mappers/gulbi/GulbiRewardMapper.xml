@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bp.jaringochi.domain.gulbi.dao.GulbiRewardDao">
+	
+	<select id="selectRewardForUpdate" resultType="GulbiReward">
+		SELECT
+			id AS weeklyBudgetId,
+			user_id AS uesrId,
+			reward_outfit_key AS rewardOutfitKey,
+			reward_status AS rewardStatus,
+			reward_images_json AS rewardImagesJson
+		FROM weekly_budget
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+		FOR UPDATE
+	</select>
+	
+	<update id="updateUserCurrentOutfit">
+		UPDATE `user`
+		SET current_outfit_key = #{outfitKey},
+			current_gulbi_images_json = #{imagesJson}
+		WHERE id = #{userId}
+	</update>
+	
+	<update id="updateRewardDecision">
+		UPDATE weekly_budget
+		SET reward_status = #{rewardStatus},
+			reward_decided_at = NOW()
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+		  AND reward_status = 'PENDING'
+	</update>
+</mapper>

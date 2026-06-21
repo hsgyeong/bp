@@ -11,7 +11,8 @@ import org.springframework.context.annotation.Configuration;
         "com.bp.jaringochi.domain.report.dao",
         "com.bp.jaringochi.domain.statistics.dao",
         "com.bp.jaringochi.domain.transaction.dao",
-        "com.bp.jaringochi.domain.user.dao"   
+        "com.bp.jaringochi.domain.user.dao",
+        "com.bp.jaringochi.domain.gulbi.dao"
 })
 public class MyBatisConfig {
 }
