@@ -6,6 +6,7 @@
 
 | 담당 | 작업 | 브랜치 | 비고 |
 |------|------|--------|------|
+| pearlseo73 | **AI 월간 레포트 + 굴비 한마디** 백엔드 | feat/report2 | 백엔드 완성(컴파일 통과). `domain/report`(controller/service/dao/dto) + `monthly_report` 테이블 + `REPORT_*` ErrorCode(R400/404/409/503). **Spring AI `ChatClient` + GMS 경유**(`gpt-5.4-mini`), AI 2회 호출(레포트 생성 `.entity()`·굴비 한마디 `.content()`), 통계/예산 서비스 재사용, 지난달 연속성(DB조회), 실패 시 폴백. ⚠️ 실행엔 `jaringochi/.env`에 `GMS_KEY` 필요(gitignore됨). **남음**: 프론트(`api/report.js`·`ReportView.vue`·라우트), GMS키 미설정 시 일반 OpenAI키 폴백(보류), `GmsConfig.java`(이미지용·미사용) 정리 |
 | pearlseo73 | 알림 트리거(생성) 백엔드 + 컨트롤러 실인증 통일 + threshold 버그픽스 | feat/notification-trigger | **PR 대기**. 지출 등록 시 임계치 알림 자동 생성(DEC-0011·0012). Swagger 검증 완료: 25~150 단계 생성·같은 단계 중복차단·다단계 점프 시 최고 1건. hsgyeong 공유 필요: `schema.sql` 2곳(UNIQUE 안전망 + threshold `TINYINT`->`SMALLINT`), `TransactionServiceImpl.addTransaction` 연결 1줄 |
 
 ## 완료 (Done)

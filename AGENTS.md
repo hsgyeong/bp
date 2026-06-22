@@ -39,18 +39,23 @@ bp/
 - 서버 포트 **8080**, springdoc-openapi(Swagger UI) 포함, Lombok 사용
 - 패키지 베이스: `com.bp.jaringochi`, 도메인형 구조 `domain/<도메인>/{controller,service,...}`
 - 빌드: `./mvnw spring-boot:run` (Windows: `mvnw.cmd`)
+- **AI(월간 레포트)**: **Spring AI 2.0.0-RC1** `spring-ai-starter-model-openai` + `ChatClient`.
+  호출은 **GMS(SSAFY AI 게이트웨이) 경유** — `application.properties`의 `spring.ai.openai.base-url=${gms.base-url}/api.openai.com` 로 라우팅, 모델 `gpt-5.4-mini`.
+  **키는 커밋 금지** — `jaringochi/.env`(gitignore됨)에 `GMS_KEY=...`, `spring.config.import`로 로드.
+  (집↔강의장 이동 시 `.env`만 새로 만들면 됨)
 
 ### 프론트엔드 (`jaringochi-front/`)
 - **Vue 3.5** + **Vite 8** + **axios**, `<script setup>` SFC
 - 실행: `npm install` → `npm run dev`
 
-## 4. 도메인 / DB (5개 테이블)
+## 4. 도메인 / DB (6개 테이블)
 
-`user`, `category`, `transaction`, `weekly_budget`, `notification`
+`user`, `category`, `transaction`, `weekly_budget`, `notification`, `monthly_report`
 → 컬럼·관계·엔드포인트 상세는 **[docs/API.md](docs/API.md)** 가 단일 기준.
+- `monthly_report`: AI 월간 레포트 캐시(월 1회 생성) + 굴비 한마디(월 1회). `user` FK.
 
 REST 규약: Base URL `/api`, 인증은 `Authorization: Bearer <token>` (JWT).
-주요 그룹: 인증/사용자, 카테고리, 거래내역, 주간예산, 알림, 통계.
+주요 그룹: 인증/사용자, 카테고리, 거래내역, 주간예산, 알림, 통계, 레포트.
 
 ## 5. 디자인 토큰 (사용자 승인 확정)
 

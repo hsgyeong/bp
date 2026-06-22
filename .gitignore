@@ -4,6 +4,8 @@
 
 # 강사 예시 프로젝트 (참고용 로컬 보관, 원격에 올리지 않음)
 SpringTestPractice/
+spring_ai_demo/
+spring-ai-tool/
 
 # OS 생성 파일
 .DS_Store
@@ -18,5 +20,4 @@ desktop.ini
 # 로그
 *.log
 
-# env
 .env
