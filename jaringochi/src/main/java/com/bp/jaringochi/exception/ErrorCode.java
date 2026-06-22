@@ -45,9 +45,15 @@ public enum ErrorCode {
 	REPORT_INVALID_INPUT(HttpStatus.BAD_REQUEST, "R400", "레포트 조회 입력값이 올바르지 않습니다."),
 	REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "R404", "해당 월의 레포트를 찾을 수 없습니다."),
 	REPORT_ALREADY_REPLIED(HttpStatus.CONFLICT, "R409", "이번 달 굴비와의 한 마디는 이미 사용했어요."),
-	REPORT_AI_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "R503", "굴비가 지금 답을 떠올리지 못했어요. 잠시 후 다시 시도해 주세요.");
+	REPORT_AI_FAILED(HttpStatus.SERVICE_UNAVAILABLE, "R503", "굴비가 지금 답을 떠올리지 못했어요. 잠시 후 다시 시도해 주세요."),
 	
 	
+	// ===== 굴비 보상 =====
+	REWARD_NOT_FOUND(HttpStatus.NOT_FOUND, "G404", "보상 정보를 찾을 수 없습니다."),
+	REWARD_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "G403", "예산 절약에 성공한 주만 굴비 옷을 뽑을 수 있습니다."),
+	REWARD_ALREADY_DECIDED(HttpStatus.CONFLICT, "G409", "이미 처리된 보상입니다."),
+	REWARD_INVALID_DECISION(HttpStatus.BAD_REQUEST, "G400", "decision은 ACCEPT 또는 DECLINE이어야 합니다."),
+	REWARD_NO_DRAW(HttpStatus.BAD_REQUEST, "G401", "먼저 굴비 옷을 뽑아야 합니다.");
 	
 	private final HttpStatus status;
 	private final String code;

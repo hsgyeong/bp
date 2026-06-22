@@ -13,6 +13,7 @@
 
 | 날짜 | 담당 | 작업 |
 |------|------|------|
+| 2026-06-22 | hsgyeong | **굴비 보상(절약 성공 리워드) 기능** - `gulbi` 도메인 신설(draw/decision/조회) + `weekly_budget`·`user` 보상 컬럼 + 자격검사(주 종료·지출≤예산·미결정) + 7무드 동일 옷(앵커→레퍼런스, DEC-0020). 이미지 생성 제공자: Claude(불가)·OpenAI(유료)·Google직접(무료티어 0) 검토 후 **SSAFY GMS 경유 Gemini** 채택(DEC-0019). 버그픽스: 컨트롤러 `@RequestBody`를 Swagger→Spring으로 교체(본문 null NPE), 불필요한 `GmsConfig` 삭제. 프론트 `GulbiRewardView`·`api/gulbiReward.js`·홈 보상카드·그림판 테마 마스코트 연동. API.md §7 추가 |
 | 2026-06-14 | hsgyeong | **거래 목록 검색·정렬 API 명세 추가** - `GET /api/transactions`에 `keyword`(메모/카테고리명 검색), `sort`(`date_desc`, `date_asc`, `amount_desc`, `amount_asc`) 쿼리 파라미터 문서화 |
 | 2026-06-14 | hsgyeong | **Refresh Token 기반 로그아웃 보완** - 로그인 응답에 `refreshToken` 추가, `refresh_token` 테이블/DAO/Mapper/Service 추가, 로그아웃·회원탈퇴 시 Refresh Token 폐기, 프론트 auth store·로그인·마이페이지·프로필 수정 화면의 토큰 상태 동기화, 로그아웃·회원탈퇴 완료 안내 alert 처리, API.md 인증 명세 갱신 |
 | 2026-06-12 | pearlseo73 | **알림 조회 백엔드 4종**(목록/안읽음수/단건읽음/전체읽음) - DTO·DAO·Mapper·Service·Controller + 소유권 검증(404/403). feat/notification PR#19 머지 |
@@ -32,6 +33,7 @@
 
 - ~~MyBatis 매퍼 경로 불일치~~ -> **해결됨**: `application.properties`(`classpath:mappers/**/*.xml`)와 실제 폴더(`resources/mappers/`)가 모두 복수 `mappers`로 통일됨.
 - `ratio` 컬럼이 `DECIMAL(5,2)`(최대 999.99) - 예산을 아주 적게 잡고 지출이 1000%를 넘으면 저장 실패 가능. 드문 케이스라 보류, 필요 시 자릿수 확대.
+- **굴비 보상 운영 주의** - (1) `gms.model`이 GMS 실제 카탈로그 이름과 일치해야 함(목록 확인), 인증 안 되면 `Authorization: Bearer`로 대체. (2) 뽑기 1회=이미지 7회 호출이라 GMS 쿼터/지연 부담 → 테스트 시 프론트 무드 1~2개로 축소. (3) `httpClient` 타임아웃 미설정 → 멈추면 길게 블로킹(개선 권장). (4) `gemini-2.5-flash-image`를 Google **직접** 호출하면 무료 티어 한도 0(429)이라 GMS 경유 필수.
 
 ## 다음 할 일 (Backlog)
 

@@ -38,7 +38,9 @@ CREATE TABLE `user` (
   `password`   VARCHAR(255) NOT NULL                   COMMENT '암호화 저장',
   `nickname`   VARCHAR(50)  NOT NULL                   COMMENT '표시 이름',
   `created_at` DATETIME     DEFAULT CURRENT_TIMESTAMP  COMMENT '가입 시각',
-  `deleted_at` DATETIME     NULL                       COMMENT 'NULL=활성 / 값=탈퇴 시점(soft delete)'
+  `deleted_at` DATETIME     NULL                       COMMENT 'NULL=활성 / 값=탈퇴 시점(soft delete)',
+  `current_outfit_key`        VARCHAR(50) NOT NULL DEFAULT 'default' COMMENT '현재 착용 굴비 옷',
+  `current_gulbi_images_json` JSON        NULL                       COMMENT '무드별 굴비 이미지 맵'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 카테고리
@@ -75,7 +77,11 @@ CREATE TABLE `weekly_budget` (
   `end_date`     DATE          NOT NULL                   COMMENT '주 종료일',
   `update_count` INT           DEFAULT 0                  COMMENT '그 달 수정 횟수(월 2회 제한)',
   `created_at`   DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '주마다 새로 생성',
-  `updated_at`   DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '주중 변경 시각'
+  `updated_at`   DATETIME      DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '주중 변경 시각',
+  `reward_status`      VARCHAR(20) NULL COMMENT 'NULL=미뽑기 / PENDING / ACCEPTED / DECLINED',
+  `reward_outfit_key`  VARCHAR(50) NULL COMMENT '뽑은 옷 키',
+  `reward_images_json` JSON        NULL COMMENT '뽑기 결과 이미지 맵',
+  `reward_decided_at`  DATETIME    NULL COMMENT '받기/거절 확정 시각'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 예산 초과 알림

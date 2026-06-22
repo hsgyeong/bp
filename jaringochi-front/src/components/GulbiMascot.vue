@@ -28,9 +28,12 @@ const LABEL = {
 const props = defineProps({
   mood: { type: String, default: 'hello' },
   size: { type: [Number, String], default: 120 },
+  images: { type: Object, default: null }, 
 })
 
 function src() {
+   // 옷 입은 이미지가 있으면 그걸, 없으면 기본 굴비 PNG
+  if (props.images && props.images[props.mood]) return props.images[props.mood]
   return MOODS[props.mood] || MOODS.hello
 }
 function label() {

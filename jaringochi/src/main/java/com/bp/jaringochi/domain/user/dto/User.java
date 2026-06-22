@@ -1,8 +1,16 @@
 package com.bp.jaringochi.domain.user.dto;
 
 import java.time.LocalDateTime;
+import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class User {
+	
+	private static final ObjectMapper MAPPER = new ObjectMapper();
 	
 	private Long id;
 	private String email;
@@ -10,6 +18,9 @@ public class User {
 	private String nickname;
 	private LocalDateTime createdAt;
 	private LocalDateTime deletedAt;
+	private String currentOutfitKey;
+	@JsonIgnore
+	private String currentGulbiImagesJson;
 	
 	public Long getId() {
 		return id;
@@ -48,5 +59,29 @@ public class User {
 		this.deletedAt = deletedAt;
 	}
 	
+	public String getCurrentOutfitKey() { 
+		return currentOutfitKey; 
+	}
+	public void setCurrentOutfitKey(String currentOutfitKey) { 
+		this.currentOutfitKey = currentOutfitKey; 
+	}
+
+	public String getCurrentGulbiImagesJson() { 
+		return currentGulbiImagesJson; 
+	}
 	
+	public void setCurrentGulbiImagesJson(String currentGulbiImagesJson) {
+		this.currentGulbiImagesJson = currentGulbiImagesJson;
+	}
+
+	// 응답엔 파싱된 맵으로 내려줌: { "happy": "data:image/png;base64,...", ... }
+	@JsonProperty("currentGulbiImages")
+	public Map<String, String> getCurrentGulbiImages(){
+		if (currentGulbiImagesJson == null || currentGulbiImagesJson.isBlank()) return null;
+		try {
+			return MAPPER.readValue(currentGulbiImagesJson, new TypeReference<Map<String, String>>() {});
+		} catch (Exception e) {
+			return null;
+		}
+	}
 }
