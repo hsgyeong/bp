@@ -21,6 +21,7 @@ const tabs = [
   { to: '/',       label: '홈',     icon: '🏠', ti: 'ti-home' },
   { to: '/ledger', label: '가계부', icon: '📒', ti: 'ti-notebook' },
   { to: '/stats',  label: '통계',   icon: '📊', ti: 'ti-chart-bar' },
+  { to: '/report', label: '레포트', icon: '🐟', ti: 'ti-report' },
   { to: '/more',   label: '더보기', icon: '⋯',  ti: 'ti-dots' },
 ]
 
@@ -63,7 +64,7 @@ const { theme, cycle: cycleTheme } = useTheme()
     <router-view />    <!-- 현재 주소에 맞는 화면이 여기 끼워짐 -->
   </main>
 
-  <!-- 하단 4탭 바 (paint: paint-hline 유틸로 윗선을 손그림 가로선으로) -->
+  <!-- 하단 5탭 바 (paint: paint-hline 유틸로 윗선을 손그림 가로선으로) -->
   <nav class="tabbar paint-hline">
     <router-link
       v-for="tab in tabs"
@@ -97,7 +98,7 @@ const { theme, cycle: cycleTheme } = useTheme()
   border-top: 1px solid var(--line);
 }
 .tab {
-  flex: 1;                /* 4칸 똑같이 나눔 */
+  flex: 1;                /* 5칸 똑같이 나눔 */
   display: flex;
   flex-direction: column;
   align-items: center;
