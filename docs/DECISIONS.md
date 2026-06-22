@@ -142,6 +142,38 @@
   - 단계별 여러 건이 아니라 **최고 1건**만 재생성(DEC-0011 철학 유지). 거래 수정 시 재평가(`updateTransaction`)는 여전히 백로그.
   - API.md §4-4에 재평가 동작 명시.
 
+## DEC-0018 · 굴비 보상(절약 성공 리워드) 도메인 신설
+- **날짜**: 2026-06-22
+- **결정**: 한 주 예산을 지킨(절약 성공) 사용자에게 보상으로 **굴비에게 옷을 입히는 AI 이미지**를 생성해 주는 `gulbi` 도메인을 추가한다.
+  - 엔드포인트: `GET/POST /api/budgets/weekly/{weeklyBudgetId}/gulbi-reward`(상태조회 / `/draw` 뽑기 / `/decision` 받기·거절). 예산 하위 리소스로 배치.
+  - 자격: **그 주 종료**(endDate < 오늘) + **지출 ≤ 예산** + 미결정(rewardStatus가 ACCEPTED/DECLINED 아님).
+  - 옷은 6종(hanbok·hoodie·pajama·school·santa·raincoat) 중 **현재 옷 제외 랜덤 1개**, 무드 7종이 같은 옷 착용.
+  - DB: `weekly_budget`에 `reward_status`·`reward_outfit_key`·`reward_images_json`·`reward_decided_at`, `user`에 `current_outfit_key`·`current_gulbi_images_json` 추가.
+- **이유**: "절약하면 굴비가 새 옷을 받는다"는 보상 루프로 절약 동기를 강화. 예산 달성 여부가 판정 기준이라 주간예산 하위에 둠.
+- **영향**:
+  - 이미지 생성은 느리고 외부 호출이라 **뽑기=생성(트랜잭션 밖) → 저장만 짧은 트랜잭션**으로 분리(`GulbiRewardService.draw` + `GulbiRewardTx.persistPending`).
+  - PENDING 상태로 저장해 두고 `GET`으로 재생성 없이 이어보기 가능. ACCEPT 시에만 유저 현재 외형 반영.
+  - ErrorCode `REWARD_*`(G400·G401·G403·G404·G409) 추가. API.md §7 신설.
+  - 컨트롤러 `@RequestBody`는 반드시 `org.springframework.web.bind.annotation` 것을 사용(초기 버그: Swagger 애너테이션을 import해 본문 바인딩이 안 돼 `baseImages`가 null → NPE).
+
+## DEC-0019 · 이미지 생성 제공자: SSAFY GMS(Gemini) 채택
+- **날짜**: 2026-06-22
+- **결정**: 굴비 옷 이미지 생성은 **SSAFY GMS 게이트웨이 경유 Gemini 이미지 모델**(`gemini-2.5-flash-image`, JSON `generateContent`)을 사용한다. 호출 URL은 `{gms.base-url}/generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`, 인증 헤더 `x-goog-api-key: <GMS_KEY>`. 키는 `.env`(`GMS_KEY`)로 주입, `.gitignore` 대상.
+- **이유**: Claude는 이미지 생성 불가, OpenAI `gpt-image-1`은 유료, Google 직접 호출은 이미지 모델 무료 티어 0(429). GMS는 SSAFY 제공으로 학생 무료 + Gemini 이미지 편집 지원.
+- **영향**:
+  - `GmsImageClient`는 멀티파트가 아닌 **JSON(contents/parts/inline_data + responseModalities)** 으로 호출. 설정은 `gms.base-url`·`gms.api-key`·`gms.model`.
+  - 사용 안 하게 된 `GmsConfig`(빈 RestClient·`${gms.key}` 주입) 삭제 — 미삭제 시 기동 실패.
+  - 모델명은 GMS가 실제로 여는 카탈로그와 일치해야 함(목록 확인). 인증이 `x-goog-api-key`로 안 되면 `Authorization: Bearer`로 대체.
+  - 뽑기 1회 = 무드 7종 = **이미지 7회 호출**이라 비용·지연·쿼터 부담. 테스트 시 무드 축소 권장.
+
+## DEC-0020 · 7무드 동일 옷: 앵커 생성 후 레퍼런스 통일
+- **날짜**: 2026-06-22
+- **결정**: 한 번의 뽑기에서 옷은 `draw()`가 **한 번만** 랜덤 선택해 7무드가 같은 `outfitKey`를 공유한다. 시각적 일관성을 위해 **첫 무드(앵커)로 옷의 정본을 생성**한 뒤, 나머지 무드는 그 정본 이미지를 **레퍼런스(2번째 입력 이미지)** 로 함께 보내 같은 옷을 입히도록 한다.
+- **이유**: 무드별로 독립 생성하면 같은 "후드티"라도 색·무늬가 제각각 나온다. 정본을 레퍼런스로 강제하면 종류·색·디테일이 강하게 일치.
+- **영향**:
+  - `GmsImageClient.dressGulbi(..., referenceB64)` 5번째 인자 추가(앵커는 `null`). `GulbiRewardService.generate`가 앵커→레퍼런스 순으로 호출.
+  - 생성 모델 특성상 **픽셀 단위 동일은 보장 못 함**. 더 엄격히 맞추려면 프롬프트에 색까지 고정. 호출 수는 7회 유지.
+
 <!--
 ## DEC-000N · 제목
 - **날짜**:

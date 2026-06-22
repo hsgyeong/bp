@@ -426,6 +426,64 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 ---
 
+## 7. 굴비 보상 (Gulbi Reward)
+
+> 한 주의 예산을 지켜내면(절약 성공) 보상으로 굴비에게 입힐 옷을 AI 이미지로 생성한다.
+> 마스코트 7무드(hello·warn·happy·sad·hungry·sulk·angry)가 **동일한 한 벌**을 입는다.
+> 옷 종류(랜덤): hanbok·hoodie·pajama·school·santa·raincoat 중 **현재 입은 옷 제외** 후 1개.
+> 이미지 생성은 SSAFY GMS 게이트웨이 경유 Gemini 이미지 모델 사용 (DEC-0019).
+> 자격: **그 주가 종료**(endDate < 오늘) + **지출 ≤ 예산** + 아직 ACCEPT/DECLINE 안 한 상태.
+
+### 7-1. 보상 상태 조회 (PENDING 이어보기)
+- **GET** `/api/budgets/weekly/{weeklyBudgetId}/gulbi-reward`
+- 인증: 필요
+- 용도: 이미 뽑아둔(PENDING) 보상이 있으면 **재생성 없이** 저장된 결과를 반환. 없으면 `data: null`.
+
+**Response 200** (PENDING 있음)
+```json
+{
+  "weeklyBudgetId": 1,
+  "outfitKey": "hoodie",
+  "rewardStatus": "PENDING",
+  "images": { "happy": "data:image/png;base64,...", "sad": "data:image/png;base64,..." }
+}
+```
+
+---
+
+### 7-2. 굴비 옷 뽑기
+- **POST** `/api/budgets/weekly/{weeklyBudgetId}/gulbi-reward/draw`
+- 인증: 필요
+- 처리: 자격 검사 → 현재 옷 제외 랜덤 선택 → 7무드 **동일 옷** 이미지 생성(트랜잭션 밖, 앵커 1장 생성 후 나머지는 레퍼런스로 통일 · DEC-0020) → PENDING 저장(짧은 트랜잭션).
+
+| 요청(body) | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| baseImages | object | ✅ | `{ "<mood>": { "mimeType": "image/png", "base64": "..." } }` 무드별 원본 굴비 이미지 |
+
+**Response 200** 생성 결과 (7-1과 동일 형식, `rewardStatus: "PENDING"`)
+- 400: `baseImages` 누락
+- 403: 절약 성공 주가 아님 (REWARD_NOT_ELIGIBLE, G403)
+- 404: 해당 주 예산 없음 (BUDGET_NOT_FOUND, B404)
+- 409: 이미 받기/거절 처리된 보상 (REWARD_ALREADY_DECIDED, G409)
+
+---
+
+### 7-3. 보상 받기 / 거절
+- **POST** `/api/budgets/weekly/{weeklyBudgetId}/gulbi-reward/decision`
+- 인증: 필요
+
+| 요청(body) | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| decision | string | ✅ | `ACCEPT` 또는 `DECLINE` |
+
+- 처리: `ACCEPT` 시 `user.current_outfit_key`·`current_gulbi_images_json`을 뽑은 결과로 갱신 후 보상 `ACCEPTED`. `DECLINE` 시 보상만 `DECLINED`(굴비 외형 유지).
+- **Response 200** `{ "message": "굴비 옷 선택이 반영되었습니다." }`
+- 400: decision 값 오류 (REWARD_INVALID_DECISION, G400) / 먼저 뽑기 필요 (REWARD_NO_DRAW, G401)
+- 404: 보상 정보 없음 (REWARD_NOT_FOUND, G404)
+- 409: 이미 처리된 보상 (REWARD_ALREADY_DECIDED, G409)
+
+---
+
 ## 공통 사항
 
 ### 응답 상태 코드
@@ -454,3 +512,4 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 | 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
 | 통계 | GET /statistics/by-category, /statistics/monthly-trend |
+| 굴비보상 | GET /budgets/weekly/{id}/gulbi-reward, POST .../gulbi-reward/draw, POST .../gulbi-reward/decision |

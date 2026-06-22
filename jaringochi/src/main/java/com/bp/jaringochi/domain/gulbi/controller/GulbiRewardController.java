@@ -2,8 +2,10 @@ package com.bp.jaringochi.domain.gulbi.controller;
 
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +17,6 @@ import com.bp.jaringochi.exception.BusinessException;
 import com.bp.jaringochi.exception.ErrorCode;
 import com.bp.jaringochi.global.response.Response;
 
-import io.swagger.v3.oas.annotations.parameters.RequestBody;
 
 @RestController
 @RequestMapping("/api/budgets/weekly/{weeklyBudgetId}/gulbi-reward")
@@ -53,6 +54,15 @@ public class GulbiRewardController {
 			throw new BusinessException(ErrorCode.USER_UNAUTHORIZED);
 		}
 		return Long.valueOf(jwt.getSubject());
+	}
+	
+	@GetMapping
+	public Response<GulbiDrawResponse> getPending(
+			@PathVariable Long weeklyBudgetId,
+			Authentication authentication
+	) {
+		Long userId = getCurrentUserId(authentication);
+		return Response.success(gulbiRewardService.getPending(userId, weeklyBudgetId));
 	}
 	
 }

@@ -8,3 +8,6 @@ export function decideGulbiReward(weeklyBudgetId, decision) {
     return http.post(`/budgets/weekly/${weeklyBudgetId}/gulbi-reward/decision`, { decision })
 }
 
+export function getGulbiReward(weeklyBudgetId) {
+    return http.get(`/budgets/weekly/${weeklyBudgetId}/gulbi-reward`)
+}

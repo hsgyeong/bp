@@ -39,9 +39,14 @@ public enum ErrorCode {
 	NOTIFICATION_FORBIDDEN(HttpStatus.FORBIDDEN, "N403", "해당 알림에 접근할 권한이 없습니다."),
 
 	// ===== 통계 =====
-	STATISTICS_INVALID_INPUT(HttpStatus.BAD_REQUEST, "S400", "통계 조회 입력값이 올바르지 않습니다.");
+	STATISTICS_INVALID_INPUT(HttpStatus.BAD_REQUEST, "S400", "통계 조회 입력값이 올바르지 않습니다."),
 	
-	
+	// ===== 굴비 보상 =====
+	REWARD_NOT_FOUND(HttpStatus.NOT_FOUND, "G404", "보상 정보를 찾을 수 없습니다."),
+	REWARD_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "G403", "예산 절약에 성공한 주만 굴비 옷을 뽑을 수 있습니다."),
+	REWARD_ALREADY_DECIDED(HttpStatus.CONFLICT, "G409", "이미 처리된 보상입니다."),
+	REWARD_INVALID_DECISION(HttpStatus.BAD_REQUEST, "G400", "decision은 ACCEPT 또는 DECLINE이어야 합니다."),
+	REWARD_NO_DRAW(HttpStatus.BAD_REQUEST, "G401", "먼저 굴비 옷을 뽑아야 합니다.");
 	
 	private final HttpStatus status;
 	private final String code;

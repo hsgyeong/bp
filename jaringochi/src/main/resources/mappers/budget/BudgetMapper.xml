@@ -6,7 +6,7 @@
 
     <!-- 공통 컬럼 + 그 주 지출합(spent_money) 서브쿼리 (type=2 지출만, 그 주 범위, 같은 유저) -->
     <sql id="weeklyColumns">
-        wb.id, wb.user_id, wb.amount, wb.start_date, wb.end_date, wb.update_count,
+        wb.id, wb.user_id, wb.amount, wb.start_date, wb.end_date, wb.update_count, wb.reward_status,
         COALESCE((
             SELECT SUM(t.amount)
             FROM `transaction` t
