@@ -12,6 +12,8 @@
 		<result property="nickname" column="nickname"/>
 		<result property="createdAt" column="created_at"/>
 		<result property="deletedAt" column="deleted_at"/>
+		<result property="currentOutfitKey" column="current_outfit_key"/>            
+		<result property="currentGulbiImagesJson" column="current_gulbi_images_json"/>
 	</resultMap>
 	
 	<insert id="insertUser" parameterType="User" useGeneratedKeys="true" keyProperty="id">
@@ -34,7 +36,8 @@
 	</select>
 	
 	<select id="findById" parameterType="long" resultMap="userResultMap">
-		SELECT id, email, password, nickname, created_at, deleted_at
+		SELECT id, email, password, nickname, created_at, deleted_at,
+		       current_outfit_key, current_gulbi_images_json
 		FROM `user`
 		WHERE id = #{id}
 		  AND deleted_at IS NULL

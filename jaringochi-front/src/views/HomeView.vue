@@ -2,11 +2,12 @@
 import { computed, onMounted, ref } from 'vue'  // computed: 값이 바뀌면 자동으로 다시 계산되는 값 / onMounted: 화면이 처음 열렸을 때 실행되는 함수 등록 / ref: 화면에 반영되는 반응형 변수
 import { useRouter } from 'vue-router'          // 코드로 화면 이동할 때 사용
 import { fetchTransactions } from '@/api/transaction'
-import { getCurrentWeek } from '@/api/budget'
+import { getCurrentWeek, getRecentWeeks } from '@/api/budget'
 import { useAuthStore } from '@/stores/auth'    // 로그인한 사용자 정보를 꺼내기 위한 Pinia store
 import { useTheme } from '@/composables/useTheme'
 import GulbiMascot from '@/components/GulbiMascot.vue'
 import { categoryTablerIcon } from '@/utils/categoryIcon'
+import { fetchMeApi } from '@/api/auth'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -16,6 +17,24 @@ const loading = ref(false)
 const errorMessage = ref('')
 const transactions = ref([])
 const weeklyBudget = ref(null)
+const recentWeeks = ref([])
+const gulbiImages = ref(null)   // 현재 착용 옷 이미지 맵
+
+// 끝난 주 중 "절약 성공 & 아직 안 뽑은" 가장 최근 주 1개
+const pendingReward = computed(() => {
+  const now = new Date()
+  const todayStr =
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+
+  return [...recentWeeks.value]
+    .filter((w) => {
+      const ended   = String(w.endDate) < todayStr
+      const success = Number(w.spentMoney || 0) <= Number(w.amount || 0)
+      const notDecided = w.rewardStatus == null || w.rewardStatus === 'PENDING' // ← null + PENDING
+      return ended && success && notDecided
+    })
+    .sort((a, b) => String(b.endDate).localeCompare(String(a.endDate)))[0] || null
+})
 
 const hasWeeklyBudget = computed(() => {
   return weeklyBudget.value != null
@@ -164,15 +183,22 @@ function goBudget() {
   router.push({ name: 'budget' })
 }
 
+function goReward() {
+  if (!pendingReward.value) return
+  router.push({ name: 'gulbi-reward', params: { weeklyBudgetId: pendingReward.value.id } })
+}
+
 async function loadHome() {
   loading.value = true
   errorMessage.value = ''
 
   // 이번 주 예산과 이번 달 거래 목록 동시에 요청
-  const [budgetResult, transactionResult] = await Promise.allSettled([
-    getCurrentWeek(),
-    fetchTransactions(getMonthRange()),
-  ])
+const [budgetResult, transactionResult, recentResult, meResult] = await Promise.allSettled([
+  getCurrentWeek(),
+  fetchTransactions(getMonthRange()),
+  getRecentWeeks(),
+  fetchMeApi(),                                  
+])
 
   if (budgetResult.status === 'fulfilled') {
     weeklyBudget.value = budgetResult.value.data.data || budgetResult.value.data
@@ -186,6 +212,19 @@ async function loadHome() {
     transactions.value = []
     errorMessage.value =
       transactionResult.reason?.response?.data?.message || '홈 정보를 불러오지 못했습니다.'
+  }
+
+  if (recentResult.status === 'fulfilled') {
+    recentWeeks.value = recentResult.value.data.data || recentResult.value.data || []
+  } else {
+    recentWeeks.value = []
+  }
+
+  if (meResult.status === 'fulfilled') {
+    const me = meResult.value.data?.data ?? null
+    gulbiImages.value = me?.currentGulbiImages || null
+  } else {
+    gulbiImages.value = null
   }
 
   loading.value = false
@@ -214,7 +253,7 @@ onMounted(loadHome)
 
     <section class="mascot-card" :class="{ 'no-budget': !hasWeeklyBudget }">
       <!-- paint 테마: 표정 굴비 사진 / classic 테마: 기존 골드 SVG 굴비 -->
-      <GulbiMascot v-if="theme === 'paint'" :mood="mascotMood" :size="92" />
+      <GulbiMascot v-if="theme === 'paint'" :mood="mascotMood" :size="92"  :images="gulbiImages"/>
       <svg v-else class="gulbi" viewBox="0 0 120 80" aria-hidden="true">
         <path d="M14 40 L2 24 Q-2 40 2 56 Z" fill="#E89020" />
         <ellipse cx="58" cy="40" rx="45" ry="25" fill="#F8B64C" stroke="#D98217" stroke-width="2.5" />
@@ -232,11 +271,23 @@ onMounted(loadHome)
       </div>
 
       <div v-else class="budget-empty">
-        <strong class="budget-empty-title">아직 이번주 예산을 설정하지 않았어요.</strong>
-        <div class="budget-empty-action">
-          <p>지금 바로 예산을 설정해볼까요?</p>
-          <button class="budget-link" type="button" @click="goBudget">예산 설정하기</button>
-        </div>
+        <!-- 지난주 절약 성공 & 미뽑기 → 굴비 옷 뽑기 우선 노출 -->
+        <template v-if="pendingReward">
+          <strong class="budget-empty-title">지난주 예산을 지켜냈어요! 🎉</strong>
+          <div class="budget-empty-action">
+            <p>절약에 성공한 보상으로 굴비에게 새 옷을 선물할 수 있어요.</p>
+            <button class="budget-link" type="button" @click="goReward">굴비 옷 뽑기</button>
+          </div>
+        </template>
+
+        <!-- 보상이 없으면 기존 예산 설정 안내 -->
+        <template v-else>
+          <strong class="budget-empty-title">아직 이번주 예산을 설정하지 않았어요.</strong>
+          <div class="budget-empty-action">
+            <p>지금 바로 예산을 설정해볼까요?</p>
+            <button class="budget-link" type="button" @click="goBudget">예산 설정하기</button>
+          </div>
+        </template>
       </div>
     </section>
 

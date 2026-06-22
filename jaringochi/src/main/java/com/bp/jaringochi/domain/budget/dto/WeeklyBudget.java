@@ -24,6 +24,7 @@ public class WeeklyBudget {
     private Integer updateCount;     // 월 2회 제한 판단 위해
     private BigDecimal spentMoney;   
     private BigDecimal ratio;        // spentMoney/amount×100 Service에서 반올림해서 입력
+    private String rewardStatus;	 // NULL=미뽑기 / PENDING / ACCEPTED / DECLINED
 
     // 필드엔 없는데 만든 getter
     public boolean isUpdatable() {

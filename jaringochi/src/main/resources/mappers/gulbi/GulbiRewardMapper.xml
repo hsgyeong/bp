@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bp.jaringochi.domain.gulbi.dao.GulbiRewardDao">
+	
+	<!-- 뽑기 자격 판정: 그 주 예산/지출/종료일/보상상태 + 유저 현재 옷 -->
+	<select id="selectDrawContext" resultType="GulbiDrawContext">
+		SELECT
+			wb.amount			AS amount,
+			wb.end_date			AS endDate,
+			wb.reward_status	AS rewardStatus,
+			u.current_outfit_key AS currentOutfitKey,
+			COALESCE((
+				SELECT SUM(t.amount)
+				FROM `transaction` t
+				WHERE t.user_id = wb.user_id
+				  AND t.type = 2
+				  AND t.`date` BETWEEN wb.start_date AND wb.end_date				 
+			), 0) AS spentMoney
+		FROM weekly_budget wb
+		JOIN `user` u ON u.id = wb.user_id
+		WHERE wb.id = #{weeklyBudgetId}
+		  AND wb.user_id = #{userId}
+	</select>
+	
+	<!-- 뽑기 결과 저장 (PENDING) -->
+	<update id="updateRewardDraw">
+		UPDATE weekly_budget
+		SET reward_outfit_key  = #{outfitKey},
+			reward_images_json = #{imagesJson},
+			reward_status      = 'PENDING',
+			reward_decided_at  = NULL
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+	</update>
+	
+	<select id="selectRewardForUpdate" resultType="GulbiReward">
+		SELECT
+			id                 AS weeklyBudgetId,
+			user_id            AS userId,
+			reward_outfit_key  AS rewardOutfitKey,
+			reward_status      AS rewardStatus,
+			reward_images_json AS rewardImagesJson
+		FROM weekly_budget
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+		FOR UPDATE
+	</select>
+	
+	<update id="updateUserCurrentOutfit">
+		UPDATE `user`
+		SET current_outfit_key        = #{outfitKey},
+			current_gulbi_images_json = #{imagesJson}
+		WHERE id = #{userId}
+	</update>
+	
+	<update id="updateRewardDecision">
+		UPDATE weekly_budget
+		SET reward_status     = #{rewardStatus},
+			reward_decided_at = NOW()
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+		  AND reward_status = 'PENDING'
+	</update>
+	
+	<select id="selectReward" resultType="GulbiReward">
+		SELECT
+			id                 AS weeklyBudgetId,
+			user_id            AS userId,
+			reward_outfit_key  AS rewardOutfitKey,
+			reward_status      AS rewardStatus,
+			reward_images_json AS rewardImagesJson
+		FROM weekly_budget
+		WHERE id = #{weeklyBudgetId}
+		  AND user_id = #{userId}
+	</select>
+</mapper>

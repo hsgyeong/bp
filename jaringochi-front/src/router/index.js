@@ -12,6 +12,8 @@ import MyPageView from '@/views/MyPageView.vue'
 import ProfileEditView from '@/views/ProfileEditView.vue'
 import BudgetView from '@/views/BudgetView.vue'
 import TransactionFormView from '@/views/TransactionFormView.vue'
+import GulbiRewardView from '@/views/GulbiRewardView.vue'
+
 
 // 주소 <-> 화면 짝짓는 표
 const routes = [
@@ -27,7 +29,9 @@ const routes = [
   { path: '/me/edit', name: 'profile-edit', component: ProfileEditView, meta: { requiresAuth: true } },
   { path: '/categories', name: 'categories', component: CategoryView, meta: { requiresAuth: true } },
   { path: '/budget',    name: 'budget',   component: BudgetView, meta: { requiresAuth: true } }, 
-  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView,}
+  { path: '/:pathMatch(.*)*', name: 'not-found', component: NotFoundView,},
+  { path: '/gulbi-reward/:weeklyBudgetId', name: 'gulbi-reward',     
+    component: GulbiRewardView, props: true, meta: { requiresAuth: true } },
 ]
 
 const router = createRouter({
