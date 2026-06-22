@@ -426,6 +426,68 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 ---
 
+## 7. 월간 레포트 (Monthly Report)
+
+> AI(굴비) 월간 레포트. 통계/예산 지표는 기존 도메인을 재사용해 정확히 계산하고, 텍스트
+> (한줄평·코멘트·조언·한마디 응답)는 **Spring AI `ChatClient`**로 생성한다. AI 호출은
+> **GMS(SSAFY AI 게이트웨이) 경유**(`spring.ai.openai.*` 설정, 키는 `.env`의 `GMS_KEY`).
+> 레포트는 **월 1회 생성 후 DB 캐싱**(`monthly_report`), 굴비 한마디도 **월 1회**.
+> 생성 대상은 **완료된 달(지난달까지)만** — 진행 중인 이번 달/미래 달은 400(R400).
+> 주간 예산 성공 주는 **완료된 최근 3주**(진행 중 주 제외) 중 `ratio ≤ 100` 카운트(월 무관).
+
+### 7-1. 월간 레포트 조회 (없으면 생성)
+- **GET** `/api/reports/monthly?year=&month=`
+- 인증: 필요
+- DB에 있으면 그대로 반환, 없으면 통계 수집 + AI 생성 후 저장하고 반환. **재요청 시 재생성 안 함.**
+
+| 쿼리 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| year | int | ✅ | 대상 연도 |
+| month | int | ✅ | 대상 월(1~12) |
+
+**Response 200**
+```json
+{
+  "id": 1,
+  "reportYear": 2026, "reportMonth": 5,
+  "totalExpense": 320000.00, "prevExpense": 280000.00, "diffRatio": 14.29,
+  "successWeeks": 2, "totalWeeks": 3,
+  "topCategory": "식비",
+  "oneLiner": "지난달보다 조금 더 썼네, 다음 달엔 같이 줄여보자.",
+  "mood": "warn",
+  "categoryComment": "식비가 전월보다 늘었어. 외식 한 번만 줄여도 큰 도움이 돼.",
+  "advice": "주간 예산을 미리 정하고 큰 지출은 하루 미뤄 생각해보자.",
+  "userMessage": null, "gulbiReply": null, "repliedAt": null,
+  "generatedAt": "2026-06-01T09:00:00",
+  "categories": [
+    { "categoryId": 5, "categoryName": "식비", "amount": 120000.00, "ratio": 37.50, "diffAmount": 20000.00 }
+  ]
+}
+```
+- `diffRatio`: 전월 대비 %, **전월 지출이 0이면 `null`**. `mood`: `hello|warn|happy|sad|hungry|sulk|angry` 중 1.
+- 400(R400): 이번 달/미래 달 요청 또는 월 범위 오류
+- AI 호출 실패 시에도 레포트는 **숫자 기반 폴백 문구로 정상 반환**(앱 안 죽음). 굴비 텍스트만 기본값으로 채움.
+
+---
+
+### 7-2. 굴비에게 한 마디 (월 1회)
+- **POST** `/api/reports/monthly/talk`
+- 인증: 필요
+- 해당 월 레포트가 있고 **아직 답하지 않았을 때만**. 메시지 1개 → 굴비 응답 저장 후 갱신 레포트 반환.
+
+| 요청 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| year | int | ✅ | 대상 연도 |
+| month | int | ✅ | 대상 월 |
+| message | string | ✅ | 굴비에게 건넬 한 마디(최대 200자) |
+
+**Response 200** 갱신된 레포트(`userMessage`/`gulbiReply`/`repliedAt` 채워짐)
+- 404(R404): 해당 월 레포트 없음
+- 409(R409): 이미 이번 달 한 마디 사용함
+- 503(R503): AI 실패 — **저장하지 않음(1회 기회 미소모, 재시도 가능)**
+
+---
+
 ## 공통 사항
 
 ### 응답 상태 코드
@@ -438,6 +500,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 | 403 | 권한 없음 (타인 리소스 등) |
 | 404 | 리소스 없음 |
 | 409 | 충돌 (중복 등) |
+| 503 | AI(굴비) 호출 실패 (R503) |
 
 ### 공통 에러 응답 형식
 ```json
@@ -454,3 +517,4 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 | 주간예산 | GET /budgets/weekly/current, GET /budgets/weekly/recent, POST /budgets/weekly, PUT /budgets/weekly/{id} |
 | 알림 | GET /notifications, GET /notifications/unread-count, PATCH /notifications/{id}/read, /notifications/read-all |
 | 통계 | GET /statistics/by-category, /statistics/monthly-trend |
+| 레포트 | GET /reports/monthly, POST /reports/monthly/talk |
