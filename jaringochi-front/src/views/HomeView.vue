@@ -193,12 +193,12 @@ async function loadHome() {
   errorMessage.value = ''
 
   // 이번 주 예산과 이번 달 거래 목록 동시에 요청
-const [budgetResult, transactionResult, recentResult, meResult] = await Promise.allSettled([
-  getCurrentWeek(),
-  fetchTransactions(getMonthRange()),
-  getRecentWeeks(),
-  fetchMeApi(),                                  
-])
+  const [budgetResult, transactionResult, recentResult, meResult] = await Promise.allSettled([
+    getCurrentWeek(),
+    fetchTransactions(getMonthRange()),
+    getRecentWeeks(),
+    fetchMeApi(),                                  
+  ])
 
   if (budgetResult.status === 'fulfilled') {
     weeklyBudget.value = budgetResult.value.data.data || budgetResult.value.data
@@ -230,7 +230,15 @@ const [budgetResult, transactionResult, recentResult, meResult] = await Promise.
   loading.value = false
 }
 
-onMounted(loadHome)
+// onMounted(loadHome)
+onMounted(() => {
+  loadHome()
+  fetchMeApi().then((res) => {
+    const me = res.data?.data ?? null
+    gulbiImages.value = me?.currentGulbiImages || null
+    console.log(me)
+  })
+})
 </script>
 
 <template>
