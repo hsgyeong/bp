@@ -153,8 +153,8 @@ const barChart = computed(() => {
     const bH = h(Number(w.amount))
     const sH = h(Number(w.spentMoney))
     return {
-      budget: { x: gx.toFixed(1), y: (120 - bH).toFixed(1), h: bH.toFixed(1) },
-      spent:  { x: (gx + 20).toFixed(1), y: (120 - sH).toFixed(1), h: sH.toFixed(1) },
+      budget: { x: gx.toFixed(1), y: (120 - bH).toFixed(1), h: bH.toFixed(1), cx: (gx + 9).toFixed(1), amt: won(w.amount) },
+      spent:  { x: (gx + 20).toFixed(1), y: (120 - sH).toFixed(1), h: sH.toFixed(1), cx: (gx + 29).toFixed(1), amt: won(w.spentMoney) },
       labelX: (gx + 19).toFixed(1),
       label: weekLabel(w),
     }
@@ -169,7 +169,7 @@ const rateChart = computed(() => {
   const x = (i) => (n === 1 ? 165 : 55 + i * (225 / (n - 1)))
   const y = (v) => 95 - (v / scaleMax) * 60
   const pts = rates.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
-  const dots = rates.map((v, i) => ({ cx: x(i).toFixed(1), cy: y(v).toFixed(1) }))
+  const dots = rates.map((v, i) => ({ cx: x(i).toFixed(1), cy: y(v).toFixed(1), pct: Math.round(v) + '%' }))
   const labels = weeks.value.map((w, i) => ({ x: x(i).toFixed(1), t: weekLabel(w) }))
   return { pts, dots, y100: y(100).toFixed(1), labels }
 })
@@ -311,6 +311,13 @@ const rateChart = computed(() => {
                     filter="url(#paintWobble)" />
             </template>
           </template>
+          <!-- 각 막대 위에 금액 -->
+          <g fill="var(--mute)" font-size="6.5" font-weight="700" text-anchor="middle">
+            <template v-for="(b, i) in barChart.bars" :key="'amt' + i">
+              <text :x="b.budget.cx" :y="Number(b.budget.y) - 6">{{ b.budget.amt }}</text>
+              <text :x="b.spent.cx" :y="Number(b.spent.y) - 6">{{ b.spent.amt }}</text>
+            </template>
+          </g>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(b, i) in barChart.bars" :key="i" :x="b.labelX" y="138">{{ b.label }}</text>
           </g>
@@ -322,7 +329,7 @@ const rateChart = computed(() => {
         <b style="font-size:15px">예산 대비 지출 달성률</b>
         <svg viewBox="0 0 300 130" class="chart" style="margin-top:8px">
           <line x1="30" y1="95" x2="290" y2="95" stroke="var(--line)" />
-          <line x1="30" :y1="rateChart.y100" x2="290" :y2="rateChart.y100" stroke="var(--cream-2)" stroke-dasharray="3 3" />
+          <line x1="30" :y1="rateChart.y100" x2="290" :y2="rateChart.y100" stroke="var(--mute)" stroke-width="0.5" stroke-opacity="0.5" />
           <text x="2" :y="Number(rateChart.y100) + 4" fill="var(--mute)" font-size="10" font-weight="700">100%</text>
           <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
             <polyline fill="none" :stroke="rateColor" stroke-width="3" stroke-linejoin="round"
@@ -330,6 +337,10 @@ const rateChart = computed(() => {
             <g :fill="rateColor">
               <circle v-for="(d, i) in rateChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
             </g>
+          </g>
+          <!-- 각 점 위에 달성률 % -->
+          <g fill="var(--mute)" font-size="8" font-weight="700" text-anchor="middle">
+            <text v-for="(d, i) in rateChart.dots" :key="'pct' + i" :x="d.cx" :y="Number(d.cy) - 12">{{ d.pct }}</text>
           </g>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in rateChart.labels" :key="i" :x="l.x" y="113">{{ l.t }}</text>
