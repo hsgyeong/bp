@@ -17,7 +17,8 @@ async function load() {
   const cur = await getCurrentWeek()
   current.value = cur.data.data          // 봉투 두 겹: axios .data + 우리 봉투 .data
   const rec = await getRecentWeeks()
-  weeks.value = rec.data.data
+  // 최신 주가 위로(내림차순), 가장 예전 주가 아래로 오도록 정렬
+  weeks.value = [...rec.data.data].sort((a, b) => b.startDate.localeCompare(a.startDate))
 }
 
 onMounted(load)   // 화면 처음 뜰 때 1회
@@ -70,16 +71,16 @@ async function onSave() {
     <div class="card" v-if="current">
       <div class="row between" style="margin-bottom:12px">
         <b>이번 주 예산 사용률</b>
-        <b style="color:var(--gold-deep)">{{ Math.round(current.ratio) }}%</b>
+        <b style="color:var(--expense)">{{ Math.round(current.ratio) }}%</b>
       </div>
       <div class="bar-track"><div class="bar-fill" :style="{ width: Math.min(current.ratio, 100) + '%' }"></div></div>
       <div class="row between" style="margin-top:9px;font-size:12px;font-weight:700;color:var(--mute)">
-        <span>사용 {{ won(current.spentMoney) }}원</span>
-        <span>예산 {{ won(current.amount) }}원</span>
+        <span>사용 <b style="color:var(--expense)">{{ won(current.spentMoney) }}원</b></span>
+        <span>예산 <b style="color:var(--budget)">{{ won(current.amount) }}원</b></span>
       </div>
       <div class="row between" style="margin-top:6px;font-size:12px;font-weight:700;color:var(--mute)">
         <span>{{ current.startDate }} ~ {{ current.endDate }}</span>
-        <span>남은 {{ won(current.remaining) }}원</span>
+        <span>남은 <b style="color:var(--ink)">{{ won(current.remaining) }}원</b></span>
       </div>
     </div>
     <div class="card" v-else>
@@ -134,7 +135,7 @@ async function onSave() {
 .between { justify-content: space-between; }
 .muted { color: var(--mute); }
 .bar-track { height: 14px; background: var(--cream-2); border-radius: 10px; overflow: hidden; }
-.bar-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg, var(--gold), var(--gold-deep)); }
+.bar-fill { height: 100%; border-radius: 10px; background: var(--expense); }
 .field { width: 100%; border: 1.5px solid var(--line); background: #fff; border-radius: 14px; padding: 15px 16px; font-size: 15px; font-family: inherit; font-weight: 600; color: var(--ink); box-sizing: border-box; }
 .label { font-size: 13px; font-weight: 700; color: var(--ink-2); margin: 0 0 8px 2px; }
 .btn-primary { width: 100%; border: none; border-radius: 16px; padding: 16px; font-size: 16px; font-weight: 800; font-family: inherit; color: #fff; background: linear-gradient(135deg, var(--gold), var(--gold-deep)); box-shadow: 0 8px 18px rgba(224,135,26,.35); cursor: pointer; }
@@ -143,16 +144,28 @@ async function onSave() {
 .menu { display: flex; align-items: center; gap: 10px; padding: 14px 8px; border-bottom: 1px solid var(--line); font-size: 13px; font-weight: 700; }
 .menu:last-child { border-bottom: none; }
 .period { color: var(--ink-2); }
-.ratio { color: var(--gold-deep); }
-.amt { margin-left: auto; font-size: 14px; }
+.ratio { color: var(--expense); }
+.amt { margin-left: auto; font-size: 14px; color: var(--budget); }
 .empty { padding: 24px; text-align: center; color: var(--mute); font-weight: 600; }
 
 /* ── paint(그림판) 테마 보정 ───────────────────────────────────────────── */
 /* 굴비 한마디: 크림 그라데이션 → 흰 배경(테두리는 .paint-box), 하드코딩 갈색 글씨 → 흑백 */
 :root[data-theme="paint"] .gulbi-msg { background: var(--card); }
 :root[data-theme="paint"] .bubble-text { color: var(--ink); }
-/* 진행바 채움: 골드 그라데이션 → 검은 채움 */
-:root[data-theme="paint"] .bar-fill { background: var(--ink); }
+/* 진행바: 각진 손그림 테두리(wobble) + 색연필 빗금 채움 */
+:root[data-theme="paint"] .bar-track {
+  background: #fff;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  filter: url(#paintWobbleSmall);
+}
+:root[data-theme="paint"] .bar-fill {
+  border-radius: 0;
+  background-color: var(--expense);
+  /* 45도 색연필 빗금 덧칠 (statsHatch 와 동일 톤) */
+  background-image: repeating-linear-gradient(45deg,
+    rgba(0,0,0,.16) 0, rgba(0,0,0,.16) 1.4px, transparent 1.4px, transparent 6px);
+}
 /* 저장 버튼: 골드 그라데이션 → 검은 채움(테두리는 전역 button wobble) */
 :root[data-theme="paint"] .btn-primary { background: var(--ink); }
 /* 최근 주간 구분선: .paint-hline-b 가 손그림 선을 그림 → 직선 border 는 숨김 */

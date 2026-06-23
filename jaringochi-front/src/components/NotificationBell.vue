@@ -101,19 +101,20 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
     <!-- 드롭다운 -->
     <template v-if="open">
       <div class="backdrop" @click="open = false"></div>
-      <div class="panel">
-        <div class="panel-head">
+      <div class="panel paint-box">
+        <div class="panel-head paint-hline-b">
           <b>알림</b>
           <button class="read-all" @click="onReadAll" :disabled="count === 0">전체 읽음</button>
         </div>
 
+        <div class="panel-list">
         <div v-if="loading" class="empty">불러오는 중…</div>
         <template v-else>
           <div
-            v-for="n in items"
+            v-for="(n, i) in items"
             :key="n.id"
             class="item"
-            :class="{ unread: n.isRead === 0 }"
+            :class="{ unread: n.isRead === 0, 'paint-hline-b': i < items.length - 1 }"
             @click="onItemClick(n)"
           >
             <span class="dot" :class="{ on: n.isRead === 0 }"></span>
@@ -135,6 +136,7 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
             <template v-else>🐟</template>
           </div>
         </template>
+        </div>
       </div>
     </template>
   </div>
@@ -191,13 +193,12 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
   top: 58px;
   right: 12px;
   width: 300px;
-  max-height: 60vh;
-  overflow-y: auto;
   background: var(--card);
   border: 1px solid var(--line);
   border-radius: 18px;
   box-shadow: 0 10px 30px rgba(120, 90, 30, .18);
 }
+.panel-list { max-height: calc(60vh - 50px); overflow-y: auto; }
 .panel-head {
   display: flex;
   align-items: center;
@@ -210,11 +211,14 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
   border: none;
   background: none;
   color: var(--gold-deep);
+  font-family: inherit;   /* 본문과 같은 글씨체(paint: 손글씨) */
   font-size: 12px;
   font-weight: 700;
   cursor: pointer;
 }
 .read-all:disabled { color: var(--mute); cursor: default; }
+/* paint 테마의 전역 버튼 손그림 테두리(::before) 제거 — 텍스트만 */
+:root[data-theme="paint"] .read-all::before { content: none; }
 
 .item {
   display: flex;
@@ -247,6 +251,10 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
 /* 종 테두리는 전역 button::before(wobble)가 그려줌 → 원형 모서리만 맞춤 */
 :root[data-theme="paint"] .bell { border-radius: 50%; }
 :root[data-theme="paint"] .bell::before { border-radius: 50% !important; }
-:root[data-theme="paint"] .panel { border: 2.5px solid var(--ink); border-radius: 5px; }
+/* 패널 테두리: .paint-box(::before)가 손그림 wobble 로 그림 → border-radius 만 맞춤 */
+:root[data-theme="paint"] .panel { border-radius: 6px; }
+/* 구분선: 직선 border 숨기고 .paint-hline-b 손그림 가로선만 보이게 */
+:root[data-theme="paint"] .panel-head,
+:root[data-theme="paint"] .item { border-bottom-color: transparent; --hand-line-w: 1px; }
 :root[data-theme="paint"] .item.unread { background: #F2F2F2; }
 </style>

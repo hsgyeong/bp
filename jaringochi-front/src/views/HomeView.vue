@@ -100,6 +100,18 @@ const progressWidth = computed(() => {
   return `${Math.min(budgetRate.value, 100)}%`
 })
 
+// 이번 주 남은 예산 (서버 remaining 우선, 없으면 예산-사용 직접 계산)
+const remaining = computed(() => {
+  const r = weeklyBudget.value?.remaining
+  return r != null ? Number(r) : budgetAmount.value - spentMoney.value
+})
+
+// 이번 주 기간 (예: 2026-06-22 ~ 2026-06-28)
+const weekRangeText = computed(() => {
+  const b = weeklyBudget.value
+  return b?.startDate && b?.endDate ? `${b.startDate} ~ ${b.endDate}` : ''
+})
+
 // 예산 사용률에 따른 굴비 메시지
 const mascotMessage = computed(() => {
   if (budgetRate.value >= 100) return '이번 주 예산을 넘었어요. 오늘은 조금 쉬어가요.'
@@ -193,12 +205,12 @@ async function loadHome() {
   errorMessage.value = ''
 
   // 이번 주 예산과 이번 달 거래 목록 동시에 요청
-const [budgetResult, transactionResult, recentResult, meResult] = await Promise.allSettled([
-  getCurrentWeek(),
-  fetchTransactions(getMonthRange()),
-  getRecentWeeks(),
-  fetchMeApi(),                                  
-])
+  const [budgetResult, transactionResult, recentResult, meResult] = await Promise.allSettled([
+    getCurrentWeek(),
+    fetchTransactions(getMonthRange()),
+    getRecentWeeks(),
+    fetchMeApi(),                                  
+  ])
 
   if (budgetResult.status === 'fulfilled') {
     weeklyBudget.value = budgetResult.value.data.data || budgetResult.value.data
@@ -230,7 +242,15 @@ const [budgetResult, transactionResult, recentResult, meResult] = await Promise.
   loading.value = false
 }
 
-onMounted(loadHome)
+// onMounted(loadHome)
+onMounted(() => {
+  loadHome()
+  fetchMeApi().then((res) => {
+    const me = res.data?.data ?? null
+    gulbiImages.value = me?.currentGulbiImages || null
+    console.log(me)
+  })
+})
 </script>
 
 <template>
@@ -239,13 +259,6 @@ onMounted(loadHome)
       <div>
         <p class="month">{{ monthLabel }}</p>
         <h1>{{ greetingText }} <span v-if="theme !== 'paint'">👋</span></h1>
-      </div>
-
-      <div class="head-icons" aria-hidden="true">
-        <span v-if="theme === 'paint'"><i class="ti ti-chart-histogram"></i></span>
-        <span v-else>📊</span>
-        <span v-if="theme === 'paint'"><i class="ti ti-wallet"></i></span>
-        <span v-else>🔋</span>
       </div>
     </header>
 
@@ -303,8 +316,12 @@ onMounted(loadHome)
       </div>
 
       <div class="budget-row">
-        <span>사용 {{ won(spentMoney) }}원</span>
-        <span>예산 {{ won(budgetAmount) }}원</span>
+        <span>사용 <b style="color:var(--expense)">{{ won(spentMoney) }}원</b></span>
+        <span>예산 <b style="color:var(--budget)">{{ won(budgetAmount) }}원</b></span>
+      </div>
+      <div class="budget-row budget-sub">
+        <span>{{ weekRangeText }}</span>
+        <span>남은 <b style="color:var(--ink)">{{ won(remaining) }}원</b></span>
       </div>
     </section>
 
@@ -396,13 +413,6 @@ onMounted(loadHome)
   font-weight: 900;
   line-height: 1.2;
   word-break: keep-all;
-}
-
-.head-icons {
-  display: flex;
-  gap: 10px;
-  padding-top: 4px;
-  font-size: 24px;
 }
 
 .error-message {
@@ -518,7 +528,7 @@ onMounted(loadHome)
 }
 
 .card-head strong {
-  color: var(--gold-deep);
+  color: var(--expense);
   font-size: 24px;
   font-weight: 900;
 }
@@ -534,7 +544,7 @@ onMounted(loadHome)
   height: 100%;
   display: block;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  background: var(--expense);
 }
 
 .budget-row {
@@ -542,6 +552,13 @@ onMounted(loadHome)
   color: var(--mute);
   font-size: 16px;
   font-weight: 900;
+}
+
+/* 날짜·남은 줄: 한 단계 작게 */
+.budget-row.budget-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .summary-grid {
@@ -609,6 +626,8 @@ onMounted(loadHome)
   font-weight: 900;
   cursor: pointer;
 }
+/* paint 테마의 전역 버튼 손그림 테두리(::before) 제거 — '더보기'는 텍스트만 */
+:root[data-theme="paint"] .recent-head button::before { content: none; }
 
 .empty-state {
   min-height: 82px;
@@ -716,11 +735,18 @@ onMounted(loadHome)
 :root[data-theme="paint"] .mascot-card p {
   color: var(--ink);
 }
-:root[data-theme="paint"] .progress span {
-  background: var(--ink);
+/* 사용률 바: 각진 손그림 트랙(wobble) + 코랄 색연필 빗금 채움 (예산 페이지와 통일) */
+:root[data-theme="paint"] .progress {
+  background: #fff;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  filter: url(#paintWobbleSmall);
 }
-:root[data-theme="paint"] .head-icons {
-  filter: grayscale(1);
+:root[data-theme="paint"] .progress span {
+  border-radius: 0;
+  background-color: var(--expense);
+  background-image: repeating-linear-gradient(45deg,
+    rgba(0,0,0,.16) 0, rgba(0,0,0,.16) 1.4px, transparent 1.4px, transparent 6px);
 }
 /* 최근 거래 카테고리 아이콘: 회색 배경 박스 제거, 라인 아이콘만 */
 :root[data-theme="paint"] .category-icon {

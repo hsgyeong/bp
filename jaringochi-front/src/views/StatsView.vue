@@ -3,6 +3,7 @@ import { ref, computed, watch, onMounted } from 'vue'
 import { getByCategory, getMonthlyTrend } from '@/api/statistics'
 import { getRecentWeeks } from '@/api/budget'
 import { useTheme } from '@/composables/useTheme'
+import MonthPicker from '@/components/MonthPicker.vue'
 
 // paint 테마일 때만 차트를 '색연필' 톤으로 칠한다(앱 크롬은 흑백 유지).
 const { theme } = useTheme()
@@ -17,21 +18,17 @@ const trend = ref(null)      // monthly-trend: { items:[{month,amount}], diffRat
 const cat   = ref(null)      // by-category: { total, items:[{categoryId,categoryName,amount,ratio}] }
 const weeks = ref([])        // budgets/weekly/recent (과거->현재, 최대 4주)
 
-const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']
+// 수입/지출/예산은 전역 토큰(--income/--expense/--budget)이 테마별 색을 제공 → 분기 없이 그대로 사용.
+// 도넛(다색 카테고리 팔레트)·달성률 보라는 대응 전역 토큰이 없어 로컬 팔레트로 둔다.
+const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']  // classic
+const DONUT_PAINT  = ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96']  // paint(색연필)
+const RATE_PAINT   = '#B197D0'  // 달성률 전용 보라(파스텔)
 
-// paint 전용 색연필 팔레트(채도 낮은 파스텔 톤). 통계에선 수입/지출도 색 허용.
-const PENCIL = {
-  income:  '#7FBE96',  // 연한 초록
-  expense: '#E08A72',  // 연한 코랄
-  budget:  '#94B8E6',  // 연한 파랑
-  rate:    '#B197D0',  // 연한 보라
-  donut: ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96'],
-}
 const isPaint = computed(() => theme.value === 'paint')
-const donutColors = computed(() => (isPaint.value ? PENCIL.donut : DONUT_COLORS))
-const barBudgetFill = computed(() => (isPaint.value ? PENCIL.budget : 'var(--gold-soft)'))
-const barSpentFill  = computed(() => (isPaint.value ? PENCIL.expense : 'var(--gold-deep)'))
-const rateColor     = computed(() => (isPaint.value ? PENCIL.rate : 'var(--income)'))
+const donutColors   = computed(() => (isPaint.value ? DONUT_PAINT : DONUT_COLORS))
+const barBudgetFill = 'var(--budget)'
+const barSpentFill  = 'var(--expense)'
+const rateColor     = computed(() => (isPaint.value ? RATE_PAINT : 'var(--income)'))
 
 const won = (n) => Number(n || 0).toLocaleString()
 
@@ -39,18 +36,114 @@ const won = (n) => Number(n || 0).toLocaleString()
 const pad = (n) => String(n).padStart(2, '0')
 const fmt = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 
-function monthRange() {
+// ===== 카테고리 조회 기간 (가계부처럼 네이티브 피커 + 모바일 스와이프로 이동) =====
+// 오늘 기준 'YYYY-MM' / ISO 주 'YYYY-Www'
+function thisMonthValue() {
   const t = new Date()
-  const first = new Date(t.getFullYear(), t.getMonth(), 1)
-  const last  = new Date(t.getFullYear(), t.getMonth() + 1, 0)
+  return `${t.getFullYear()}-${pad(t.getMonth() + 1)}`
+}
+function dateToWeekValue(d) {                 // 날짜 → ISO 주 문자열(목요일 기준 연도)
+  const t = new Date(d)
+  const day = (t.getDay() + 6) % 7            // 월=0 … 일=6
+  t.setDate(t.getDate() - day + 3)            // 그 주의 목요일
+  const firstThu = new Date(t.getFullYear(), 0, 4)
+  const ftDay = (firstThu.getDay() + 6) % 7
+  firstThu.setDate(firstThu.getDate() - ftDay + 3)
+  const week = 1 + Math.round((t - firstThu) / (7 * 86400000))
+  return `${t.getFullYear()}-W${pad(week)}`
+}
+function weekValueToMonday(val) {             // ISO 주 문자열 → 그 주 월요일 Date
+  const [y, w] = val.split('-W').map(Number)
+  const jan4 = new Date(y, 0, 4)             // 1월 4일은 항상 1주차에 포함
+  const jan4Day = (jan4.getDay() + 6) % 7
+  const monday = new Date(jan4)
+  monday.setDate(jan4.getDate() - jan4Day + (w - 1) * 7)
+  return monday
+}
+
+const catMonth = ref(thisMonthValue())            // 월·카테고리에서 조회할 달
+const catWeek  = ref(dateToWeekValue(new Date()))  // 주·카테고리에서 조회할 주
+const maxMonth = thisMonthValue()                 // 미래 선택 방지(피커 max)
+const maxWeek  = dateToWeekValue(new Date())
+
+function monthRange() {
+  const [y, m] = catMonth.value.split('-').map(Number)
+  const first = new Date(y, m - 1, 1)
+  const last  = new Date(y, m, 0)
   return { startDate: fmt(first), endDate: fmt(last) }
 }
 function weekRange() {
-  const t = new Date()
-  const day = (t.getDay() + 6) % 7         // 월=0 … 일=6
-  const mon = new Date(t); mon.setDate(t.getDate() - day)
+  const mon = weekValueToMonday(catWeek.value)
   const sun = new Date(mon); sun.setDate(mon.getDate() + 6)
   return { startDate: fmt(mon), endDate: fmt(sun) }
+}
+
+// 전/후 이동 (스와이프·필요시 버튼 공용). 미래로는 못 가게 막음.
+function stepMonth(delta) {
+  const [y, m] = catMonth.value.split('-').map(Number)
+  const d = new Date(y, m - 1 + delta, 1)
+  const next = `${d.getFullYear()}-${pad(d.getMonth() + 1)}`
+  if (next <= maxMonth) catMonth.value = next
+}
+function stepWeek(delta) {
+  const mon = weekValueToMonday(catWeek.value)
+  mon.setDate(mon.getDate() + delta * 7)
+  const next = dateToWeekValue(mon)
+  if (next <= maxWeek) catWeek.value = next
+}
+// 카테고리 카드 스와이프: 오른쪽→이전, 왼쪽→다음
+let touchX = null
+function onTouchStart(e) { touchX = e.changedTouches[0].clientX }
+function onTouchEnd(e) {
+  if (touchX === null) return
+  const dx = e.changedTouches[0].clientX - touchX
+  touchX = null
+  if (Math.abs(dx) < 40) return
+  const dir = dx > 0 ? -1 : 1                 // 오른쪽 스와이프=이전(-1)
+  period.value === 'week' ? stepWeek(dir) : stepMonth(dir)
+}
+
+// 주 선택용 커스텀 달력(월~일, 주 칼럼 없음). 날짜를 고르면 그 날이 속한 주로 조회.
+const pickerOpen = ref(false)
+const pickerYM   = ref('')                    // 달력에 표시 중인 'YYYY-MM'
+const todayStr   = fmt(new Date())
+const DOW = ['월', '화', '수', '목', '금', '토', '일']
+
+function openWeekPicker() {
+  const mon = weekValueToMonday(catWeek.value)
+  pickerYM.value = `${mon.getFullYear()}-${pad(mon.getMonth() + 1)}`
+  pickerOpen.value = true
+}
+function shiftPickerMonth(d) {
+  const [y, m] = pickerYM.value.split('-').map(Number)
+  const nd = new Date(y, m - 1 + d, 1)
+  pickerYM.value = `${nd.getFullYear()}-${pad(nd.getMonth() + 1)}`
+}
+const pickerLabel = computed(() => {
+  const [y, m] = pickerYM.value.split('-').map(Number)
+  return `${y}년 ${m}월`
+})
+const calendarCells = computed(() => {
+  if (!pickerYM.value) return []
+  const [y, m] = pickerYM.value.split('-').map(Number)
+  const lead = (new Date(y, m - 1, 1).getDay() + 6) % 7   // 1일 앞 빈칸(월=0)
+  const last = new Date(y, m, 0).getDate()
+  const sMon = weekValueToMonday(catWeek.value)
+  const sStart = fmt(sMon)
+  const sEnd = fmt(new Date(sMon.getFullYear(), sMon.getMonth(), sMon.getDate() + 6))
+  const cells = []
+  for (let i = 0; i < lead; i++) cells.push(null)
+  for (let day = 1; day <= last; day++) {
+    const ds = `${y}-${pad(m)}-${pad(day)}`
+    cells.push({ day, ds, future: ds > todayStr, sel: ds >= sStart && ds <= sEnd })
+  }
+  return cells
+})
+function pickDay(c) {
+  if (!c || c.future) return
+  const [y, m, d] = c.ds.split('-').map(Number)
+  catWeek.value = dateToWeekValue(new Date(y, m - 1, d))
+  pickerOpen.value = false
 }
 
 // "2026-05" -> "5월"
@@ -83,13 +176,10 @@ async function load() {
   }
 }
 onMounted(load)
-watch([period, type, view], load)
+watch([period, type, view, catMonth, catWeek], load)
 
 // ===== 월 단순금액: 꺾은선 =====
-const lineColor = computed(() => {
-  if (isPaint.value) return type.value === 1 ? PENCIL.income : PENCIL.expense
-  return type.value === 1 ? 'var(--income)' : 'var(--expense)'
-})
+const lineColor = computed(() => (type.value === 1 ? 'var(--income)' : 'var(--expense)'))
 
 const trendChart = computed(() => {
   if (!trend.value || !trend.value.items.length) return null
@@ -101,7 +191,7 @@ const trendChart = computed(() => {
   const y = (v) => 130 - (v / max) * 110
   const pts = items.map((it, i) => `${x(i).toFixed(1)},${y(amts[i]).toFixed(1)}`).join(' ')
   const area = `${pts} ${x(n - 1).toFixed(1)},130 ${x(0).toFixed(1)},130`
-  const dots = items.map((it, i) => ({ cx: x(i).toFixed(1), cy: y(amts[i]).toFixed(1) }))
+  const dots = items.map((it, i) => ({ cx: x(i).toFixed(1), cy: y(amts[i]).toFixed(1), amt: won(amts[i]) }))
   const labels = items.map((it, i) => ({ x: x(i).toFixed(1), t: monthLabel(it.month) }))
   return { pts, area, dots, labels }
 })
@@ -119,8 +209,12 @@ const diff = computed(() => {
 
 // ===== 카테고리별: 도넛 =====
 const catTitle = computed(() => {
-  if (period.value === 'week') return '이번 주 지출 구성'
-  const m = new Date().getMonth() + 1
+  if (period.value === 'week') {
+    const r = weekRange()
+    const cur = catWeek.value === maxWeek
+    return `${cur ? '이번 주' : weekLabel(r)} 지출 구성`
+  }
+  const m = parseInt(catMonth.value.split('-')[1], 10)
   return `${m}월 ${type.value === 1 ? '수입' : '지출'} 구성`
 })
 const donut = computed(() => {
@@ -160,8 +254,8 @@ const barChart = computed(() => {
     const bH = h(Number(w.amount))
     const sH = h(Number(w.spentMoney))
     return {
-      budget: { x: gx.toFixed(1), y: (120 - bH).toFixed(1), h: bH.toFixed(1) },
-      spent:  { x: (gx + 20).toFixed(1), y: (120 - sH).toFixed(1), h: sH.toFixed(1) },
+      budget: { x: gx.toFixed(1), y: (120 - bH).toFixed(1), h: bH.toFixed(1), cx: (gx + 9).toFixed(1), amt: won(w.amount) },
+      spent:  { x: (gx + 20).toFixed(1), y: (120 - sH).toFixed(1), h: sH.toFixed(1), cx: (gx + 29).toFixed(1), amt: won(w.spentMoney) },
       labelX: (gx + 19).toFixed(1),
       label: weekLabel(w),
     }
@@ -176,7 +270,7 @@ const rateChart = computed(() => {
   const x = (i) => (n === 1 ? 165 : 55 + i * (225 / (n - 1)))
   const y = (v) => 95 - (v / scaleMax) * 60
   const pts = rates.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')
-  const dots = rates.map((v, i) => ({ cx: x(i).toFixed(1), cy: y(v).toFixed(1) }))
+  const dots = rates.map((v, i) => ({ cx: x(i).toFixed(1), cy: y(v).toFixed(1), pct: Math.round(v) + '%' }))
   const labels = weeks.value.map((w, i) => ({ x: x(i).toFixed(1), t: weekLabel(w) }))
   return { pts, dots, y100: y(100).toFixed(1), labels }
 })
@@ -236,6 +330,10 @@ const rateChart = computed(() => {
           <g fill="var(--mute)" font-size="11" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in trendChart.labels" :key="i" :x="l.x" y="148">{{ l.t }}</text>
           </g>
+          <!-- 각 점 위에 월별 금액 -->
+          <g fill="var(--mute)" font-size="8" font-weight="700" text-anchor="middle">
+            <text v-for="(d, i) in trendChart.dots" :key="i" :x="d.cx" :y="Number(d.cy) - 12">{{ d.amt }}</text>
+          </g>
         </svg>
         <div v-else class="empty">데이터가 없어요</div>
       </div>
@@ -258,11 +356,37 @@ const rateChart = computed(() => {
 
     <!-- ===== 카테고리별: 도넛 (월/주 공용) ===== -->
     <template v-if="view === 'category'">
-      <div class="card">
+      <div class="card cat-card" @touchstart.passive="onTouchStart" @touchend="onTouchEnd">
         <div class="row between" style="margin-bottom:6px">
-          <b style="font-size:15px">{{ catTitle }}</b>
+          <!-- 월: 커스텀 월 선택기 / 주: 월~일 커스텀 달력 -->
+          <MonthPicker v-if="period === 'month'" v-model="catMonth" :max="maxMonth" class="cat-picker">
+            <b style="font-size:15px">{{ catTitle }}</b>
+            <small>▾</small>
+          </MonthPicker>
+          <div v-else class="cat-picker" @click="openWeekPicker">
+            <b style="font-size:15px">{{ catTitle }}</b>
+            <small>▾</small>
+          </div>
           <b style="color:var(--expense)" v-if="cat">{{ won(cat.total) }}원</b>
         </div>
+
+        <!-- 주 선택 달력 팝업 -->
+        <template v-if="pickerOpen">
+          <div class="cal-backdrop" @click="pickerOpen = false"></div>
+          <div class="cal-pop paint-box">
+            <div class="cal-head">
+              <button type="button" @click="shiftPickerMonth(-1)">‹</button>
+              <span>{{ pickerLabel }}</span>
+              <button type="button" @click="shiftPickerMonth(1)">›</button>
+            </div>
+            <div class="cal-grid">
+              <span class="cal-dow" v-for="d in DOW" :key="d">{{ d }}</span>
+              <span v-for="(c, i) in calendarCells" :key="i" class="cal-cell"
+                    :class="{ sel: c && c.sel, future: c && c.future, blank: !c }"
+                    @click="pickDay(c)">{{ c ? c.day : '' }}</span>
+            </div>
+          </div>
+        </template>
         <div class="donut-wrap" v-if="donut">
           <svg viewBox="0 0 160 160" class="donut">
             <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
@@ -314,6 +438,13 @@ const rateChart = computed(() => {
                     filter="url(#paintWobble)" />
             </template>
           </template>
+          <!-- 각 막대 위에 금액 -->
+          <g fill="var(--mute)" font-size="6.5" font-weight="700" text-anchor="middle">
+            <template v-for="(b, i) in barChart.bars" :key="'amt' + i">
+              <text :x="b.budget.cx" :y="Number(b.budget.y) - 6">{{ b.budget.amt }}</text>
+              <text :x="b.spent.cx" :y="Number(b.spent.y) - 6">{{ b.spent.amt }}</text>
+            </template>
+          </g>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(b, i) in barChart.bars" :key="i" :x="b.labelX" y="138">{{ b.label }}</text>
           </g>
@@ -325,7 +456,7 @@ const rateChart = computed(() => {
         <b style="font-size:15px">예산 대비 지출 달성률</b>
         <svg viewBox="0 0 300 130" class="chart" style="margin-top:8px">
           <line x1="30" y1="95" x2="290" y2="95" stroke="var(--line)" />
-          <line x1="30" :y1="rateChart.y100" x2="290" :y2="rateChart.y100" stroke="var(--cream-2)" stroke-dasharray="3 3" />
+          <line x1="30" :y1="rateChart.y100" x2="290" :y2="rateChart.y100" stroke="var(--mute)" stroke-width="0.5" stroke-opacity="0.5" />
           <text x="2" :y="Number(rateChart.y100) + 4" fill="var(--mute)" font-size="10" font-weight="700">100%</text>
           <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
             <polyline fill="none" :stroke="rateColor" stroke-width="3" stroke-linejoin="round"
@@ -333,6 +464,10 @@ const rateChart = computed(() => {
             <g :fill="rateColor">
               <circle v-for="(d, i) in rateChart.dots" :key="i" :cx="d.cx" :cy="d.cy" r="4" />
             </g>
+          </g>
+          <!-- 각 점 위에 달성률 % -->
+          <g fill="var(--mute)" font-size="8" font-weight="700" text-anchor="middle">
+            <text v-for="(d, i) in rateChart.dots" :key="'pct' + i" :x="d.cx" :y="Number(d.cy) - 12">{{ d.pct }}</text>
           </g>
           <g fill="var(--mute)" font-size="9" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in rateChart.labels" :key="i" :x="l.x" y="113">{{ l.t }}</text>
@@ -344,8 +479,28 @@ const rateChart = computed(() => {
 </template>
 
 <style scoped>
-.stats-view { padding: 16px 20px 24px; }
+.stats-view { padding: 34px 20px 24px; }
 .title { font-size: 18px; margin-bottom: 14px; }
+
+/* 카테고리 기간 선택: 제목을 누르면 월(네이티브)·주(커스텀 달력) 피커가 열림 */
+.cat-picker { position: relative; display: inline-flex; align-items: center; gap: 5px; cursor: pointer; }
+.cat-picker small { font-size: 11px; color: var(--mute); }
+.cat-picker input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+
+/* 주 선택 달력 팝업 (월~일, 주 칼럼 없음) */
+.cat-card { position: relative; }
+.cal-backdrop { position: fixed; inset: 0; z-index: 15; }
+.cal-pop { position: absolute; z-index: 20; top: 44px; left: 14px; width: 250px;
+  background: var(--card); border: 1.5px solid var(--ink); border-radius: 14px; padding: 10px 12px; }
+.cal-head { display: flex; align-items: center; justify-content: space-between; font-weight: 800; font-size: 14px; margin-bottom: 8px; }
+.cal-head button { background: none; border: none; font-size: 18px; line-height: 1; cursor: pointer; padding: 2px 10px; color: var(--ink); }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.cal-dow { font-size: 11px; font-weight: 700; color: var(--mute); padding: 2px 0; }
+.cal-cell { font-size: 12px; font-weight: 700; padding: 6px 0; border-radius: 8px; cursor: pointer; }
+.cal-cell.blank { cursor: default; }
+.cal-cell.future { opacity: .3; cursor: not-allowed; }
+.cal-cell.sel { background: var(--expense-soft); color: var(--expense); }
+.cal-cell:not(.blank):not(.future):not(.sel):hover { background: var(--cream-2); }
 
 .seg { display: flex; background: var(--cream-2); border-radius: 14px; padding: 4px; gap: 4px; margin-bottom: 10px; }
 .seg .s { flex: 1; text-align: center; padding: 9px 0; font-size: 13px; font-weight: 700; color: var(--ink-2); border-radius: 11px; cursor: pointer; }
