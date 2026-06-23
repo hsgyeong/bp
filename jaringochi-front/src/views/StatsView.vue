@@ -101,7 +101,7 @@ const trendChart = computed(() => {
   const y = (v) => 130 - (v / max) * 110
   const pts = items.map((it, i) => `${x(i).toFixed(1)},${y(amts[i]).toFixed(1)}`).join(' ')
   const area = `${pts} ${x(n - 1).toFixed(1)},130 ${x(0).toFixed(1)},130`
-  const dots = items.map((it, i) => ({ cx: x(i).toFixed(1), cy: y(amts[i]).toFixed(1) }))
+  const dots = items.map((it, i) => ({ cx: x(i).toFixed(1), cy: y(amts[i]).toFixed(1), amt: won(amts[i]) }))
   const labels = items.map((it, i) => ({ x: x(i).toFixed(1), t: monthLabel(it.month) }))
   return { pts, area, dots, labels }
 })
@@ -235,6 +235,10 @@ const rateChart = computed(() => {
           </g>
           <g fill="var(--mute)" font-size="11" font-weight="700" text-anchor="middle">
             <text v-for="(l, i) in trendChart.labels" :key="i" :x="l.x" y="148">{{ l.t }}</text>
+          </g>
+          <!-- 각 점 위에 월별 금액 -->
+          <g fill="var(--mute)" font-size="8" font-weight="700" text-anchor="middle">
+            <text v-for="(d, i) in trendChart.dots" :key="i" :x="d.cx" :y="Number(d.cy) - 12">{{ d.amt }}</text>
           </g>
         </svg>
         <div v-else class="empty">데이터가 없어요</div>
