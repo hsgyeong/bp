@@ -21,9 +21,9 @@ const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']
 
 // paint 전용 색연필 팔레트(채도 낮은 파스텔 톤). 통계에선 수입/지출도 색 허용.
 const PENCIL = {
-  income:  '#7FBE96',  // 연한 초록
+  income:  '#6FA3DC',  // 또렷한 파랑
   expense: '#E08A72',  // 연한 코랄
-  budget:  '#94B8E6',  // 연한 파랑
+  budget:  '#5FB0A6',  // 청록(teal)
   rate:    '#B197D0',  // 연한 보라
   donut: ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96'],
 }
