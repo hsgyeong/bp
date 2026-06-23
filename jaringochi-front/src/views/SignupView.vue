@@ -188,7 +188,7 @@ onBeforeUnmount(() => {
       </header>
 
       <div class="intro" aria-hidden="true">
-        <GulbiMascot v-if="theme === 'paint'" mood="hello" :size="78" class="gulbi" />
+        <GulbiMascot v-if="theme === 'paint'" mood="hello" :size="104" class="gulbi" />
         <svg v-else class="gulbi" viewBox="0 0 120 120">
           <defs>
             <linearGradient id="signupGold" x1="0" y1="0" x2="1" y2="1">
@@ -393,8 +393,8 @@ onBeforeUnmount(() => {
 }
 
 .gulbi {
-  width: 78px;
-  height: 78px;
+  width: 104px;
+  height: 51.45px;
   display: block;
   margin: 0 auto;
 }
