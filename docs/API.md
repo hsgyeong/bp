@@ -430,8 +430,8 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 > 한 주의 예산을 지켜내면(절약 성공) 보상으로 굴비에게 입힐 옷을 AI 이미지로 생성한다.
 > 마스코트 7무드(hello·warn·happy·sad·hungry·sulk·angry)가 **동일한 한 벌**을 입는다.
-> 옷 종류(랜덤): hanbok·hoodie·pajama·school·santa·raincoat 중 **현재 입은 옷 제외** 후 1개.
-> 이미지 생성은 SSAFY GMS 게이트웨이 경유 Gemini 이미지 모델 사용 (DEC-0019).
+> 옷은 고정 목록 없이 **Gemini가 매번 랜덤으로 디자인**한다. `outfitKey`는 모델이 함께 반환하는 **한국어 옷 이름**(1~4단어, 자유 텍스트)이다 (DEC-0021).
+> 이미지 생성은 SSAFY GMS 게이트웨이 경유 Gemini 이미지 모델 사용 (DEC-0019). 결과 이미지는 서버에서 축소 후 저장 (DEC-0022).
 > 자격: **그 주가 종료**(endDate < 오늘) + **지출 ≤ 예산** + 아직 ACCEPT/DECLINE 안 한 상태.
 
 ### 7-1. 보상 상태 조회 (PENDING 이어보기)
@@ -443,7 +443,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 ```json
 {
   "weeklyBudgetId": 1,
-  "outfitKey": "hoodie",
+  "outfitKey": "우주복",
   "rewardStatus": "PENDING",
   "images": { "happy": "data:image/png;base64,...", "sad": "data:image/png;base64,..." }
 }
@@ -454,7 +454,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 ### 7-2. 굴비 옷 뽑기
 - **POST** `/api/budgets/weekly/{weeklyBudgetId}/gulbi-reward/draw`
 - 인증: 필요
-- 처리: 자격 검사 → 현재 옷 제외 랜덤 선택 → 7무드 **동일 옷** 이미지 생성(트랜잭션 밖, 앵커 1장 생성 후 나머지는 레퍼런스로 통일 · DEC-0020) → PENDING 저장(짧은 트랜잭션).
+- 처리: 자격 검사 → **Gemini 랜덤 옷 생성**(앵커가 옷+한국어 이름 생성) → 7무드 **동일 옷** 이미지 생성(트랜잭션 밖, 앵커 1장 생성 후 나머지는 레퍼런스로 통일 · DEC-0020) → PENDING 저장(짧은 트랜잭션).
 
 | 요청(body) | 타입 | 필수 | 설명 |
 |------|------|------|------|

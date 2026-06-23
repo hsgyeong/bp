@@ -53,7 +53,8 @@ public enum ErrorCode {
 	REWARD_NOT_ELIGIBLE(HttpStatus.FORBIDDEN, "G403", "예산 절약에 성공한 주만 굴비 옷을 뽑을 수 있습니다."),
 	REWARD_ALREADY_DECIDED(HttpStatus.CONFLICT, "G409", "이미 처리된 보상입니다."),
 	REWARD_INVALID_DECISION(HttpStatus.BAD_REQUEST, "G400", "decision은 ACCEPT 또는 DECLINE이어야 합니다."),
-	REWARD_NO_DRAW(HttpStatus.BAD_REQUEST, "G401", "먼저 굴비 옷을 뽑아야 합니다.");
+	REWARD_NO_DRAW(HttpStatus.BAD_REQUEST, "G401", "먼저 굴비 옷을 뽑아야 합니다."),
+	REWARD_IMAGE_GENERATION_FAILED(HttpStatus.BAD_GATEWAY, "G502", "굴비 옷 생성에 실패했습니다. 잠시 후 다시 시도해주세요.");
 	
 	private final HttpStatus status;
 	private final String code;

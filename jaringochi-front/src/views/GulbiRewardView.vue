@@ -17,10 +17,6 @@ const MOOD_LABEL = {
   hello: '인사', warn: '걱정', happy: '흐뭇', sad: '슬픔',
   hungry: '배고픔', sulk: '삐짐', angry: '화남',
 }
-const OUTFIT_LABEL = {
-  hanbok: '한복', hoodie: '후드티', pajama: '잠옷',
-  school: '교복', santa: '산타옷', raincoat: '우비',
-}
 
 // router/index.js 에서 props:true 로 넘겨받음
 const props = defineProps({
@@ -137,9 +133,9 @@ onMounted(async () => {
     <!-- 2) 미리보기 (PENDING) -->
     <template v-else-if="phase === 'preview'">
       <div class="card center">
-        <p class="lead">굴비가 <b>{{ OUTFIT_LABEL[outfitKey] || outfitKey }}</b>을(를) 입었어요!</p>
+        <p class="lead">굴비가 <b>{{ outfitKey }}</b>을(를) 입었어요!</p>
 
-        <img class="hero" :src="images[previewMood]" :alt="`${OUTFIT_LABEL[outfitKey]} 굴비`" />
+        <img class="hero" :src="images[previewMood]" :alt="`${outfitKey} 굴비`" />
 
         <div class="thumbs">
           <button
