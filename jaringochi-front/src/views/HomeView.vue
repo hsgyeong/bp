@@ -100,6 +100,18 @@ const progressWidth = computed(() => {
   return `${Math.min(budgetRate.value, 100)}%`
 })
 
+// 이번 주 남은 예산 (서버 remaining 우선, 없으면 예산-사용 직접 계산)
+const remaining = computed(() => {
+  const r = weeklyBudget.value?.remaining
+  return r != null ? Number(r) : budgetAmount.value - spentMoney.value
+})
+
+// 이번 주 기간 (예: 2026-06-22 ~ 2026-06-28)
+const weekRangeText = computed(() => {
+  const b = weeklyBudget.value
+  return b?.startDate && b?.endDate ? `${b.startDate} ~ ${b.endDate}` : ''
+})
+
 // 예산 사용률에 따른 굴비 메시지
 const mascotMessage = computed(() => {
   if (budgetRate.value >= 100) return '이번 주 예산을 넘었어요. 오늘은 조금 쉬어가요.'
@@ -311,8 +323,12 @@ onMounted(() => {
       </div>
 
       <div class="budget-row">
-        <span>사용 {{ won(spentMoney) }}원</span>
-        <span>예산 {{ won(budgetAmount) }}원</span>
+        <span>사용 <b style="color:var(--expense)">{{ won(spentMoney) }}원</b></span>
+        <span>예산 <b style="color:var(--budget)">{{ won(budgetAmount) }}원</b></span>
+      </div>
+      <div class="budget-row budget-sub">
+        <span>{{ weekRangeText }}</span>
+        <span>남은 <b style="color:var(--ink)">{{ won(remaining) }}원</b></span>
       </div>
     </section>
 
@@ -526,7 +542,7 @@ onMounted(() => {
 }
 
 .card-head strong {
-  color: var(--gold-deep);
+  color: var(--expense);
   font-size: 24px;
   font-weight: 900;
 }
@@ -542,7 +558,7 @@ onMounted(() => {
   height: 100%;
   display: block;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--gold), var(--gold-deep));
+  background: var(--expense);
 }
 
 .budget-row {
@@ -550,6 +566,13 @@ onMounted(() => {
   color: var(--mute);
   font-size: 16px;
   font-weight: 900;
+}
+
+/* 날짜·남은 줄: 한 단계 작게 */
+.budget-row.budget-sub {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .summary-grid {
@@ -724,8 +747,18 @@ onMounted(() => {
 :root[data-theme="paint"] .mascot-card p {
   color: var(--ink);
 }
+/* 사용률 바: 각진 손그림 트랙(wobble) + 코랄 색연필 빗금 채움 (예산 페이지와 통일) */
+:root[data-theme="paint"] .progress {
+  background: #fff;
+  border: 1.5px solid var(--ink);
+  border-radius: 0;
+  filter: url(#paintWobbleSmall);
+}
 :root[data-theme="paint"] .progress span {
-  background: var(--ink);
+  border-radius: 0;
+  background-color: var(--expense);
+  background-image: repeating-linear-gradient(45deg,
+    rgba(0,0,0,.16) 0, rgba(0,0,0,.16) 1.4px, transparent 1.4px, transparent 6px);
 }
 :root[data-theme="paint"] .head-icons {
   filter: grayscale(1);

@@ -20,6 +20,9 @@
   --income-soft: #DBF1EA;
   --expense: #E8623D;
   --expense-soft: #FCE2DA;
+  /* 예산 색: classic 은 기존 금색 톤 유지 (paint 에서만 청록으로 덮어씀) */
+  --budget: var(--gold-deep);
+  --budget-soft: var(--gold-soft);
   --shadow: 0 10px 30px rgba(120, 90, 30, 0.12);
 }
 
@@ -70,11 +73,14 @@ body {
   --ink-2: #4A4A4A;
   --mute: #9A9A9A;
   --line: #161616;
-  /* 수입/지출은 흑백이라 색 대신 톤(진하기)으로 구분, 부호(+/−)로 보강 */
-  --income: #4A4A4A;
-  --income-soft: #EDEDED;
-  --expense: #161616;
-  --expense-soft: #E6E6E6;
+  /* 가시성을 위해 금액만 색 허용: 수입=파랑 / 지출=코랄 (앱 크롬·아이콘은 흑백 유지) */
+  --income: #6FA3DC;
+  --income-soft: #E4EEF8;
+  --expense: #E08A72;
+  --expense-soft: #FBE7E0;
+  /* 예산=청록 */
+  --budget: #5FB0A6;
+  --budget-soft: #CDE8E4;
   --shadow: none;
   /* paint 손글씨 폰트 — 여기 한 줄만 바꾸면 전체 폰트 교체됨 */
   --paint-font: "Gamja Flower", "Gaegu", cursive;

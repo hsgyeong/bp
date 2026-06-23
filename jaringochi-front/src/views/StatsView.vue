@@ -17,21 +17,17 @@ const trend = ref(null)      // monthly-trend: { items:[{month,amount}], diffRat
 const cat   = ref(null)      // by-category: { total, items:[{categoryId,categoryName,amount,ratio}] }
 const weeks = ref([])        // budgets/weekly/recent (과거->현재, 최대 4주)
 
-const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']
+// 수입/지출/예산은 전역 토큰(--income/--expense/--budget)이 테마별 색을 제공 → 분기 없이 그대로 사용.
+// 도넛(다색 카테고리 팔레트)·달성률 보라는 대응 전역 토큰이 없어 로컬 팔레트로 둔다.
+const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']  // classic
+const DONUT_PAINT  = ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96']  // paint(색연필)
+const RATE_PAINT   = '#B197D0'  // 달성률 전용 보라(파스텔)
 
-// paint 전용 색연필 팔레트(채도 낮은 파스텔 톤). 통계에선 수입/지출도 색 허용.
-const PENCIL = {
-  income:  '#6FA3DC',  // 또렷한 파랑
-  expense: '#E08A72',  // 연한 코랄
-  budget:  '#5FB0A6',  // 청록(teal)
-  rate:    '#B197D0',  // 연한 보라
-  donut: ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96'],
-}
 const isPaint = computed(() => theme.value === 'paint')
-const donutColors = computed(() => (isPaint.value ? PENCIL.donut : DONUT_COLORS))
-const barBudgetFill = computed(() => (isPaint.value ? PENCIL.budget : 'var(--gold-soft)'))
-const barSpentFill  = computed(() => (isPaint.value ? PENCIL.expense : 'var(--gold-deep)'))
-const rateColor     = computed(() => (isPaint.value ? PENCIL.rate : 'var(--income)'))
+const donutColors   = computed(() => (isPaint.value ? DONUT_PAINT : DONUT_COLORS))
+const barBudgetFill = 'var(--budget)'
+const barSpentFill  = 'var(--expense)'
+const rateColor     = computed(() => (isPaint.value ? RATE_PAINT : 'var(--income)'))
 
 const won = (n) => Number(n || 0).toLocaleString()
 
@@ -86,10 +82,7 @@ onMounted(load)
 watch([period, type, view], load)
 
 // ===== 월 단순금액: 꺾은선 =====
-const lineColor = computed(() => {
-  if (isPaint.value) return type.value === 1 ? PENCIL.income : PENCIL.expense
-  return type.value === 1 ? 'var(--income)' : 'var(--expense)'
-})
+const lineColor = computed(() => (type.value === 1 ? 'var(--income)' : 'var(--expense)'))
 
 const trendChart = computed(() => {
   if (!trend.value || !trend.value.items.length) return null
