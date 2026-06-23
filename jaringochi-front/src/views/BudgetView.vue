@@ -17,7 +17,8 @@ async function load() {
   const cur = await getCurrentWeek()
   current.value = cur.data.data          // 봉투 두 겹: axios .data + 우리 봉투 .data
   const rec = await getRecentWeeks()
-  weeks.value = rec.data.data
+  // 최신 주가 위로(내림차순), 가장 예전 주가 아래로 오도록 정렬
+  weeks.value = [...rec.data.data].sort((a, b) => b.startDate.localeCompare(a.startDate))
 }
 
 onMounted(load)   // 화면 처음 뜰 때 1회
