@@ -48,16 +48,11 @@ public class GmsImageClient {
 	 *
 	 * @param base64Image  편집 대상 굴비 이미지(base64)
 	 * @param mimeType     그 이미지의 MIME 타입(예: image/png)
-	 * @param outfitName   입힐 옷의 영문 설명
 	 * @param mood         무드 키(happy, sad ...).
 	 * @param referenceB64 정본(앵커) 이미지의 base64. null이면 '새로 옷 생성',
 	 *                     값이 있으면 '그 옷을 그대로 따라 입히기'(7무드 옷 통일용)
 	 * @return "data:image/png;base64,...." 형태의 결과 이미지 data URL
 	 */
-	
-	// 결과: 이미지 data URL + 제미나이가 지은 옷 이름. 레퍼런스 호출 땐 outfitName=null
-	public record DressResult(String dataUrl, String outfitName) {}
-	
 	public DressResult dressGulbi(String base64Image, String mimeType, String mood, String referenceB64) {
 		try {			
 			// contents[0].parts 배열을 담을 리스트
@@ -125,7 +120,7 @@ public class GmsImageClient {
 
 				// 응답 JSON 파싱: candidates[0].content.parts 안에서 이미지 데이터를 찾는다.
 				JsonNode root = objectMapper.readTree(response.body());
-				JsonNode resultParts = root.path("candidates").get(0).path("content").path("parts");
+				JsonNode resultParts = root.path("candidates").path(0).path("content").path("parts");
 				
 				String dataUrl = null;		// 이미지
 				String outfitName = null;	// 옷 이름
@@ -200,4 +195,7 @@ public class GmsImageClient {
 				return "data:image/png;base64," + rawBase64;	// 무슨 문제든 원본 유지
 			}
 		}	
+		
+		// 결과: 이미지 data URL + 제미나이가 지은 옷 이름. 레퍼런스 호출 땐 outfitName=null
+		public record DressResult(String dataUrl, String outfitName) {}
 }

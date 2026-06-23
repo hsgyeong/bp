@@ -3,7 +3,12 @@ package com.bp.jaringochi.domain.gulbi.service;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -145,28 +150,65 @@ public class GulbiRewardService {
 			return new GenerateResult(images, "랜덤 옷");
 		}
 		
-		// 첫 무드를 기준으로 옷을 '새로' 만든다(referenceB64 = null → 랜덤 생성 모드)
-		var anchor = entries.get(0);
+		// 앵커 : 먼저 순차로 생성 (나머지가 이 이미지를 참조함)
+		Map.Entry<String, GulbiDrawRequest.BaseImage> anchor = entries.get(0);
 		GulbiDrawRequest.BaseImage anchorBase = anchor.getValue();
-		GmsImageClient.DressResult a = gmsImageClient.dressGulbi(
-				anchorBase.base64(), anchorBase.mimeType(), anchor.getKey(), null);
-		// 앵커 결과 이미지를 맵에 저장(키 = 그 무드 이름)
+		GmsImageClient.DressResult a;
+		
+		try {
+			// 앵커는 다른 무드의 기준이 되기 때문에 반드시 먼저 순차로 생성
+			a = gmsImageClient.dressGulbi(
+					anchorBase.base64(), anchorBase.mimeType(), anchor.getKey(), null);
+		} catch (Exception ex) {
+			throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED);
+		}
+		// 앵커 결과 이미지를 맵에 저장
 		images.put(anchor.getKey(), a.dataUrl());
 		
 		String outfitName = (a.outfitName() == null || a.outfitName().isBlank()) ? "랜덤 옷" : a.outfitName().trim();
+		// DB 컬럼 길이 보호 (50자를 넘으면 잘라냄)
 		if (outfitName.length() > 50) {
 			outfitName = outfitName.substring(0, 50);
 		}
 		
-		// 정본 이미지의 raw base64만 추출(data URL의 "," 뒤). 나머지 무드의 레퍼런스로 쓴다
-		String referenceB64 = a.dataUrl().substring(a.dataUrl().indexOf(',') + 1);
-		// 앵커 옷(정본)을 레퍼런스로 넘겨 '같은 옷'을 입힌다(i=1부터, 앵커 제외)
-		for (int i = 1; i < entries.size(); i++) {
-			var e = entries.get(i);
-			GulbiDrawRequest.BaseImage base = e.getValue();
-			images.put(e.getKey(), gmsImageClient.dressGulbi(
-					base.base64(), base.mimeType(), e.getKey(), referenceB64).dataUrl());
-		}
+		final String referenceB64 = a.dataUrl().substring(a.dataUrl().indexOf(',') + 1);
+		
+		// 나머지 무드 : 서로 독립으로 동시에 호출해 시간 단축. 동시에 3개까지
+		ExecutorService pool = Executors.newFixedThreadPool(3);
+		try {
+			List<String> moodKeys = new ArrayList<>();	// 순서 보존용
+			List<Future<String>> futures = new ArrayList<>();
+			
+			// i=1부터(앵커 제외) 무드별 작업을 만들어 풀에 제출 → 백그라운드에서 동시에 실행 시작.
+			for (int i = 1; i < entries.size(); i++) {
+				Map.Entry<String, GulbiDrawRequest.BaseImage> e = entries.get(i);
+				final String mood = e.getKey();			// 익명 클래스에서 쓰려면 final
+				final GulbiDrawRequest.BaseImage base = e.getValue();
+				
+				moodKeys.add(mood);
+				
+				Callable<String> task = new Callable<String>() {
+
+					@Override
+					public String call() throws Exception {
+						return gmsImageClient.dressGulbi(
+								base.base64(), base.mimeType(), mood, referenceB64).dataUrl();
+					}
+					
+				};
+				futures.add(pool.submit(task));
+			}
+			// 입력 순서대로 결과 모으기 (get은 그 작업이 끝날 때까지 기다림)
+			for (int i = 0; i < futures.size(); i++) {
+				try {
+					images.put(moodKeys.get(i), futures.get(i).get());
+				} catch (Exception ex) {
+					throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED, ex);
+				}
+			}
+		} finally {
+			pool.shutdown(); // 스레드 정리
+		}		
 		return new GenerateResult(images, outfitName);
 	}
 
