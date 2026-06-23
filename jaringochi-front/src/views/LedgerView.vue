@@ -255,12 +255,12 @@ onBeforeUnmount(() => {
 <template>
   <section class="ledger-view">
     <header class="topbar">
-      <h1>가계부</h1>
-
-      <MonthPicker v-model="selectedMonth" align="right" class="month-picker">
+      <MonthPicker v-model="selectedMonth" class="month-picker">
         <span>{{ monthLabel }}</span>
         <small>▾</small>
       </MonthPicker>
+
+      <h1>가계부</h1>
     </header>
 
     <!-- 일자별/달력 전환 탭 -->
@@ -457,24 +457,27 @@ onBeforeUnmount(() => {
 
 .topbar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 28px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 26px;
 }
 
 .topbar h1 {
-  font-size: 32px;
+  font-size: 30px;
   font-weight: 900;
+  line-height: 1.2;
   color: var(--ink);
 }
 
+/* 월 선택: 홈 화면의 '2026년 6월'(작은 회색)과 동일한 톤·위치 */
 .month-picker {
   position: relative;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
   color: var(--mute);
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   cursor: pointer;
 }

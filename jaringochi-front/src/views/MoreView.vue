@@ -30,7 +30,7 @@ const menus = [
 </template>
 
 <style scoped>
-.more-view { padding: 16px 20px 24px; }
+.more-view { padding: 34px 20px 24px; }
 .title { font-size: 18px; margin-bottom: 14px; }
 
 .list { padding: 4px 4px; }

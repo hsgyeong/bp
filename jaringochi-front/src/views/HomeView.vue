@@ -260,13 +260,6 @@ onMounted(() => {
         <p class="month">{{ monthLabel }}</p>
         <h1>{{ greetingText }} <span v-if="theme !== 'paint'">👋</span></h1>
       </div>
-
-      <div class="head-icons" aria-hidden="true">
-        <span v-if="theme === 'paint'"><i class="ti ti-chart-histogram"></i></span>
-        <span v-else>📊</span>
-        <span v-if="theme === 'paint'"><i class="ti ti-wallet"></i></span>
-        <span v-else>🔋</span>
-      </div>
     </header>
 
     <p v-if="errorMessage" class="error-message">{{ errorMessage }}</p>
@@ -420,13 +413,6 @@ onMounted(() => {
   font-weight: 900;
   line-height: 1.2;
   word-break: keep-all;
-}
-
-.head-icons {
-  display: flex;
-  gap: 10px;
-  padding-top: 4px;
-  font-size: 24px;
 }
 
 .error-message {
@@ -640,6 +626,8 @@ onMounted(() => {
   font-weight: 900;
   cursor: pointer;
 }
+/* paint 테마의 전역 버튼 손그림 테두리(::before) 제거 — '더보기'는 텍스트만 */
+:root[data-theme="paint"] .recent-head button::before { content: none; }
 
 .empty-state {
   min-height: 82px;
@@ -759,9 +747,6 @@ onMounted(() => {
   background-color: var(--expense);
   background-image: repeating-linear-gradient(45deg,
     rgba(0,0,0,.16) 0, rgba(0,0,0,.16) 1.4px, transparent 1.4px, transparent 6px);
-}
-:root[data-theme="paint"] .head-icons {
-  filter: grayscale(1);
 }
 /* 최근 거래 카테고리 아이콘: 회색 배경 박스 제거, 라인 아이콘만 */
 :root[data-theme="paint"] .category-icon {

@@ -215,7 +215,7 @@ async function send() {
 </template>
 
 <style scoped>
-.report-view { padding: 16px 20px 24px; }
+.report-view { padding: 34px 20px 24px; }
 .title { font-size: 18px; margin-bottom: 14px; }
 
 .month-nav { display: flex; align-items: center; justify-content: center; gap: 18px; margin-bottom: 14px; }

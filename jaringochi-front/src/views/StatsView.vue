@@ -479,7 +479,7 @@ const rateChart = computed(() => {
 </template>
 
 <style scoped>
-.stats-view { padding: 16px 20px 24px; }
+.stats-view { padding: 34px 20px 24px; }
 .title { font-size: 18px; margin-bottom: 14px; }
 
 /* 카테고리 기간 선택: 제목을 누르면 월(네이티브)·주(커스텀 달력) 피커가 열림 */
