@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { fetchTransactions } from '@/api/transaction'
 import { useTheme } from '@/composables/useTheme'
 import { categoryTablerIcon } from '@/utils/categoryIcon'
+import MonthPicker from '@/components/MonthPicker.vue'
 
 const router = useRouter()
 const { theme } = useTheme()   // paint 테마: 카테고리 이모지 → Tabler 라인 아이콘
@@ -256,11 +257,10 @@ onBeforeUnmount(() => {
     <header class="topbar">
       <h1>가계부</h1>
 
-      <label class="month-picker">
+      <MonthPicker v-model="selectedMonth" align="right" class="month-picker">
         <span>{{ monthLabel }}</span>
         <small>▾</small>
-        <input v-model="selectedMonth" type="month" />
-      </label>
+      </MonthPicker>
     </header>
 
     <!-- 일자별/달력 전환 탭 -->
