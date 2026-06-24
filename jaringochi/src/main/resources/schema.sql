@@ -118,6 +118,7 @@ CREATE TABLE `monthly_report` (
   `mood`             VARCHAR(20)   NULL                       COMMENT 'happy|smirk|angry|sad (코드가 결정)',
   `category_comment` VARCHAR(500)  NULL                       COMMENT '카테고리 분석 코멘트',
   `advice`           VARCHAR(500)  NULL                       COMMENT '다음 달 조언',
+  `story`            VARCHAR(1000) NULL                       COMMENT '굴비의 총평(긴 이야기, 300자 내외)',
   -- 굴비에게 한 마디 (월 1회)
   `user_message`     VARCHAR(255)  NULL                       COMMENT '사용자가 굴비에게 건넨 말',
   `gulbi_reply`      VARCHAR(500)  NULL                       COMMENT '굴비의 응답',

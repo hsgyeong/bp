@@ -9,7 +9,7 @@
         id, user_id, report_year, report_month,
         total_expense, prev_expense, diff_ratio,
         success_weeks, total_weeks, top_category, category_json, extra_json,
-        one_liner, mood, category_comment, advice,
+        one_liner, mood, category_comment, advice, story,
         user_message, gulbi_reply, replied_at, generated_at
     </sql>
 
@@ -39,12 +39,12 @@
             (user_id, report_year, report_month,
              total_expense, prev_expense, diff_ratio,
              success_weeks, total_weeks, top_category, category_json, extra_json,
-             one_liner, mood, category_comment, advice, generated_at)
+             one_liner, mood, category_comment, advice, story, generated_at)
         VALUES
             (#{userId}, #{reportYear}, #{reportMonth},
              #{totalExpense}, #{prevExpense}, #{diffRatio},
              #{successWeeks}, #{totalWeeks}, #{topCategory}, #{categoryJson}, #{extraJson},
-             #{oneLiner}, #{mood}, #{categoryComment}, #{advice}, #{generatedAt})
+             #{oneLiner}, #{mood}, #{categoryComment}, #{advice}, #{story}, #{generatedAt})
     </insert>
 
     <!-- 굴비 한 마디 저장 -->
