@@ -475,12 +475,14 @@ onMounted(() => {
 }
 
 .budget-empty-action p {
-  white-space: nowrap;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.5;
 }
 
 .budget-link {
   display: block;
-  width: 100%;
+  width: 90%;
   margin-top: 14px;
   border: 0;
   border-radius: 14px;
