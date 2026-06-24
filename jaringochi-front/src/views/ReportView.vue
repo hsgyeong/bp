@@ -320,20 +320,16 @@ async function send() {
         </div>
       </div>
 
+      <!-- 굴비의 총평 (이번 달 긴 이야기) -->
+      <div class="card advice" v-if="report.story">
+        <div class="advice-head">굴비의 총평</div>
+        <p>{{ report.story }}</p>
+      </div>
+
       <!-- 굴비의 조언 -->
       <div class="card advice" v-if="report.advice">
         <div class="advice-head">굴비의 한 수</div>
         <p>{{ report.advice }}</p>
-      </div>
-
-      <!-- 굴비가 기억하는 너 (과거 다짐) -->
-      <div class="card memory" v-if="report.memory">
-        <div class="advice-head">굴비가 기억하는 너</div>
-        <p class="mem-past">
-          {{ report.memory.reportYear }}년 {{ report.memory.reportMonth }}월엔
-          <b>“{{ report.memory.userMessage }}”</b> 라고 했었지?
-        </p>
-        <p class="mem-reply" v-if="report.memory.gulbiReply">🐟 {{ report.memory.gulbiReply }}</p>
       </div>
 
       <!-- 굴비에게 한 마디 (월 1회) -->
@@ -434,10 +430,6 @@ async function send() {
 .wk-fill.no { background: var(--expense); }
 .wk-pct { width: 64px; text-align: right; font-weight: 800; }
 
-/* 굴비가 기억하는 너 */
-.memory .mem-past { font-size: 13px; font-weight: 600; line-height: 1.6; color: var(--ink-2); margin: 0; }
-.memory .mem-past b { font-weight: 800; color: var(--ink); }
-.memory .mem-reply { font-size: 13px; font-weight: 700; line-height: 1.6; color: var(--ink); margin: 8px 0 0; }
 
 /* 조언 / 한 마디 */
 .advice-head { font-size: 14px; font-weight: 800; color: var(--gold-deep); margin-bottom: 8px; }

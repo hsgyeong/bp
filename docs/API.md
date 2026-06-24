@@ -517,6 +517,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
   "mood": "smirk",
   "categoryComment": "식비가 전월보다 늘었어. 외식 한 번만 줄여도 큰 도움이 돼.",
   "advice": "주간 예산을 미리 정하고 큰 지출은 하루 미뤄 생각해보자.",
+  "story": "이번 달은 총 32만 원을 썼네. 지난달보다 조금 늘었지만 식비 빼면 흐름은 안정적이야 ... (300자 내외 총평)",
   "userMessage": null, "gulbiReply": null, "repliedAt": null,
   "generatedAt": "2026-06-01T09:00:00",
   "categories": [
@@ -534,6 +535,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 }
 ```
 - `diffRatio`: 전월 대비 %, **전월 지출이 0이면 `null`**. `mood`: **`happy|smirk|angry|sad` 4종**(코드가 그 달 예산 초과 주 수로 결정, AI는 그 mood 톤으로 텍스트만 생성).
+- `story`("굴비의 총평"): 이번 달 흐름을 굴비가 풀어내는 **300자 내외 긴 총평**. `oneLiner`/`categoryComment`/`advice`와 **같은 AI 호출 1회**(`applyAiNarrative`)에서 함께 생성되어 DB에 캐싱됨. 옛 캐시 레포트엔 `null`일 수 있음(프론트는 `v-if`로 숨김).
 - `categories[]`: 전월/당월 **합집합**(전월에만 있던 카테고리는 `amount=0`). `prevAmount`/`prevRatio`=전월 값(전월 도넛용), `diffAmount`=`amount − prevAmount`.
 - `extra`: 부가 지표 스냅샷. **실제 거래액은 원본 그대로**, `dailyAvg`만 원 단위 반올림(총지출÷그 달 전체 일수). `weeks`=그 달 완료된 주의 달성 리스트. 옛 캐시 레포트엔 `null`일 수 있음.
 - 400(R400): 이번 달/미래 달 요청 또는 월 범위 오류

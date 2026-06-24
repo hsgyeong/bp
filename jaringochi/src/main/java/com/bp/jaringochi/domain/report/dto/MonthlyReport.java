@@ -44,6 +44,7 @@ public class MonthlyReport {
     private String mood;              // happy|smirk|angry|sad (코드가 결정, 4종)
     private String categoryComment;   // 카테고리 분석 코멘트
     private String advice;            // 다음 달 조언
+    private String story;             // 굴비의 총평 (긴 이야기, 300자 내외)
 
     // ===== 굴비에게 한 마디 (월 1회) =====
     private String userMessage;
@@ -55,5 +56,4 @@ public class MonthlyReport {
     // ===== 컬럼이 아닌 파생 필드 (JSON 을 파싱해 응답에 실어줌) =====
     private List<CategoryDiffItem> categories;   // categoryJson 파싱
     private ReportExtra extra;                    // extraJson 파싱 (부가 지표)
-    private ReportMemory memory;                  // 과거 다짐 ("굴비가 기억하는 너"), 조회 시 주입
 }

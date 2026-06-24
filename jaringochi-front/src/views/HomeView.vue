@@ -117,8 +117,8 @@ const mascotMessage = computed(() => {
   switch (mascotMood.value) {
     case 'happy': return '아주 좋아요. 이번 주 지출 흐름이 안정적이에요.'
     case 'smirk': return '살짝 빨라요. 오늘은 지갑을 조금만 닫아볼까요?'
-    case 'angry': return '오늘 기준보다 많이 썼어요. 남은 날은 아껴봐요.'
-    case 'sad':   return '이번 주 예산을 크게 넘겼어요. 잠시 쉬어가요.'
+    case 'angry': return '어쩌려고 그래요? 남은 날은 아껴봐요.'
+    case 'sad':   return '제발 아껴요 이러다 텅장이 돼요...'
     default:      return ''
   }
 })

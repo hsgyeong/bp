@@ -22,7 +22,6 @@ import com.bp.jaringochi.domain.report.dao.ReportDao;
 import com.bp.jaringochi.domain.report.dto.CategoryDiffItem;
 import com.bp.jaringochi.domain.report.dto.MonthlyReport;
 import com.bp.jaringochi.domain.report.dto.ReportExtra;
-import com.bp.jaringochi.domain.report.dto.ReportMemory;
 import com.bp.jaringochi.domain.report.dto.ReportNarrative;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatItem;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatistics;
@@ -74,31 +73,12 @@ public class ReportServiceImpl implements ReportService {
         if (existing != null) {
             existing.setCategories(parseCategories(existing.getCategoryJson()));
             existing.setExtra(parseExtra(existing.getExtraJson()));
-            attachMemory(userId, existing);
             return existing;                          // 캐싱: 재생성 안 함
         }
 
         MonthlyReport report = buildReport(userId, year, month);
         reportDao.insert(report);                     // id 채워짐
-        attachMemory(userId, report);
         return report;
-    }
-
-    // "굴비가 기억하는 너" — 과거 레포트 중 가장 최근에 남긴 다짐을 응답에 주입
-    private void attachMemory(Long userId, MonthlyReport r) {
-        List<MonthlyReport> history = reportDao.selectRecentReports(
-                userId, r.getReportYear(), r.getReportMonth(), MEMORY_MONTHS);
-        for (MonthlyReport h : history) {             // 최신순
-            if (StringUtils.hasText(h.getUserMessage())) {
-                ReportMemory m = new ReportMemory();
-                m.setReportYear(h.getReportYear());
-                m.setReportMonth(h.getReportMonth());
-                m.setUserMessage(h.getUserMessage());
-                m.setGulbiReply(h.getGulbiReply());
-                r.setMemory(m);
-                return;
-            }
-        }
     }
 
     // ==================================================================
@@ -137,7 +117,6 @@ public class ReportServiceImpl implements ReportService {
         report.setRepliedAt(now);
         report.setCategories(parseCategories(report.getCategoryJson()));
         report.setExtra(parseExtra(report.getExtraJson()));
-        attachMemory(userId, report);
         return report;
     }
 
@@ -346,11 +325,14 @@ public class ReportServiceImpl implements ReportService {
     private void applyAiNarrative(MonthlyReport r, List<CategoryDiffItem> diffs, List<MonthlyReport> history) {
         String mood = r.getMood();
         String system = PERSONA
-                + " 사용자의 한 달 지출 데이터를 보고 짧고 따뜻하게 정리해줘. "
+                + " 사용자의 한 달 지출 데이터를 보고 따뜻하게 정리해줘. "
                 + "이번 달 굴비의 기분은 '" + mood + "' 야 — " + moodGuide(mood)
-                + ". 이 기분에 맞춰 oneLiner/categoryComment/advice 의 말투와 감정을 일치시켜줘. "
+                + ". 이 기분에 맞춰 oneLiner/categoryComment/advice/story 의 말투와 감정을 일치시켜줘. "
                 + "oneLiner 는 40자 이내 한 줄 총평, categoryComment 는 전월보다 늘어난 카테고리 짚고 절약 포인트(80자 이내), "
-                + "advice 는 다음 달 구체적 절약 조언(100자 이내).";
+                + "advice 는 다음 달 구체적 절약 조언(100자 이내), "
+                + "story 는 이번 달 살림을 굴비가 들려주는 총평으로 총지출·전월 대비·가장 많이 쓴 항목·주간 예산 성취를 "
+                + "자연스럽게 엮어 280~320자로 따뜻하게 풀어줘(숫자는 데이터에 있는 값만 쓰고, advice 의 구체적 팁과는 "
+                + "내용이 겹치지 않게 한 달 흐름과 격려 위주로).";
 
         try {
             ReportNarrative n = chatClient.prompt()
@@ -364,6 +346,7 @@ public class ReportServiceImpl implements ReportService {
                 r.setCategoryComment(StringUtils.hasText(n.getCategoryComment())
                         ? n.getCategoryComment() : fallbackCategoryComment(r));
                 r.setAdvice(StringUtils.hasText(n.getAdvice()) ? n.getAdvice() : FALLBACK_ADVICE);
+                r.setStory(StringUtils.hasText(n.getStory()) ? n.getStory() : fallbackStory(r));
                 return;
             }
         } catch (Exception e) {
@@ -491,7 +474,26 @@ public class ReportServiceImpl implements ReportService {
         r.setOneLiner(fallbackOneLiner(r));
         r.setCategoryComment(fallbackCategoryComment(r));
         r.setAdvice(FALLBACK_ADVICE);
+        r.setStory(fallbackStory(r));
         // mood 는 이미 computeMood 로 설정됨 — 폴백에서 건드리지 않음
+    }
+
+    // AI 실패 시 굴비 총평 폴백 — 스냅샷 숫자만으로 구성(지어내기 없음)
+    private String fallbackStory(MonthlyReport r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("이번 달은 총 ").append(won(r.getTotalExpense())).append("원을 썼어. ");
+        if (r.getDiffRatio() != null) {
+            sb.append(r.getDiffRatio().signum() <= 0
+                    ? "지난달보다 아껴낸 게 보여서 굴비는 참 기특해. "
+                    : "지난달보다 조금 더 나갔지만, 어디에 썼는지 알면 충분히 다잡을 수 있어. ");
+        }
+        if (r.getTopCategory() != null) {
+            sb.append("그중 '").append(r.getTopCategory()).append("'에 가장 많이 썼더라. ");
+        }
+        sb.append("주간 예산은 ").append(nz0(r.getTotalWeeks())).append("주 중 ")
+          .append(nz0(r.getSuccessWeeks())).append("주를 지켜냈어. ");
+        sb.append("작은 습관이 쌓이면 다음 달은 더 가벼워질 거야. 굴비가 옆에서 같이 지켜볼 테니 천천히 가보자고.");
+        return sb.toString();
     }
 
     private String fallbackOneLiner(MonthlyReport r) {
