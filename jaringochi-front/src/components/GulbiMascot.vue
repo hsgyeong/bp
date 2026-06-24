@@ -7,21 +7,17 @@
 -->
 <script setup>
 import hello from '@/assets/gulbi/gulbi-hello.png'
-import warn from '@/assets/gulbi/gulbi-warn.png'
 import happy from '@/assets/gulbi/gulbi-happy.png'
-import sad from '@/assets/gulbi/gulbi-sad.png'
-import hungry from '@/assets/gulbi/gulbi-hungry.png'
-import sulk from '@/assets/gulbi/gulbi-sulk.png'
+import sad   from '@/assets/gulbi/gulbi-sad.png'
+import smirk from '@/assets/gulbi/gulbi-smirk.png'
 import angry from '@/assets/gulbi/gulbi-angry.png'
 
-const MOODS = { hello, warn, happy, sad, hungry, sulk, angry }
+const MOODS = { hello, happy, sad, smirk, angry }
 const LABEL = {
   hello: '굴비가 인사해요',
-  warn: '굴비가 걱정해요',
   happy: '굴비가 흐뭇해해요',
-  sad: '굴비가 슬퍼해요',
-  hungry: '굴비가 배고파해요',
-  sulk: '굴비가 삐졌어요',
+  sad:   '굴비가 슬퍼해요',
+  smirk: '굴비가 비웃어요',
   angry: '굴비가 화났어요',
 }
 

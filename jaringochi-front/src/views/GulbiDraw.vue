@@ -3,11 +3,9 @@ import { ref } from 'vue'
 import { drawGulbiReward, decideGulbiReward } from '../api/gulbiReward';
 
 import hello from '@/assets/gulbi/gulbi-hello.png'
-import warn from '@/assets/gulbi/gulbi-warn.png'
 import happy from '@/assets/gulbi/gulbi-happy.png'
-import sad from '@/assets/gulbi/gulbi-sad.png'
-import hungry from '@/assets/gulbi/gulbi-hungry.png'
-import sulk from '@/assets/gulbi/gulbi-sulk.png'
+import sad   from '@/assets/gulbi/gulbi-sad.png'
+import smirk from '@/assets/gulbi/gulbi-smirk.png'
 import angry from '@/assets/gulbi/gulbi-angry.png'
 import { P } from 'vue-router/dist/index-BQLwgiyK.js';
 
@@ -15,7 +13,7 @@ const props = defineProps({
     weeklyBudgetId: { type: Number, required: true },
 })
 
-const baseAssets = { hello, warn, happy, sad, hungry, sulk, angry }
+const baseAssets = { hello, happy, sad, smirk, angry }
 
 const loading = ref(false)
 const reward = ref(null)
