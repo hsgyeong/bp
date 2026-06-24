@@ -3,7 +3,7 @@
   paint(그림판) 테마용 흑백 라인 일러스트. 이미지는 src/assets/gulbi/ 에서 잘라둔 7종.
 
   사용 예) <GulbiMascot mood="happy" :size="120" />
-  mood: hello | warn | happy | sad | hungry | sulk | angry
+  mood: hello | warn | happy | sad | hungry | angry
 -->
 <script setup>
 import hello from '@/assets/gulbi/gulbi-hello.png'
