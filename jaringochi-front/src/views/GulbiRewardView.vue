@@ -3,19 +3,17 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { drawGulbiReward, decideGulbiReward, getGulbiReward } from '@/api/gulbiReward'
 
-// GulbiMascot 과 동일한 7종 무드 PNG (기본 굴비)
+// GulbiMascot 과 동일한 5종 무드 PNG (기본 굴비)
 import hello from '@/assets/gulbi/gulbi-hello.png'
-import warn from '@/assets/gulbi/gulbi-warn.png'
 import happy from '@/assets/gulbi/gulbi-happy.png'
-import sad from '@/assets/gulbi/gulbi-sad.png'
-import hungry from '@/assets/gulbi/gulbi-hungry.png'
-import sulk from '@/assets/gulbi/gulbi-sulk.png'
+import sad   from '@/assets/gulbi/gulbi-sad.png'
+import smirk from '@/assets/gulbi/gulbi-smirk.png'
 import angry from '@/assets/gulbi/gulbi-angry.png'
 
-const MOODS = { hello, warn, happy, sad, hungry, sulk, angry }
+
+const baseAssets = { hello, happy, sad, smirk, angry }
 const MOOD_LABEL = {
-  hello: '인사', warn: '걱정', happy: '흐뭇', sad: '슬픔',
-  hungry: '배고픔', sulk: '삐짐', angry: '화남',
+  hello: '인사', happy: '흐뭇', sad: '슬픔', smirk: '씨익', angry: '화남',
 }
 
 // router/index.js 에서 props:true 로 넘겨받음
