@@ -21,6 +21,19 @@
         ORDER BY amount DESC
     </select>
 
+    <!-- 레포트용: 일자별 지출 합계 (type=2 지출만, 기간 내, 거래 있는 날만) -->
+    <select id="selectDailyExpense" resultType="DailyExpense">
+        SELECT
+            t.`date` AS date,
+            COALESCE(SUM(t.amount), 0) AS amount
+        FROM `transaction` t
+        WHERE t.user_id = #{userId}
+          AND t.type = 2
+          AND t.`date` BETWEEN #{startDate} AND #{endDate}
+        GROUP BY t.`date`
+        ORDER BY t.`date`
+    </select>
+
     <!-- 6-2. 월별 합계 (해당 type, 기간 내). 거래 있는 달만 'yyyy-MM'으로 반환 -->
     <select id="selectMonthlyTotals" resultType="MonthlyTrendItem">
         SELECT

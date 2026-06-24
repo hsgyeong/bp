@@ -1,11 +1,12 @@
 package com.bp.jaringochi.domain.budget.service;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import com.bp.jaringochi.domain.budget.dto.WeeklyBudget;
 
 public interface BudgetService {
-	
+
 	// userId=현재 유저, req=요청 바디(amount/startDate/endDate), id=경로변수
 
     // 4-1. 현재 주 예산 (지출 현황 포함)
@@ -13,6 +14,9 @@ public interface BudgetService {
 
     // 4-2. 이번 주 포함 최근 5주
     List<WeeklyBudget> getRecentWeeks(Long userId);
+
+    // 레포트용: 해당 월에 걸치는 주들 (과거→현재, ratio 포함)
+    List<WeeklyBudget> getWeeksByMonth(Long userId, LocalDate startDate, LocalDate endDate);
 
     // 4-3. 주간 예산 등록
     WeeklyBudget addWeeklyBudget(Long userId, WeeklyBudget req);

@@ -1,9 +1,10 @@
 <!--
   굴비 마스코트 — 상태(mood)에 따라 표정이 바뀌는 손그림 굴비.
-  paint(그림판) 테마용 흑백 라인 일러스트. 이미지는 src/assets/gulbi/ 에서 잘라둔 7종.
+  paint(그림판) 테마용 흑백 라인 일러스트. 이미지는 src/assets/gulbi/ 의 5종.
+  hello 는 로그인/회원가입 전용, 나머지 happy/smirk/angry/sad 4종을 화면에서 사용.
 
   사용 예) <GulbiMascot mood="happy" :size="120" />
-  mood: hello | warn | happy | sad | hungry | sulk | angry
+  mood: hello | happy | smirk | angry | sad
 -->
 <script setup>
 import hello from '@/assets/gulbi/gulbi-hello.png'

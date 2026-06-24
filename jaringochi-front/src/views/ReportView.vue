@@ -1,7 +1,12 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getMonthlyReport, talkToGulbi } from '@/api/report'
+import { useTheme } from '@/composables/useTheme'
 import GulbiMascot from '@/components/GulbiMascot.vue'
+
+// paint 테마일 때 차트를 '색연필' 톤으로 (StatsView 와 동일 규칙)
+const { theme } = useTheme()
+const isPaint = computed(() => theme.value === 'paint')
 
 // ===== 대상 연/월 =====
 // 레포트는 완료된 달(지난달)까지만 생성 가능 → 기본값·상한을 "지난달"로 둔다.
@@ -19,7 +24,18 @@ const isLatest = computed(
   () => year.value === latest.getFullYear() && month.value === latest.getMonth() + 1,
 )
 
-const won = (n) => Number(n || 0).toLocaleString()
+const won = (n) => Number(n || 0).toLocaleString()          // 원본 금액 그대로(천단위 구분만)
+const md = (iso) => {                                        // 'YYYY-MM-DD' → 'M/D'
+  if (!iso) return ''
+  const [, m, d] = String(iso).split('-')
+  return `${Number(m)}/${Number(d)}`
+}
+
+// 레포트 표정은 4종만 (hello는 로그인/회원가입 전용). 옛 값(warn 등)은 happy로 흡수
+const REPORT_MOODS = ['happy', 'smirk', 'angry', 'sad']
+const mascotMood = computed(() =>
+  REPORT_MOODS.includes(report.value?.mood) ? report.value.mood : 'happy',
+)
 
 // 전월 대비 표시 (감소=초록, 증가=코랄)
 const diff = computed(() => {
@@ -29,31 +45,49 @@ const diff = computed(() => {
   return { abs: Math.abs(v).toFixed(0), down: v < 0, flat: v === 0 }
 })
 
-// ===== 카테고리 도넛 =====
-const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']
-const donut = computed(() => {
-  const items = report.value?.categories || []
+// ===== 카테고리 도넛 (전월/당월 2개, 색은 categories 리스트 위치 기준으로 양쪽 일관) =====
+const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']  // classic
+const DONUT_PAINT  = ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96']  // paint(색연필)
+const palette = computed(() => (isPaint.value ? DONUT_PAINT : DONUT_COLORS))
+
+// categories 에 색을 입힌 공용 리스트 (도넛 2개 + 범례가 같은 색 매핑 공유)
+const cats = computed(() =>
+  (report.value?.categories || []).map((it, i) => ({
+    ...it,
+    color: palette.value[i % palette.value.length],
+  })),
+)
+
+function buildDonut(ratioField) {
+  const items = cats.value
   if (!items.length) return null
   const r = 54
   const circ = 2 * Math.PI * r
   let acc = 0
-  const segs = items.map((it, i) => {
-    const seg = (Number(it.ratio) / 100) * circ
-    const s = {
-      color: DONUT_COLORS[i % DONUT_COLORS.length],
+  const segs = []
+  for (const it of items) {
+    const ratio = Number(it[ratioField]) || 0
+    if (ratio <= 0) continue
+    const seg = (ratio / 100) * circ
+    segs.push({
+      color: it.color,
       dash: `${seg.toFixed(1)} ${(circ - seg).toFixed(1)}`,
       offset: (-acc).toFixed(1),
-    }
+    })
     acc += seg
-    return s
-  })
-  return { r, segs }
-})
-const legend = computed(() =>
-  (report.value?.categories || []).map((it, i) => ({
-    ...it,
-    color: DONUT_COLORS[i % DONUT_COLORS.length],
-  })),
+  }
+  return segs.length ? { r, segs } : null
+}
+const curDonut = computed(() => buildDonut('ratio'))
+const prevDonut = computed(() => buildDonut('prevRatio'))
+
+// ===== 부가 지표 (extra_json) =====
+const extra = computed(() => report.value?.extra || null)
+const weekBars = computed(() =>
+  (extra.value?.weeks || []).map((w) => {
+    const ratio = Math.round(Number(w.ratio) || 0)
+    return { label: w.label, ratio, pass: w.pass, width: Math.min(ratio, 100) }
+  }),
 )
 
 // ===== 로드 =====
@@ -108,6 +142,16 @@ async function send() {
 
 <template>
   <div class="report-view">
+    <!-- 색연필 빗금(hatch) 패턴 — paint 도넛 컬러 위에 덧칠 (StatsView 와 동일 id) -->
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <pattern id="statsHatch" width="6" height="6" patternUnits="userSpaceOnUse"
+                 patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="6" stroke="rgba(0,0,0,.16)" stroke-width="1.4" />
+        </pattern>
+      </defs>
+    </svg>
+
     <h1 class="title">이달의 굴비 레포트</h1>
 
     <!-- 월 네비게이션 -->
@@ -123,7 +167,7 @@ async function send() {
     <template v-else-if="report">
       <!-- 굴비 한줄평 -->
       <div class="card gulbi-card">
-        <GulbiMascot :mood="report.mood || 'hello'" :size="96" />
+        <GulbiMascot :mood="mascotMood" :size="96" />
         <div class="bubble">{{ report.oneLiner }}</div>
       </div>
 
@@ -150,23 +194,52 @@ async function send() {
         </div>
       </div>
 
-      <!-- 카테고리 분석 + AI 코멘트 -->
+      <!-- 카테고리 분석: 전월/당월 도넛 2개 + AI 코멘트 -->
       <div class="card">
         <div class="row between" style="margin-bottom:6px">
           <b style="font-size:15px">카테고리 분석</b>
-          <b v-if="report.topCategory" class="muted" style="font-size:13px">최다: {{ report.topCategory }}</b>
+          <b class="muted" style="font-size:13px">전월과 비교</b>
         </div>
 
-        <div class="donut-wrap" v-if="donut">
-          <svg viewBox="0 0 160 160" class="donut">
-            <circle v-for="(s, i) in donut.segs" :key="i" cx="80" cy="80" :r="donut.r"
-                    fill="none" :stroke="s.color" stroke-width="26"
-                    :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
-          </svg>
+        <div class="donut-pair" v-if="curDonut || prevDonut">
+          <div class="donut-col">
+            <svg viewBox="0 0 160 160" class="donut sub">
+              <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
+                <circle v-for="(s, i) in (prevDonut?.segs || [])" :key="'pc' + i" cx="80" cy="80" :r="prevDonut.r"
+                        fill="none" :stroke="s.color" stroke-width="26"
+                        :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+                <template v-if="isPaint && prevDonut">
+                  <circle v-for="(s, i) in prevDonut.segs" :key="'ph' + i" cx="80" cy="80" :r="prevDonut.r"
+                          fill="none" stroke="url(#statsHatch)" stroke-width="26"
+                          :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+                  <circle cx="80" cy="80" :r="prevDonut.r + 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+                  <circle cx="80" cy="80" :r="prevDonut.r - 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+                </template>
+              </g>
+            </svg>
+            <span class="donut-cap muted">전월</span>
+          </div>
+          <div class="donut-col">
+            <svg viewBox="0 0 160 160" class="donut">
+              <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
+                <circle v-for="(s, i) in (curDonut?.segs || [])" :key="'cc' + i" cx="80" cy="80" :r="curDonut.r"
+                        fill="none" :stroke="s.color" stroke-width="26"
+                        :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+                <template v-if="isPaint && curDonut">
+                  <circle v-for="(s, i) in curDonut.segs" :key="'ch' + i" cx="80" cy="80" :r="curDonut.r"
+                          fill="none" stroke="url(#statsHatch)" stroke-width="26"
+                          :stroke-dasharray="s.dash" :stroke-dashoffset="s.offset" />
+                  <circle cx="80" cy="80" :r="curDonut.r + 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+                  <circle cx="80" cy="80" :r="curDonut.r - 13" fill="none" stroke="var(--ink)" stroke-width="1.6" />
+                </template>
+              </g>
+            </svg>
+            <span class="donut-cap">이번 달</span>
+          </div>
         </div>
 
-        <div class="legend" v-for="it in legend" :key="it.categoryName">
-          <span class="lg"><i :style="{ background: it.color }"></i>{{ it.categoryName }}</span>
+        <div class="legend paint-hline" v-for="it in cats" :key="it.categoryId ?? it.categoryName">
+          <span class="lg"><i class="paint-sketch" :style="{ background: it.color }"></i>{{ it.categoryName }}</span>
           <b>{{ won(it.amount) }}</b>
           <span class="lp">{{ Number(it.ratio).toFixed(0) }}%</span>
           <span class="ld" :class="Number(it.diffAmount) > 0 ? 'up' : Number(it.diffAmount) < 0 ? 'dn' : 'fl'">
@@ -176,9 +249,48 @@ async function send() {
           </span>
         </div>
 
-        <div v-if="!donut" class="empty">지출 기록이 없어요</div>
+        <div v-if="!cats.length" class="empty">지출 기록이 없어요</div>
 
         <p class="ai-comment" v-if="report.categoryComment">🐟 {{ report.categoryComment }}</p>
+      </div>
+
+      <!-- 이번 달 한눈에 -->
+      <div class="card" v-if="extra">
+        <b style="font-size:15px">이번 달 한눈에</b>
+        <div class="glance">
+          <div class="g-cell">
+            <div class="g-lbl">하루 평균</div>
+            <div class="g-val">{{ won(extra.dailyAvg) }}원</div>
+          </div>
+          <div class="g-cell">
+            <div class="g-lbl">무지출 날</div>
+            <div class="g-val">{{ extra.noSpendDays ?? 0 }}일 🐟</div>
+          </div>
+          <div class="g-cell" v-if="extra.biggestDay">
+            <div class="g-lbl">가장 큰 하루</div>
+            <div class="g-val">{{ md(extra.biggestDay.date) }} · {{ won(extra.biggestDay.amount) }}원</div>
+          </div>
+          <div class="g-cell" v-if="extra.savedMost">
+            <div class="g-lbl">가장 아낀 항목</div>
+            <div class="g-val income">{{ extra.savedMost.name }} ▼{{ won(Math.abs(Number(extra.savedMost.diff))) }}</div>
+          </div>
+          <div class="g-cell" v-else-if="extra.spentMost">
+            <div class="g-lbl">가장 늘어난 항목</div>
+            <div class="g-val expense">{{ extra.spentMost.name }} ▲{{ won(extra.spentMost.diff) }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 주차별 예산 달성 -->
+      <div class="card" v-if="weekBars.length">
+        <b style="font-size:15px">주차별 예산 달성</b>
+        <div class="weeks">
+          <div class="wk" v-for="w in weekBars" :key="w.label">
+            <span class="wk-lbl">{{ w.label }}</span>
+            <div class="wk-bar"><div class="wk-fill" :class="w.pass ? 'ok' : 'no'" :style="{ width: w.width + '%' }"></div></div>
+            <span class="wk-pct" :class="w.pass ? 'income' : 'expense'">{{ w.pass ? '✓' : '✗' }} {{ w.ratio }}%</span>
+          </div>
+        </div>
       </div>
 
       <!-- 굴비의 조언 -->
@@ -201,8 +313,10 @@ async function send() {
         <template v-else-if="canTalk">
           <p class="talk-guide">이번 달 살림을 본 굴비에게 하고 싶은 말을 건네보세요. (이번 달 1회)</p>
           <div class="talk-input">
-            <input v-model="draft" type="text" maxlength="200" placeholder="예) 다음 달엔 외식 좀 줄여볼게!"
-                   @keyup.enter="send" :disabled="sending" />
+            <span class="paint-field" style="flex:1">
+              <input v-model="draft" type="text" maxlength="200" placeholder="예) 다음 달엔 외식 좀 줄여볼게!"
+                     @keyup.enter="send" :disabled="sending" />
+            </span>
             <button class="send-btn" :disabled="sending || !draft.trim()" @click="send">
               {{ sending ? '...' : '보내기' }}
             </button>
@@ -245,9 +359,12 @@ async function send() {
 .num-lbl { font-size: 12px; font-weight: 700; color: var(--mute); margin-bottom: 6px; }
 .num-val { font-size: 15px; font-weight: 800; }
 
-/* 도넛 + 범례 */
-.donut-wrap { display: flex; justify-content: center; margin: 8px 0 14px; }
-.donut { width: 150px; height: 150px; transform: rotate(-90deg); }
+/* 도넛 2개 (전월/당월) + 범례 */
+.donut-pair { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 10px 0 14px; }
+.donut-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.donut { width: 132px; height: 132px; transform: rotate(-90deg); }
+.donut.sub { width: 104px; height: 104px; }
+.donut-cap { font-size: 12px; font-weight: 700; }
 .legend { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-top: 1px solid var(--line);
   font-size: 14px; font-weight: 700; }
 .legend:first-of-type { border-top: none; }
@@ -263,13 +380,29 @@ async function send() {
 .ai-comment { margin: 12px 0 0; padding: 12px 14px; background: var(--cream-2); border-radius: 14px;
   font-size: 13px; font-weight: 700; line-height: 1.6; color: var(--ink); }
 
+/* 이번 달 한눈에 */
+.glance { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; margin-top: 10px; }
+.g-cell { background: var(--cream-2); border-radius: 12px; padding: 10px 12px; }
+.g-lbl { font-size: 11px; font-weight: 700; color: var(--mute); margin-bottom: 3px; }
+.g-val { font-size: 15px; font-weight: 800; color: var(--ink); }
+
+/* 주차별 막대 */
+.weeks { display: flex; flex-direction: column; gap: 9px; margin-top: 10px; }
+.wk { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+.wk-lbl { width: 48px; color: var(--mute); font-weight: 700; }
+.wk-bar { flex: 1; height: 10px; background: var(--cream-2); border-radius: 6px; overflow: hidden; }
+.wk-fill { height: 100%; border-radius: 6px; }
+.wk-fill.ok { background: var(--income); }
+.wk-fill.no { background: var(--expense); }
+.wk-pct { width: 64px; text-align: right; font-weight: 800; }
+
 /* 조언 / 한 마디 */
 .advice-head { font-size: 14px; font-weight: 800; color: var(--gold-deep); margin-bottom: 8px; }
 .advice p, .talk-guide { font-size: 14px; font-weight: 600; line-height: 1.6; color: var(--ink); margin: 0; }
 .once { font-size: 11px; font-weight: 700; color: var(--mute); margin-left: 4px; }
 
 .talk-input { display: flex; gap: 8px; margin-top: 10px; }
-.talk-input input { flex: 1; border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
+.talk-input input { width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 11px 13px;
   font-size: 14px; background: #fff; color: var(--ink); }
 .send-btn { border: none; border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 800;
   background: var(--gold-deep); color: #fff; cursor: pointer; }

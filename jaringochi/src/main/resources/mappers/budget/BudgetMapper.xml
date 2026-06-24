@@ -37,6 +37,16 @@
         LIMIT 4
     </select>
 
+    <!-- 레포트용: 해당 월에 걸치는 주들 (start_date <= 월말 AND end_date >= 월초), 과거→현재 -->
+    <select id="selectWeeksByMonth" resultType="WeeklyBudget">
+        SELECT <include refid="weeklyColumns"/>
+        FROM weekly_budget wb
+        WHERE wb.user_id = #{userId}
+          AND wb.start_date &lt;= #{endDate}
+          AND wb.end_date   &gt;= #{startDate}
+        ORDER BY wb.start_date ASC
+    </select>
+
     <!-- 4-3. 등록 (id 자동 채움) -->
     <insert id="insertWeeklyBudget" parameterType="WeeklyBudget"
             useGeneratedKeys="true" keyProperty="id">

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import com.bp.jaringochi.domain.statistics.dao.StatisticsDao;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatItem;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatistics;
+import com.bp.jaringochi.domain.statistics.dto.DailyExpense;
 import com.bp.jaringochi.domain.statistics.dto.MonthlyTrend;
 import com.bp.jaringochi.domain.statistics.dto.MonthlyTrendItem;
 import com.bp.jaringochi.exception.BusinessException;
@@ -86,6 +87,13 @@ public class StatisticsServiceImpl implements StatisticsService {
         result.setItems(items);
         result.setDiffRatio(calcDiffRatio(items));
         return result;
+    }
+
+    // 레포트용: 일자별 지출 합계 (가공 없이 그대로 전달)
+    @Override
+    public List<DailyExpense> getDailyExpense(Long userId, LocalDate startDate, LocalDate endDate) {
+        validateDates(startDate, endDate);
+        return statisticsDao.selectDailyExpense(userId, startDate, endDate);
     }
 
     // ===== 상위 TOP_N 유지, 나머지를 '기타' 1건으로 합산 (rows는 금액 내림차순) =====

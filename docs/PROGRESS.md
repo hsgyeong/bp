@@ -67,3 +67,21 @@
 - [ ] 목업 -> Vue 이식 - 카테고리·예산·로그인·회원가입 완료 / 홈·통계·프로필·거래 화면 남음
 - [ ] 프론트-백 API 연동 - 진행 중(완료된 화면 단위로 axios 연동)
 - [ ] Access Token 재발급 API(`/api/auth/refresh`) 검토 - Refresh Token 유효성 검증 로직은 준비됐지만 엔드포인트/프론트 재발급 흐름은 미구현
+
+### 레포트 도메인 보강 (pearlseo73, 2026-06-24)
+
+- [x] **굴비 표정 7종→4종 + 코드 결정식** - `mood`(happy/smirk/angry/sad)를 `ReportServiceImpl.computeMood`가
+  그 달 예산 초과 주 수(≤1/2/3/≥4)로 결정, 예산 없으면 전월대비 폴백. AI는 mood를 고르지 않고
+  주입된 mood 톤으로 텍스트만 생성(`ReportNarrative.mood` 제거).
+- [x] **전월/당월 카테고리 도넛 2개** - `CategoryDiffItem`에 `prevAmount`/`prevRatio` 추가, `buildDiffs` 합집합.
+  프론트 `ReportView.vue` 도넛 2개(색연필/wobble, StatsView 미러링), 색은 categories 위치 기준 일관.
+- [x] **부가 지표(extra_json)** - 하루평균(원 단위 반올림)·무지출일·가장 큰 하루·가장 아낀/늘어난 항목·주차별 달성.
+  `monthly_report.extra_json` 컬럼 추가, `ReportExtra` DTO. 실제 거래액은 원본 그대로.
+- [x] **메모리 1개월→최대 12개월** - `ReportDao.selectRecentReports`. 내러티브/굴비한마디 프롬프트에 단계적 압축 주입.
+- [x] 신규 쿼리: `BudgetDao.selectWeeksByMonth`, `StatisticsDao.selectDailyExpense`.
+- [x] `ReportView.vue` 그림판 테마 기준 재작성, `GulbiMascot.vue` 주석 5종 정리. API.md/schema.sql 갱신.
+- [ ] **(미구현) "굴비가 기억하는 너" 카드** - 과거 다짐 vs 이번 달 노출은 백엔드가 과거 userMessage를
+  응답에 따로 실어야 함(현재 메모리는 AI 프롬프트에만 반영). 필요 시 후속.
+- [ ] **(주의) pom 인코딩** - `project.build.sourceEncoding=UTF-8` 미설정이라 `mvnw compile`이 플랫폼 기본
+  인코딩으로 한글 소스(텍스트블록)를 깨뜨림. IDE 빌드는 OK. CLI 빌드 시 `-Dproject.build.sourceEncoding=UTF-8` 필요
+  또는 pom에 properties 추가 권장(별개 이슈).
