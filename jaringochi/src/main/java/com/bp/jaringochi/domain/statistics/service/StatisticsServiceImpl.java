@@ -104,8 +104,10 @@ public class StatisticsServiceImpl implements StatisticsService {
         List<CategoryStatItem> result = new ArrayList<>(rows.subList(0, TOP_N));
 
         BigDecimal etcAmount = BigDecimal.ZERO;
+        List<CategoryStatItem> etcMembers = new ArrayList<>();   // 기타에 합쳐진 세부 항목(이름·금액·비율)
         for (CategoryStatItem item : rows.subList(TOP_N, rows.size())) {
             etcAmount = etcAmount.add(item.getAmount());
+            etcMembers.add(item);
         }
 
         CategoryStatItem etc = new CategoryStatItem();
@@ -113,6 +115,7 @@ public class StatisticsServiceImpl implements StatisticsService {
         etc.setCategoryName("기타");
         etc.setAmount(etcAmount);
         etc.setRatio(calcRatio(etcAmount, total));
+        etc.setMembers(etcMembers);
         result.add(etc);
         return result;
     }

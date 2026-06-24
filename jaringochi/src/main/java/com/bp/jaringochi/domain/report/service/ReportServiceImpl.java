@@ -189,6 +189,7 @@ public class ReportServiceImpl implements ReportService {
             d.setPrevAmount(p == null ? BigDecimal.ZERO : nz(p.getAmount()));
             d.setPrevRatio(p == null ? BigDecimal.ZERO : nz(p.getRatio()));
             d.setDiffAmount(d.getAmount().subtract(d.getPrevAmount()));
+            d.setMembers(c.getMembers());   // '기타'면 합쳐진 세부 항목, 그 외 null
             diffs.add(d);
             seen.add(keyOf(c));
         }
@@ -203,6 +204,7 @@ public class ReportServiceImpl implements ReportService {
             d.setPrevAmount(nz(p.getAmount()));
             d.setPrevRatio(nz(p.getRatio()));
             d.setDiffAmount(nz(p.getAmount()).negate());
+            d.setMembers(p.getMembers());   // 전월에만 있던 '기타'의 세부 항목
             diffs.add(d);
         }
         return diffs;

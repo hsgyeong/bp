@@ -277,7 +277,7 @@ onMounted(() => {
 
     <section class="mascot-card" :class="{ 'no-budget': !hasWeeklyBudget }">
       <!-- paint 테마: 표정 굴비 사진 / classic 테마: 기존 골드 SVG 굴비 -->
-      <GulbiMascot v-if="theme === 'paint'" :mood="mascotMood" :size="92"  :images="gulbiImages"/>
+      <GulbiMascot v-if="theme === 'paint'" :mood="mascotMood" :size="120"  :images="gulbiImages"/>
       <svg v-else class="gulbi" viewBox="0 0 120 80" aria-hidden="true">
         <path d="M14 40 L2 24 Q-2 40 2 56 Z" fill="#E89020" />
         <ellipse cx="58" cy="40" rx="45" ry="25" fill="#F8B64C" stroke="#D98217" stroke-width="2.5" />
@@ -439,7 +439,7 @@ onMounted(() => {
 .mascot-card {
   min-height: 112px;
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
+  grid-template-columns: 120px minmax(0, 1fr);
   align-items: center;
   gap: 16px;
   margin-bottom: 20px;
@@ -450,12 +450,12 @@ onMounted(() => {
 }
 
 .gulbi {
-  width: 92px;
-  height: 70px;
+  width: 118px;
+  height: 90px;
 }
 
 .mascot-card.no-budget {
-  grid-template-columns: 82px minmax(0, 1fr);
+  grid-template-columns: 110px minmax(0, 1fr);
 }
 
 .mascot-card strong {
@@ -740,7 +740,7 @@ onMounted(() => {
   background: var(--card) !important;
   border-radius: 5px !important;
   /* 굴비가 왼쪽을 보고 있으니 텍스트 오른쪽(=카드 오른쪽)에 배치해 글을 바라보게 */
-  grid-template-columns: minmax(0, 1fr) 92px;
+  grid-template-columns: minmax(0, 1fr) 120px;
 }
 :root[data-theme="paint"] .mascot-card > .gulbi-mascot { order: 2; justify-self: center; }
 :root[data-theme="paint"] .mascot-card > div { order: 1; }
@@ -799,7 +799,7 @@ onMounted(() => {
   }
 
   .mascot-card {
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 104px minmax(0, 1fr);
     padding: 18px;
   }
 
@@ -808,7 +808,8 @@ onMounted(() => {
   }
 
   .gulbi {
-    width: 76px;
+    width: 100px;
+    height: auto;
   }
 
   .mascot-card.no-budget .gulbi {

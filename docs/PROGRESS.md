@@ -91,3 +91,14 @@
 - [x] **pom 인코딩 수정** - `project.build.sourceEncoding=UTF-8` 추가 → `mvnw compile` CLI 빌드 정상화.
 - [ ] **(확인 필요) 파이 시작각** - 첫 카테고리는 12시(offset 0)에서 시작하게 되어 있음. 재시드 후 실행해
   4월/5월 도넛 top 확인 권장(이전 어긋남은 데이터 부족/관찰 가능성).
+
+### 레포트/홈 UI 보완 (pearlseo73, 2026-06-24)
+
+- [x] **전월/당월 도넛 크기 통일** - `ReportView.vue` `.donut.sub` 104px→132px(당월과 동일).
+- [x] **도넛 색 중복 제거** - 팔레트 5색→8색(classic/paint 각각). 카테고리 6개 이상일 때 `기타` 다음(전월 전용)
+  항목이 첫 항목과 같은 색이 되어 전월 도넛 시작/끝이 붙어 보이던 문제 해소.
+- [x] **`기타` 펼쳐보기** - `기타`에 합쳐진 세부 카테고리를 응답에 포함하고 범례에서 탭하면 펼침.
+  백엔드: `CategoryStatItem.members` + `StatisticsServiceImpl.collapseTail`에서 수집, `CategoryDiffItem.members` +
+  `ReportServiceImpl.buildDiffs`에서 전달. 프론트: `ReportView.vue` 범례 행 토글 + 세부 목록. **API.md 갱신**.
+  ⚠️ 레포트는 월 1회 생성 후 캐싱(`categoryJson`)이라 **기존 생성월은 재생성해야 members 표시**(미생성 달 조회 또는 row 삭제).
+- [x] **홈 굴비 확대** - `HomeView.vue` paint 마스코트 92→120px, classic SVG/그리드 칼럼·모바일 분기 동반 확대.
