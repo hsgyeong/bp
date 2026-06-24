@@ -13,6 +13,7 @@
 
 | 날짜 | 담당 | 작업 |
 |------|------|------|
+| 2026-06-24 | hsgyeong | **가계부 달력 날짜 상세 모달** - 달력 뷰에서 거래 있는 날짜 클릭 시 **화면 중앙 모달**로 그날 수입/지출/합계 + 거래 목록 표시(항목 클릭→수정 이동, Esc·배경 클릭으로 닫힘, 월 변경 시 자동 닫힘). 모달 및 수입/지출/합계 박스 테두리를 그림판 테마 손그림 선(`.paint-box`)으로 통일. 거래 수정 화면 다녀와도 보던 탭(달력)이 유지되도록 `viewMode`를 `sessionStorage`에 저장/복원(DEC-0025). `LedgerView.vue` 단일 파일. ※ 작업 중 디스크 풀(C: 98%)로 파일이 0바이트 손상되어 HEAD에서 복구 후 재작성 |
 | 2026-06-23 | hsgyeong | **굴비 보상 고도화** - 옷을 고정 6종 대신 **Gemini 랜덤 생성**으로 전환(`OUTFITS`/`pickOutfitExcept` 제거, 앵커가 옷+한국어 이름 반환 · DEC-0021). 레퍼런스 프롬프트 강화(옷만 변경·외형/표정 불변·옷 없는 결과 금지). 결과 이미지 **서버측 다운스케일**(`shrinkToDataUrl`, MAX_EDGE=256 · DEC-0022). 프론트 `GulbiRewardView`의 `OUTFIT_LABEL` 맵 제거 → `outfitKey`(모델 한글 이름) 직접 표시. API.md §7 갱신 |
 | 2026-06-22 | hsgyeong | **굴비 보상(절약 성공 리워드) 기능** - `gulbi` 도메인 신설(draw/decision/조회) + `weekly_budget`·`user` 보상 컬럼 + 자격검사(주 종료·지출≤예산·미결정) + 7무드 동일 옷(앵커→레퍼런스, DEC-0020). 이미지 생성 제공자: Claude(불가)·OpenAI(유료)·Google직접(무료티어 0) 검토 후 **SSAFY GMS 경유 Gemini** 채택(DEC-0019). 버그픽스: 컨트롤러 `@RequestBody`를 Swagger→Spring으로 교체(본문 null NPE), 불필요한 `GmsConfig` 삭제. 프론트 `GulbiRewardView`·`api/gulbiReward.js`·홈 보상카드·그림판 테마 마스코트 연동. API.md §7 추가 |
 | 2026-06-14 | hsgyeong | **거래 목록 검색·정렬 API 명세 추가** - `GET /api/transactions`에 `keyword`(메모/카테고리명 검색), `sort`(`date_desc`, `date_asc`, `amount_desc`, `amount_asc`) 쿼리 파라미터 문서화 |

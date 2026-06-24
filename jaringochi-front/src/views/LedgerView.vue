@@ -11,7 +11,9 @@ const router = useRouter()
 const { theme } = useTheme()   // paint 테마: 카테고리 이모지 → Tabler 라인 아이콘
 
 const selectedMonth = ref(getThisMonth()) // 현재 선택된 월
-const viewMode = ref('list')              // 일자별/달력 탭 상태
+// 일자별/달력 탭 상태. 수정 화면 등으로 라우트 이동 후 돌아와도(재마운트)
+// 보던 탭이 유지되도록 sessionStorage에 기억해 둔다.
+const viewMode = ref(sessionStorage.getItem('ledgerViewMode') || 'list')
 const transactions = ref([])              // 거래 목록 데이터
 const loading = ref(false)                // 목록 로딩/에러 상태
 const errorMessage = ref('')              
@@ -21,6 +23,14 @@ const sort = ref('date_desc')        // 정렬 기준: 기본은 최신순
 
 const categories = ref([])
 const selectedCategory = ref('all')
+
+const selectedDay = ref(null)  // 달력에서 클릭한 날짜의 상세(모달). null이면 닫힘.
+
+// 선택한 날짜의 순합계(수입 - 지출)
+const selectedDayBalance = computed(() => {
+  if (!selectedDay.value) return 0
+  return selectedDay.value.income - selectedDay.value.expense
+})
 
 let searchTimer = null               // 검색어 입력 debounce용 타이머
 let latestRequestId = 0              // 늦게 도착한 이전 응답을 무시하기 위한 요청 번호
@@ -232,6 +242,16 @@ function shortWon(value) {
   return won(number)
 }
 
+// 달력 칸 클릭 → 그날 상세 모달 열기. 거래가 없는 날은 열지 않는다.
+function openDay(day) {
+  if (day.empty || day.items.length === 0) return
+  selectedDay.value = day
+}
+
+function closeDay() {
+  selectedDay.value = null
+}
+
 function goCreate() {
   router.push({ name: 'transaction-new' })
 }
@@ -240,11 +260,23 @@ function goEdit(id) {
   router.push({ name: 'transaction-edit', params: { id } })
 }
 
+// Esc 키로 날짜 상세 모달 닫기
+function onKeydown(e) {
+  if (e.key === 'Escape' && selectedDay.value) closeDay()
+}
+
 // 화면이 처음 열릴 때 거래 목록을 불러온다.
 onMounted(() => {
   loadCategories()
   loadTransactions()
+  window.addEventListener('keydown', onKeydown)
 })
+
+// 월이 바뀌면 열려 있던 날짜 상세 모달을 닫는다.
+watch(selectedMonth, closeDay)
+
+// 보던 탭(일자별/달력)을 기억해 둔다 → 수정 후 돌아와도 같은 탭 유지.
+watch(viewMode, (mode) => sessionStorage.setItem('ledgerViewMode', mode))
 
 // 검색어는 글자마다 바로 요청하지 않고 300ms 쉬었다가 조회한다.
 // 빠르게 입력할 때 불필요한 API 호출과 응답 순서 꼬임을 줄인다.
@@ -269,6 +301,7 @@ onBeforeUnmount(() => {
   if (searchTimer) {
     clearTimeout(searchTimer)
   }
+  window.removeEventListener('keydown', onKeydown)
 })
 </script>
 
@@ -376,7 +409,14 @@ onBeforeUnmount(() => {
           </div>
 
           <div class="calendar-grid">
-            <button v-for="day in calendarDays" :key="day.key" class="calendar-cell" :class="{ empty: day.empty }" type="button">
+            <button
+              v-for="day in calendarDays"
+              :key="day.key"
+              class="calendar-cell"
+              :class="{ empty: day.empty, 'has-items': !day.empty && day.items.length > 0 }"
+              type="button"
+              @click="openDay(day)"
+            >
               <template v-if="!day.empty">
                 <strong>{{ day.day }}</strong>
                 <small v-if="day.income" class="income">+{{ shortWon(day.income) }}</small>
@@ -471,6 +511,65 @@ onBeforeUnmount(() => {
     </div>
 
     <button class="fab" type="button" @click="goCreate">+</button>
+
+    <!-- 달력에서 날짜 클릭 시 그날 거래 상세 -->
+    <div v-if="selectedDay" class="day-modal-backdrop" @click.self="closeDay">
+      <div class="day-modal paint-box" role="dialog" aria-modal="true">
+        <div class="day-modal-head">
+          <span class="day-modal-date">
+            {{ getDateLabel(selectedDay.date) }}
+            <small>{{ getDayName(selectedDay.date) }}</small>
+          </span>
+          <button class="day-modal-close" type="button" @click="closeDay" aria-label="닫기">✕</button>
+        </div>
+
+        <div class="day-modal-sum paint-box">
+          <div>
+            <span>수입</span>
+            <strong class="income">{{ won(selectedDay.income) }}</strong>
+          </div>
+          <div>
+            <span>지출</span>
+            <strong class="expense">{{ won(selectedDay.expense) }}</strong>
+          </div>
+          <div>
+            <span>합계</span>
+            <strong :class="selectedDayBalance >= 0 ? 'income' : 'expense'">
+              {{ signedWon(selectedDayBalance) }}
+            </strong>
+          </div>
+        </div>
+
+        <div class="day-modal-list">
+          <button
+            v-for="item in selectedDay.items"
+            :key="item.id"
+            class="txn"
+            type="button"
+            @click="goEdit(item.id)"
+          >
+            <span class="cat-ic" :class="item.type === 1 ? 'income-bg' : 'expense-bg'">
+              <i
+                v-if="theme === 'paint'"
+                class="ti"
+                :class="categoryTablerIcon(getCategory(item).name, item.type)"
+                aria-hidden="true"
+              ></i>
+              <template v-else>{{ getCategory(item).icon }}</template>
+            </span>
+
+            <span class="txn-text">
+              <strong>{{ getCategory(item).name }}</strong>
+              <small>{{ item.memo || '메모 없음' }}</small>
+            </span>
+
+            <strong class="amount" :class="item.type === 1 ? 'income' : 'expense'">
+              {{ item.type === 1 ? '+' : '-' }}{{ won(item.amount) }}
+            </strong>
+          </button>
+        </div>
+      </div>
+    </div>
   </section>
 </template>
 
@@ -848,6 +947,18 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
+.calendar-cell {
+  cursor: default;
+}
+
+.calendar-cell.has-items {
+  cursor: pointer;
+}
+
+.calendar-cell.has-items:hover {
+  background: var(--cream-2);
+}
+
 .calendar-cell strong {
   font-size: 12px;
   font-weight: 800;
@@ -956,5 +1067,106 @@ onBeforeUnmount(() => {
 /* 캘린더 토요일 색(하드코딩 파랑) → 흑백 톤으로 */
 :root[data-theme="paint"] .calendar-head span:last-child {
   color: var(--ink-2);
+}
+
+/* ── 날짜 상세 모달 ──────────────────────────────────────────────────── */
+.day-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.day-modal {
+  width: 100%;
+  max-width: 440px;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--card);
+  border-radius: 26px;
+  padding: 20px 20px 28px;
+  box-shadow: 0 18px 48px rgba(60, 45, 15, 0.28);
+}
+
+.day-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.day-modal-date {
+  color: var(--ink);
+  font-size: 22px;
+  font-weight: 900;
+}
+
+.day-modal-date small {
+  margin-left: 6px;
+  color: var(--mute);
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.day-modal-close {
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--cream-2);
+  color: var(--ink-2);
+  font-size: 16px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.day-modal-sum {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  padding: 16px 12px;
+  margin-bottom: 8px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--cream);
+}
+
+.day-modal-sum div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.day-modal-sum span {
+  color: var(--mute);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.day-modal-sum strong {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  color: var(--ink);
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.day-modal-list {
+  min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.day-modal-list::-webkit-scrollbar {
+  display: none;
 }
 </style>
