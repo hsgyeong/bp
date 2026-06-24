@@ -160,7 +160,7 @@ public class GulbiRewardService {
 			a = gmsImageClient.dressGulbi(
 					anchorBase.base64(), anchorBase.mimeType(), anchor.getKey(), null);
 		} catch (Exception ex) {
-			throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED);
+			throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED, ex);
 		}
 		// 앵커 결과 이미지를 맵에 저장
 		images.put(anchor.getKey(), a.dataUrl());

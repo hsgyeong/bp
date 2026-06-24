@@ -34,13 +34,13 @@ public class GmsImageClient {
 	// 결과 이미지 최대 한 변 (px)
 	private static final int MAX_EDGE = 256;
 
-	@Value("${gms.base-url:https://gms.ssafy.io/gmsapi}")
+	@Value("${gemini.base-url:https://generativelanguage.googleapis.com}")
 	private String baseUrl;
 
-	@Value("${gms.api-key}")
+	@Value("${gemini.api-key}")
 	private String apiKey;
 
-	@Value("${gms.model:gemini-2.5-flash-image}")
+	@Value("${gemini.model:gemini-2.5-flash-image}")
 	private String model;
 	
 	/**
@@ -97,9 +97,9 @@ public class GmsImageClient {
 
 				String json = objectMapper.writeValueAsString(body);
 				
-				// GMS 프록시 호출 주소 = 게이트웨이 + 실제 호스트 경로 + 모델 + :generateContent.
+				// Gemini 직접 호출 주소 = 호스트 + /v1beta/models/ + 모델 + :generateContent.
 				String url = baseUrl
-					    + "/generativelanguage.googleapis.com/v1beta/models/"
+					    + "/v1beta/models/"
 					    + model + ":generateContent";
 
 				// HTTP 요청 구성: POST + JSON 본문 + 인증 헤더(x-goog-api-key에 GMS 키).
