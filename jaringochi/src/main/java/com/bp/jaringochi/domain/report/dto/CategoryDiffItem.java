@@ -1,6 +1,10 @@
 package com.bp.jaringochi.domain.report.dto;
 
 import java.math.BigDecimal;
+import java.util.List;
+
+import com.bp.jaringochi.domain.statistics.dto.CategoryStatItem;
+import com.fasterxml.jackson.annotation.JsonInclude;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -20,4 +24,8 @@ public class CategoryDiffItem {
     private BigDecimal prevAmount;  // 전월 그 카테고리 지출 (전월에 없으면 0)
     private BigDecimal prevRatio;   // 전월 지출 중 비율 % (전월에 없으면 0)
     private BigDecimal diffAmount;  // 전월 대비 증감액 (양수=늘어남) = amount - prevAmount
+
+    // '기타'로 합쳐진 세부 카테고리 목록 (그 외 항목은 null) — 범례에서 펼쳐보기용
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private List<CategoryStatItem> members;
 }
