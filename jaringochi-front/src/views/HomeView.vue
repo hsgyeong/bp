@@ -112,20 +112,31 @@ const weekRangeText = computed(() => {
   return b?.startDate && b?.endDate ? `${b.startDate} ~ ${b.endDate}` : ''
 })
 
-// 예산 사용률에 따른 굴비 메시지
+// 굴비 표정 단계에 맞춘 안내 문구 (요일 + 주간예산 1/7 로직 기준)
 const mascotMessage = computed(() => {
-  if (budgetRate.value >= 100) return '이번 주 예산을 넘었어요. 오늘은 조금 쉬어가요.'
-  if (budgetRate.value >= 70) return '이번 주 예산을 꽤 썼어요. 조금만 더 아껴볼까요?'
-  if (budgetRate.value >= 40) return '좋아요. 아직 예산이 넉넉하게 남아있어요.'
-  return '아주 좋아요. 이번 주 지출 흐름이 안정적이에요.'
+  switch (mascotMood.value) {
+    case 'happy': return '아주 좋아요. 이번 주 지출 흐름이 안정적이에요.'
+    case 'smirk': return '살짝 빨라요. 오늘은 지갑을 조금만 닫아볼까요?'
+    case 'angry': return '오늘 기준보다 많이 썼어요. 남은 날은 아껴봐요.'
+    case 'sad':   return '이번 주 예산을 크게 넘겼어요. 잠시 쉬어가요.'
+    default:      return ''
+  }
 })
 
-// 예산 사용률 → 굴비 표정 (paint 테마 마스코트)
+// 요일 + 주간예산 대비 사용률 → 굴비 표정 (happy/smirk/angry/sad)
+// 하루치 예산 = 주간예산/7. 요일 D(월=1..일=7)까지 D/7 사용은 happy,
+// 거기서 1/7씩 초과할 때마다 smirk → angry → sad. (정확히 D/7이면 happy)
 const mascotMood = computed(() => {
-  if (budgetRate.value >= 100) return 'angry'
-  if (budgetRate.value >= 70) return 'sad'
-  if (budgetRate.value >= 40) return 'happy'
-  return 'hello'
+  const b = weeklyBudget.value
+  if (!b || !Number(b.amount)) return 'happy'              // 예산 없으면 기본 happy
+  const f = Number(b.spentMoney || 0) / Number(b.amount)   // 주간예산 대비 사용 비율(0~)
+  const jsDay = new Date().getDay()                         // 일=0, 월=1 … 토=6
+  const d = jsDay === 0 ? 7 : jsDay                         // 월=1 … 일=7
+
+  if (f <= d / 7)       return 'happy'
+  if (f <= (d + 1) / 7) return 'smirk'
+  if (f <= (d + 2) / 7) return 'angry'
+  return 'sad'
 })
 
 // 최근 거래 2개

@@ -25,9 +25,8 @@ const tabs = [
   { to: '/more',   label: '더보기', icon: '⋯',  ti: 'ti-dots' },
 ]
 
-// 테마 전환 (classic ↔ paint) — 상태는 useTheme composable이 전역 관리
-const THEME_LABEL = { classic: '🎨 기본', paint: '✏️ 그림판' }
-const { theme, cycle: cycleTheme } = useTheme()
+// 디자인은 그림판(paint) 하나로 고정 (테마 토글 제거). theme는 항상 'paint'.
+const { theme } = useTheme()
 </script>
 
 <template>
@@ -52,10 +51,6 @@ const { theme, cycle: cycleTheme } = useTheme()
     </defs>
   </svg>
 
-  <!-- 테마 전환 토글 (디자인 비교용). classic ↔ paint 즉시 전환 -->
-  <button class="theme-toggle" type="button" @click="cycleTheme">
-    {{ THEME_LABEL[theme] }}
-  </button>
 
   <!-- 전역 알림 종 + 드롭다운 (우상단 고정, 로그인 시에만 표시) -->
   <NotificationBell />

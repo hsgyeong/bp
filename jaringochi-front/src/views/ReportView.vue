@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { getMonthlyReport, talkToGulbi } from '@/api/report'
+import { fetchMeApi } from '@/api/auth'
 import { useTheme } from '@/composables/useTheme'
 import GulbiMascot from '@/components/GulbiMascot.vue'
 import MonthPicker from '@/components/MonthPicker.vue'
@@ -19,6 +20,8 @@ const month = ref(latest.getMonth() + 1)
 const report = ref(null)
 const loading = ref(false)
 const errorMsg = ref('')
+
+const gulbiImages = ref(null)   // 현재 착용 옷 이미지 맵 (받기 한 옷)
 
 // 더 최신(다음) 달로는 못 감 — 지난달이 상한
 const isLatest = computed(
@@ -129,7 +132,13 @@ function nextMonth() {
   else month.value++
   load()
 }
-onMounted(load)
+onMounted(() => {
+  load()
+  // 현재 착용 옷(받기 한 경우)을 불러와 굴비에 입힘
+  fetchMeApi()
+    .then((res) => { gulbiImages.value = res.data?.data?.currentGulbiImages || null })
+    .catch(() => { gulbiImages.value = null })
+})
 
 // ===== 굴비에게 한 마디 =====
 const draft = ref('')
@@ -183,7 +192,7 @@ async function send() {
     <template v-else-if="report">
       <!-- 굴비 한줄평 -->
       <div class="card gulbi-card">
-        <GulbiMascot :mood="mascotMood" :size="96" />
+        <GulbiMascot :mood="mascotMood" :size="96" :images="gulbiImages" />
         <div class="bubble">{{ report.oneLiner }}</div>
       </div>
 
