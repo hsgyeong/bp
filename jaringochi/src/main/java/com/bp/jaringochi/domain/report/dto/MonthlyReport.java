@@ -36,9 +36,12 @@ public class MonthlyReport {
     @JsonIgnore                       // 원본 JSON 문자열은 숨기고, 아래 categories 로 노출
     private String categoryJson;
 
+    @JsonIgnore                       // 원본 JSON 문자열은 숨기고, 아래 extra 로 노출
+    private String extraJson;
+
     // ===== AI 생성 텍스트 =====
     private String oneLiner;          // 한 줄 총평
-    private String mood;              // hello|warn|happy|sad|hungry|sulk|angry
+    private String mood;              // happy|smirk|angry|sad (코드가 결정, 4종)
     private String categoryComment;   // 카테고리 분석 코멘트
     private String advice;            // 다음 달 조언
 
@@ -49,6 +52,8 @@ public class MonthlyReport {
 
     private LocalDateTime generatedAt;
 
-    // ===== 컬럼이 아닌 파생 필드 (categoryJson 을 파싱해 응답에 실어줌) =====
-    private List<CategoryDiffItem> categories;
+    // ===== 컬럼이 아닌 파생 필드 (JSON 을 파싱해 응답에 실어줌) =====
+    private List<CategoryDiffItem> categories;   // categoryJson 파싱
+    private ReportExtra extra;                    // extraJson 파싱 (부가 지표)
+    private ReportMemory memory;                  // 과거 다짐 ("굴비가 기억하는 너"), 조회 시 주입
 }

@@ -14,7 +14,7 @@ import lombok.Setter;
 @NoArgsConstructor
 public class ReportNarrative {
     private String oneLiner;          // 한 줄 총평 (40자 이내)
-    private String mood;              // hello|warn|happy|sad|hungry|sulk|angry 중 하나
     private String categoryComment;   // 카테고리 분석 코멘트 (80자 이내)
     private String advice;            // 다음 달 조언 (100자 이내)
+    // mood 는 AI 가 고르지 않는다 — 코드(예산 초과 주 수)가 결정해 프롬프트로 주입.
 }

@@ -1,6 +1,7 @@
 package com.bp.jaringochi.domain.report.dao;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
@@ -14,6 +15,12 @@ public interface ReportDao {
     MonthlyReport selectByUserAndMonth(@Param("userId") Long userId,
                                        @Param("year") int year,
                                        @Param("month") int month);
+
+    // 메모리(연속성): 대상월 이전 최근 limit개 레포트 (최신순). 과거 다짐/추세 참고용
+    List<MonthlyReport> selectRecentReports(@Param("userId") Long userId,
+                                            @Param("year") int year,
+                                            @Param("month") int month,
+                                            @Param("limit") int limit);
 
     // 레포트 생성 (id 자동 채움)
     int insert(MonthlyReport report);

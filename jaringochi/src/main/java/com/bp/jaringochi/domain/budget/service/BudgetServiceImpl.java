@@ -46,6 +46,16 @@ public class BudgetServiceImpl implements BudgetService {
         return list;
     }
 
+    // 레포트용: 해당 월에 걸치는 주들 (과거→현재, ratio 채움)
+    @Override
+    public List<WeeklyBudget> getWeeksByMonth(Long userId, java.time.LocalDate startDate, java.time.LocalDate endDate) {
+        List<WeeklyBudget> list = budgetDao.selectWeeksByMonth(userId, startDate, endDate);
+        for (WeeklyBudget wb : list) {
+            wb.setRatio(calcRatio(wb.getSpentMoney(), wb.getAmount()));
+        }
+        return list;
+    }
+
     // 4-3. 등록
     @Override
     @Transactional

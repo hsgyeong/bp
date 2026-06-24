@@ -14,6 +14,11 @@ public interface BudgetDao {
     // ===== 엔드포인트 =====
     WeeklyBudget selectCurrentWeek(Long userId);          // 4-1. 현재 주 예산
     List<WeeklyBudget> selectRecentWeeks(Long userId);    // 4-2. 최근 4주 (통계 주 화면 공용)
+
+    // 레포트용: 해당 월에 걸치는 주들 (과거→현재). 월간 레포트 주차별 달성 산정
+    List<WeeklyBudget> selectWeeksByMonth(@Param("userId") Long userId,
+                                          @Param("startDate") LocalDate startDate,
+                                          @Param("endDate") LocalDate endDate);
     int insertWeeklyBudget(WeeklyBudget budget);          // 4-3. 등록
     int updateWeeklyBudget(WeeklyBudget budget);          // 4-4. 수정
 

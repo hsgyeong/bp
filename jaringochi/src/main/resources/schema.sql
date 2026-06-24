@@ -111,10 +111,11 @@ CREATE TABLE `monthly_report` (
   `success_weeks`    INT           NULL                       COMMENT '주간예산 성공 주 수(ratio<=100)',
   `total_weeks`      INT           NULL                       COMMENT '그 달에 걸친 주간예산 수',
   `top_category`     VARCHAR(50)   NULL                       COMMENT '가장 많이 쓴 카테고리명',
-  `category_json`    TEXT          NULL                       COMMENT '카테고리 breakdown 직렬화',
+  `category_json`    TEXT          NULL                       COMMENT '카테고리 breakdown(전월/당월) 직렬화',
+  `extra_json`       TEXT          NULL                       COMMENT '부가 지표(하루평균·무지출일·최대일·주차별) 직렬화',
   -- AI 생성 텍스트
   `one_liner`        VARCHAR(255)  NULL                       COMMENT '한 줄 총평',
-  `mood`             VARCHAR(20)   NULL                       COMMENT 'hello|warn|happy|sad|hungry|sulk|angry',
+  `mood`             VARCHAR(20)   NULL                       COMMENT 'happy|smirk|angry|sad (코드가 결정)',
   `category_comment` VARCHAR(500)  NULL                       COMMENT '카테고리 분석 코멘트',
   `advice`           VARCHAR(500)  NULL                       COMMENT '다음 달 조언',
   -- 굴비에게 한 마디 (월 1회)
