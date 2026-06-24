@@ -2,6 +2,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { fetchTransactions } from '@/api/transaction'
+import { listCategories } from '@/api/category'
 import { useTheme } from '@/composables/useTheme'
 import { categoryTablerIcon } from '@/utils/categoryIcon'
 import MonthPicker from '@/components/MonthPicker.vue'
@@ -17,6 +18,9 @@ const errorMessage = ref('')
 const keyword = ref('')              // 검색어: 메모/카테고리명 검색에 사용
 const transactionType = ref('all')    // 거래 유형 필터: 전체/수입/지출
 const sort = ref('date_desc')        // 정렬 기준: 기본은 최신순
+
+const categories = ref([])
+const selectedCategory = ref('all')
 
 let searchTimer = null               // 검색어 입력 debounce용 타이머
 let latestRequestId = 0              // 늦게 도착한 이전 응답을 무시하기 위한 요청 번호
@@ -182,11 +186,9 @@ async function loadTransactions() {
 
     const res = await fetchTransactions({
       ...range,
-
       keyword: keyword.value.trim() || undefined,
-
       type: transactionType.value === 'all' ? undefined : Number(transactionType.value),
-
+      categoryId: selectedCategory.value === 'all' ? undefined : Number(selectedCategory.value),
       sort: sort.value,
     })
 
@@ -209,6 +211,21 @@ async function loadTransactions() {
   }
 }
 
+async function loadCategories() {
+  try {
+    const [income, expense] = await Promise.all([
+      listCategories(1),
+      listCategories(2),
+    ])
+    categories.value = [
+      ...(income.data.data || []),
+      ...(expense.data.data || []),
+    ]
+  } catch (e) {
+    categories.value = []
+  }
+}
+
 // 캘린더 금액 표시: 2만/3천처럼 줄이지 않고 실제 금액을 그대로 보여준다.
 function shortWon(value) {
   const number = Number(value || 0)
@@ -224,7 +241,10 @@ function goEdit(id) {
 }
 
 // 화면이 처음 열릴 때 거래 목록을 불러온다.
-onMounted(loadTransactions)
+onMounted(() => {
+  loadCategories()
+  loadTransactions()
+})
 
 // 검색어는 글자마다 바로 요청하지 않고 300ms 쉬었다가 조회한다.
 // 빠르게 입력할 때 불필요한 API 호출과 응답 순서 꼬임을 줄인다.
@@ -239,7 +259,7 @@ function scheduleSearch() {
 }
 
 // 월, 거래 유형, 정렬 기준은 선택 즉시 다시 조회한다.
-watch([selectedMonth, transactionType, sort], loadTransactions)
+watch([selectedMonth, transactionType, sort, selectedCategory], loadTransactions)
 
 // 검색어는 debounce를 거쳐 조회한다.
 watch(keyword, scheduleSearch)
@@ -299,7 +319,7 @@ onBeforeUnmount(() => {
           <input
             v-model="keyword"
             type="search"
-            placeholder="메모 또는 카테고리 검색"
+            placeholder="메모 검색"
           />
         </span>
       </label>
@@ -311,6 +331,16 @@ onBeforeUnmount(() => {
             <option value="all">전체</option>
             <option value="1">수입</option>
             <option value="2">지출</option>
+          </select>
+        </span>
+      </label>
+
+      <label class="category-field">
+        <span>카테고리</span>        
+        <span class="paint-field">
+          <select v-model="selectedCategory">
+            <option value="all">전체</option>
+            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </span>
       </label>
@@ -834,16 +864,19 @@ onBeforeUnmount(() => {
 
 .filter-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 104px 132px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   margin-bottom: 18px;
 }
 
 .filter-card.calendar-filter {
-  grid-template-columns: minmax(0, 1fr) 104px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.search-field,
+.search-field {
+  grid-column: 1 / -1;
+}
+
 .type-field,
 .sort-field {
   min-width: 0;
@@ -862,6 +895,7 @@ onBeforeUnmount(() => {
 
 .search-field input,
 .type-field select,
+.category-field select,
 .sort-field select {
   width: 100%;
   height: 46px;
@@ -878,6 +912,7 @@ onBeforeUnmount(() => {
 
 .search-field input:focus,
 .type-field select:focus,
+.category-field select:focus,
 .sort-field select:focus {
   border-color: var(--gold);
   box-shadow: 0 0 0 3px rgba(242, 163, 60, 0.18);
