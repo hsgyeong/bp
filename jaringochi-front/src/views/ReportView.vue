@@ -63,8 +63,8 @@ const diff = computed(() => {
 })
 
 // ===== 카테고리 도넛 (전월/당월 2개, 색은 categories 리스트 위치 기준으로 양쪽 일관) =====
-const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595']  // classic
-const DONUT_PAINT  = ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96']  // paint(색연필)
+const DONUT_COLORS = ['#E8623D', '#F2A33C', '#5B8DEF', '#2FA98C', '#B0A595', '#2F4B8F', '#E48AB0', '#6FB04A']  // classic
+const DONUT_PAINT  = ['#E08A72', '#E7BE63', '#94B8E6', '#B197D0', '#7FBE96', '#5E72A8', '#E6A6C4', '#9FC27E']  // paint(색연필)
 const palette = computed(() => (isPaint.value ? DONUT_PAINT : DONUT_COLORS))
 
 // categories 에 색을 입힌 공용 리스트 (도넛 2개 + 범례가 같은 색 매핑 공유)
@@ -97,6 +97,10 @@ function buildDonut(ratioField) {
 }
 const curDonut = computed(() => buildDonut('ratio'))
 const prevDonut = computed(() => buildDonut('prevRatio'))
+
+// '기타' 범례 펼쳐보기 — 기타에 합쳐진 세부 카테고리(members)가 있을 때만
+const etcOpen = ref(false)
+const hasMembers = (it) => Array.isArray(it.members) && it.members.length > 0
 
 // ===== 부가 지표 (extra_json) =====
 const extra = computed(() => report.value?.extra || null)
@@ -265,16 +269,31 @@ async function send() {
           </div>
         </div>
 
-        <div class="legend paint-hline" v-for="it in cats" :key="it.categoryId ?? it.categoryName">
-          <span class="lg"><i class="paint-sketch" :style="{ background: it.color }"></i>{{ it.categoryName }}</span>
-          <b>{{ won(it.amount) }}</b>
-          <span class="lp">{{ Number(it.ratio).toFixed(0) }}%</span>
-          <span class="ld" :class="Number(it.diffAmount) > 0 ? 'up' : Number(it.diffAmount) < 0 ? 'dn' : 'fl'">
-            <template v-if="Number(it.diffAmount) > 0">▲{{ won(it.diffAmount) }}</template>
-            <template v-else-if="Number(it.diffAmount) < 0">▼{{ won(Math.abs(Number(it.diffAmount))) }}</template>
-            <template v-else>-</template>
-          </span>
-        </div>
+        <template v-for="it in cats" :key="it.categoryId ?? it.categoryName">
+          <div class="legend paint-hline" :class="{ 'is-etc': hasMembers(it) }"
+               @click="hasMembers(it) && (etcOpen = !etcOpen)">
+            <span class="lg">
+              <i class="paint-sketch" :style="{ background: it.color }"></i>{{ it.categoryName }}
+              <span v-if="hasMembers(it)" class="etc-caret">{{ etcOpen ? '▴' : '▾' }}</span>
+            </span>
+            <b>{{ won(it.amount) }}</b>
+            <span class="lp">{{ Number(it.ratio).toFixed(0) }}%</span>
+            <span class="ld" :class="Number(it.diffAmount) > 0 ? 'up' : Number(it.diffAmount) < 0 ? 'dn' : 'fl'">
+              <template v-if="Number(it.diffAmount) > 0">▲{{ won(it.diffAmount) }}</template>
+              <template v-else-if="Number(it.diffAmount) < 0">▼{{ won(Math.abs(Number(it.diffAmount))) }}</template>
+              <template v-else>-</template>
+            </span>
+          </div>
+
+          <!-- 기타 펼치기: 합쳐진 세부 카테고리 목록 -->
+          <div v-if="hasMembers(it) && etcOpen" class="etc-members">
+            <div class="etc-member" v-for="m in it.members" :key="m.categoryId ?? m.categoryName">
+              <span class="etc-name">{{ m.categoryName }}</span>
+              <b>{{ won(m.amount) }}</b>
+              <span class="lp">{{ Number(m.ratio).toFixed(0) }}%</span>
+            </div>
+          </div>
+        </template>
 
         <div v-if="!cats.length" class="empty">지출 기록이 없어요</div>
 
@@ -396,7 +415,7 @@ async function send() {
 .donut-pair { display: flex; justify-content: center; align-items: flex-end; gap: 10px; margin: 10px 0 14px; }
 .donut-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .donut { width: 132px; height: 132px; transform: rotate(-90deg); }
-.donut.sub { width: 104px; height: 104px; }
+.donut.sub { width: 132px; height: 132px; }
 .donut-cap { font-size: 12px; font-weight: 800; }
 .donut-sum { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
 .legend { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-top: 1px solid var(--line);
@@ -410,6 +429,16 @@ async function send() {
 .legend .ld.up { color: var(--expense); }
 .legend .ld.dn { color: var(--income); }
 .legend .ld.fl { color: var(--mute); }
+
+/* '기타' 펼쳐보기 */
+.legend.is-etc { cursor: pointer; }
+.legend .etc-caret { margin-left: 5px; font-size: 11px; color: var(--mute); }
+.etc-members { padding: 4px 2px 9px; }
+.etc-member { display: flex; align-items: center; gap: 8px; padding: 6px 2px 6px 21px;
+  font-size: 13px; font-weight: 700; color: var(--ink); }
+.etc-member .etc-name { color: var(--mute); }
+.etc-member b { margin-left: auto; font-weight: 800; }
+.etc-member .lp { color: var(--mute); font-size: 12px; min-width: 36px; text-align: right; }
 
 .ai-comment { margin: 12px 0 0; padding: 12px 14px; background: var(--cream-2); border-radius: 14px;
   font-size: 13px; font-weight: 700; line-height: 1.6; color: var(--ink); }

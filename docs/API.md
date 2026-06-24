@@ -377,6 +377,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 | type | int | ❌ | 1=수입 / 2=지출 (생략 시 전체) |
 
 - **items 구성**: 금액 내림차순 **상위 4개 + 나머지를 합산한 `기타` 1건**(`categoryId: null`). 카테고리가 4개 이하면 기타 없음.
+- **`기타` 항목에는 `members`**(합쳐진 세부 카테고리 배열: `categoryId`/`categoryName`/`amount`/`ratio`)가 포함된다. 기타가 아닌 항목엔 `members` 필드 없음.
 - 날짜 역전(end < start) → 400 (`S400`). 거래 없는 기간 → `total: 0`, `items: []`.
 
 **Response 200**
@@ -388,7 +389,11 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
     { "categoryId": 6, "categoryName": "교통비", "amount": 132000.00, "ratio": 22.0 },
     { "categoryId": 5, "categoryName": "쇼핑", "amount": 108000.00, "ratio": 18.0 },
     { "categoryId": 7, "categoryName": "문화생활", "amount": 72000.00, "ratio": 12.0 },
-    { "categoryId": null, "categoryName": "기타", "amount": 60000.00, "ratio": 10.0 }
+    { "categoryId": null, "categoryName": "기타", "amount": 60000.00, "ratio": 10.0,
+      "members": [
+        { "categoryId": 8, "categoryName": "통신비", "amount": 35000.00, "ratio": 5.83 },
+        { "categoryId": 9, "categoryName": "의료비", "amount": 25000.00, "ratio": 4.17 }
+      ] }
   ]
 }
 ```
@@ -522,7 +527,13 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
   "generatedAt": "2026-06-01T09:00:00",
   "categories": [
     { "categoryId": 5, "categoryName": "식비", "amount": 120000.00, "ratio": 37.50,
-      "prevAmount": 100000.00, "prevRatio": 35.71, "diffAmount": 20000.00 }
+      "prevAmount": 100000.00, "prevRatio": 35.71, "diffAmount": 20000.00 },
+    { "categoryId": null, "categoryName": "기타", "amount": 60000.00, "ratio": 18.75,
+      "prevAmount": 40000.00, "prevRatio": 14.29, "diffAmount": 20000.00,
+      "members": [
+        { "categoryId": 8, "categoryName": "통신비", "amount": 35000.00, "ratio": 10.94 },
+        { "categoryId": 9, "categoryName": "의료비", "amount": 25000.00, "ratio": 7.81 }
+      ] }
   ],
   "extra": {
     "dailyAvg": 45806,
