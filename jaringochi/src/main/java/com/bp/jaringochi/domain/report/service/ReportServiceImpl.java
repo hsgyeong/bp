@@ -22,6 +22,7 @@ import com.bp.jaringochi.domain.report.dao.ReportDao;
 import com.bp.jaringochi.domain.report.dto.CategoryDiffItem;
 import com.bp.jaringochi.domain.report.dto.MonthlyReport;
 import com.bp.jaringochi.domain.report.dto.ReportExtra;
+import com.bp.jaringochi.domain.report.dto.ReportMemory;
 import com.bp.jaringochi.domain.report.dto.ReportNarrative;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatItem;
 import com.bp.jaringochi.domain.statistics.dto.CategoryStatistics;
@@ -73,12 +74,31 @@ public class ReportServiceImpl implements ReportService {
         if (existing != null) {
             existing.setCategories(parseCategories(existing.getCategoryJson()));
             existing.setExtra(parseExtra(existing.getExtraJson()));
+            attachMemory(userId, existing);
             return existing;                          // 캐싱: 재생성 안 함
         }
 
         MonthlyReport report = buildReport(userId, year, month);
         reportDao.insert(report);                     // id 채워짐
+        attachMemory(userId, report);
         return report;
+    }
+
+    // "굴비가 기억하는 너" — 과거 레포트 중 가장 최근에 남긴 다짐을 응답에 주입
+    private void attachMemory(Long userId, MonthlyReport r) {
+        List<MonthlyReport> history = reportDao.selectRecentReports(
+                userId, r.getReportYear(), r.getReportMonth(), MEMORY_MONTHS);
+        for (MonthlyReport h : history) {             // 최신순
+            if (StringUtils.hasText(h.getUserMessage())) {
+                ReportMemory m = new ReportMemory();
+                m.setReportYear(h.getReportYear());
+                m.setReportMonth(h.getReportMonth());
+                m.setUserMessage(h.getUserMessage());
+                m.setGulbiReply(h.getGulbiReply());
+                r.setMemory(m);
+                return;
+            }
+        }
     }
 
     // ==================================================================
@@ -117,6 +137,7 @@ public class ReportServiceImpl implements ReportService {
         report.setRepliedAt(now);
         report.setCategories(parseCategories(report.getCategoryJson()));
         report.setExtra(parseExtra(report.getExtraJson()));
+        attachMemory(userId, report);
         return report;
     }
 

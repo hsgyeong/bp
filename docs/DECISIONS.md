@@ -199,3 +199,24 @@
 - **이유**:
 - **영향**:
 -->
+
+## DEC-0023 · 레포트 mood: AI 선택 → 코드 결정(4종) + AI 주입
+- **날짜**: 2026-06-24
+- **결정**: 굴비 표정 mood를 **AI가 고르지 않고** 코드가 데이터로 결정한다(`ReportServiceImpl.computeMood`).
+  그 달 예산 초과 주 수(`failedWeeks=totalWeeks-successWeeks`)로 `≤1=happy / 2=smirk / 3=angry / ≥4=sad`.
+  예산을 한 주도 안 짠 달(`totalWeeks=0`)은 전월대비(`diffRatio`)로 폴백(≤0% happy, ≤10 smirk, ≤25 angry, 그 외 sad).
+  결정된 mood는 **AI 프롬프트에 주입**해 AI가 그 기분 톤으로 텍스트(oneLiner/categoryComment/advice)만 생성.
+- **이유**: 굴비 이미지가 5종(hello+4)으로 축소됨 → AI가 7종 중 표시 불가 표정(warn/hungry/sulk)을 고를 위험 제거.
+  기존엔 mood·텍스트를 AI가 한 번에 생성해 둘이 일관됐으므로, mood를 코드로 정하되 AI가 그 mood를 "사용"하게 해 일관성 유지.
+- **영향**: `ReportNarrative.mood` 제거, `normalizeMood`/7종 분기 삭제. `schema.sql`·API.md mood 4종 갱신.
+  프론트 `GulbiMascot` 5종 정리, 레포트는 미지원 값→happy 흡수. mood는 이미지 선택 전용(말투엔 직접 영향 없었음).
+
+## DEC-0024 · 레포트 부가지표 extra_json 스냅샷 + 메모리 최대 12개월
+- **날짜**: 2026-06-24
+- **결정**: 하루평균·무지출일·가장 큰 하루·가장 아낀/늘어난 항목·주차별 달성을 `monthly_report.extra_json` **1컬럼 JSON 스냅샷**(`category_json` 패턴, `ReportExtra` DTO).
+  전월 비교 도넛 2개 위해 `CategoryDiffItem`에 `prevAmount`/`prevRatio` 추가, 전월·당월 **합집합** 구성.
+  메모리 1개월 → **최대 12개월**(`selectRecentReports`), 프롬프트엔 단계적 압축. 과거 다짐은 `ReportMemory`로 응답에 실어 "굴비가 기억하는 너" 카드 노출.
+- **이유**: 레포트 보강을 데이터 재사용으로. 월 1회 캐싱이라 스냅샷 저장이 일관적. 컬럼 다수 대신 JSON 1컬럼으로 스키마 변경 최소화.
+- **영향**: 실제 거래액은 **원본 그대로**, 하루평균만 원 단위 반올림. 신규 쿼리 `selectWeeksByMonth`·`selectDailyExpense`.
+  프론트 그림판 테마 기준(StatsView 색연필 도넛 미러링) + 월 선택 MonthPicker 모달.
+- **참고**: data.sql에 과거 6개월 주간 예산이 없어 과거 레포트가 전부 예산 미입력으로 떴음 → 2025-12~2026-05 주별 예산 시드 추가(mood 4종 다양화).

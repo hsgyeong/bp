@@ -3,6 +3,7 @@ import { ref, computed, onMounted } from 'vue'
 import { getMonthlyReport, talkToGulbi } from '@/api/report'
 import { useTheme } from '@/composables/useTheme'
 import GulbiMascot from '@/components/GulbiMascot.vue'
+import MonthPicker from '@/components/MonthPicker.vue'
 
 // paint 테마일 때 차트를 '색연필' 톤으로 (StatsView 와 동일 규칙)
 const { theme } = useTheme()
@@ -23,6 +24,19 @@ const errorMsg = ref('')
 const isLatest = computed(
   () => year.value === latest.getFullYear() && month.value === latest.getMonth() + 1,
 )
+
+// 월 선택 모달(MonthPicker)용 'YYYY-MM' 양방향 바인딩 + 상한(지난달)
+const pad2 = (n) => String(n).padStart(2, '0')
+const maxYm = `${latest.getFullYear()}-${pad2(latest.getMonth() + 1)}`
+const ymValue = computed({
+  get: () => `${year.value}-${pad2(month.value)}`,
+  set: (v) => {
+    const [y, m] = v.split('-').map(Number)
+    year.value = y
+    month.value = m
+    load()
+  },
+})
 
 const won = (n) => Number(n || 0).toLocaleString()          // 원본 금액 그대로(천단위 구분만)
 const md = (iso) => {                                        // 'YYYY-MM-DD' → 'M/D'
@@ -154,10 +168,12 @@ async function send() {
 
     <h1 class="title">이달의 굴비 레포트</h1>
 
-    <!-- 월 네비게이션 -->
+    <!-- 월 네비게이션 (가운데 라벨을 누르면 월 선택 모달) -->
     <div class="month-nav">
       <button class="nav-btn" @click="prevMonth" aria-label="이전 달">‹</button>
-      <span class="month-label">{{ year }}년 {{ month }}월</span>
+      <MonthPicker v-model="ymValue" :max="maxYm" align="left">
+        <span class="month-label">{{ year }}년 {{ month }}월 ▾</span>
+      </MonthPicker>
       <button class="nav-btn" :disabled="isLatest" @click="nextMonth" aria-label="다음 달">›</button>
     </div>
 
@@ -203,6 +219,8 @@ async function send() {
 
         <div class="donut-pair" v-if="curDonut || prevDonut">
           <div class="donut-col">
+            <span class="donut-cap muted">전월</span>
+            <span class="donut-sum muted">{{ won(report.prevExpense) }}원</span>
             <svg viewBox="0 0 160 160" class="donut sub">
               <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
                 <circle v-for="(s, i) in (prevDonut?.segs || [])" :key="'pc' + i" cx="80" cy="80" :r="prevDonut.r"
@@ -217,9 +235,10 @@ async function send() {
                 </template>
               </g>
             </svg>
-            <span class="donut-cap muted">전월</span>
           </div>
           <div class="donut-col">
+            <span class="donut-cap">이번 달</span>
+            <span class="donut-sum">{{ won(report.totalExpense) }}원</span>
             <svg viewBox="0 0 160 160" class="donut">
               <g :filter="isPaint ? 'url(#paintWobble)' : undefined">
                 <circle v-for="(s, i) in (curDonut?.segs || [])" :key="'cc' + i" cx="80" cy="80" :r="curDonut.r"
@@ -234,7 +253,6 @@ async function send() {
                 </template>
               </g>
             </svg>
-            <span class="donut-cap">이번 달</span>
           </div>
         </div>
 
@@ -297,6 +315,16 @@ async function send() {
       <div class="card advice" v-if="report.advice">
         <div class="advice-head">굴비의 한 수</div>
         <p>{{ report.advice }}</p>
+      </div>
+
+      <!-- 굴비가 기억하는 너 (과거 다짐) -->
+      <div class="card memory" v-if="report.memory">
+        <div class="advice-head">굴비가 기억하는 너</div>
+        <p class="mem-past">
+          {{ report.memory.reportYear }}년 {{ report.memory.reportMonth }}월엔
+          <b>“{{ report.memory.userMessage }}”</b> 라고 했었지?
+        </p>
+        <p class="mem-reply" v-if="report.memory.gulbiReply">🐟 {{ report.memory.gulbiReply }}</p>
       </div>
 
       <!-- 굴비에게 한 마디 (월 1회) -->
@@ -364,7 +392,8 @@ async function send() {
 .donut-col { display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .donut { width: 132px; height: 132px; transform: rotate(-90deg); }
 .donut.sub { width: 104px; height: 104px; }
-.donut-cap { font-size: 12px; font-weight: 700; }
+.donut-cap { font-size: 12px; font-weight: 800; }
+.donut-sum { font-size: 12px; font-weight: 700; margin-bottom: 2px; }
 .legend { display: flex; align-items: center; gap: 8px; padding: 9px 2px; border-top: 1px solid var(--line);
   font-size: 14px; font-weight: 700; }
 .legend:first-of-type { border-top: none; }
@@ -395,6 +424,11 @@ async function send() {
 .wk-fill.ok { background: var(--income); }
 .wk-fill.no { background: var(--expense); }
 .wk-pct { width: 64px; text-align: right; font-weight: 800; }
+
+/* 굴비가 기억하는 너 */
+.memory .mem-past { font-size: 13px; font-weight: 600; line-height: 1.6; color: var(--ink-2); margin: 0; }
+.memory .mem-past b { font-weight: 800; color: var(--ink); }
+.memory .mem-reply { font-size: 13px; font-weight: 700; line-height: 1.6; color: var(--ink); margin: 8px 0 0; }
 
 /* 조언 / 한 마디 */
 .advice-head { font-size: 14px; font-weight: 800; color: var(--gold-deep); margin-bottom: 8px; }

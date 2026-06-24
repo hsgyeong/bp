@@ -80,8 +80,12 @@
 - [x] **메모리 1개월→최대 12개월** - `ReportDao.selectRecentReports`. 내러티브/굴비한마디 프롬프트에 단계적 압축 주입.
 - [x] 신규 쿼리: `BudgetDao.selectWeeksByMonth`, `StatisticsDao.selectDailyExpense`.
 - [x] `ReportView.vue` 그림판 테마 기준 재작성, `GulbiMascot.vue` 주석 5종 정리. API.md/schema.sql 갱신.
-- [ ] **(미구현) "굴비가 기억하는 너" 카드** - 과거 다짐 vs 이번 달 노출은 백엔드가 과거 userMessage를
-  응답에 따로 실어야 함(현재 메모리는 AI 프롬프트에만 반영). 필요 시 후속.
-- [ ] **(주의) pom 인코딩** - `project.build.sourceEncoding=UTF-8` 미설정이라 `mvnw compile`이 플랫폼 기본
-  인코딩으로 한글 소스(텍스트블록)를 깨뜨림. IDE 빌드는 OK. CLI 빌드 시 `-Dproject.build.sourceEncoding=UTF-8` 필요
-  또는 pom에 properties 추가 권장(별개 이슈).
+- [x] **"굴비가 기억하는 너" 카드** - `ReportMemory` DTO로 과거 가장 최근 다짐을 응답에 주입(`attachMemory`,
+  getMonthly/talk 양쪽). 프론트 카드 추가.
+- [x] **월 선택 모달** - 레포트 월 라벨에 `MonthPicker`(통계와 동일) 연결 → 과거 달 바로 이동(엘리스 메모리 테스트 가능).
+- [x] **파이차트 총액** - 전월/당월 도넛 위에 각 달 총 지출(원본 금액) 캡션.
+- [x] **data.sql 과거 예산 시드** - 2025-12~2026-05 주별 예산 추가(이전엔 6월만 있어 과거 레포트가 전부 예산
+  미입력 → mood 폴백만 → 표정 2종). 이제 mood 4종 다양화.
+- [x] **pom 인코딩 수정** - `project.build.sourceEncoding=UTF-8` 추가 → `mvnw compile` CLI 빌드 정상화.
+- [ ] **(확인 필요) 파이 시작각** - 첫 카테고리는 12시(offset 0)에서 시작하게 되어 있음. 재시드 후 실행해
+  4월/5월 도넛 top 확인 권장(이전 어긋남은 데이터 부족/관찰 가능성).

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>레포트 보강 시안 — 이달의 굴비 레포트</title>
+<style>
+  :root{
+    --gold-deep:#E0871A; --cream:#FBF5EA; --cream-2:#F4ECDC; --card:#fff;
+    --ink:#2E2820; --mute:#A89C89; --line:#ECE3D2; --income:#2FA98C; --expense:#E8623D;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:Pretendard,-apple-system,sans-serif;}
+  body{background:#E8E0D0;padding:20px;display:flex;justify-content:center;}
+  .app{width:380px;background:var(--cream);border-radius:20px;padding:24px 18px;}
+  .title{font-size:18px;font-weight:800;margin-bottom:12px;}
+  .month-nav{display:flex;align-items:center;justify-content:center;gap:18px;margin-bottom:14px;}
+  .month-label{font-size:15px;font-weight:800;cursor:pointer;}
+  .nav-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--card);font-size:18px;font-weight:700;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:18px;margin-bottom:12px;box-shadow:0 6px 18px rgba(120,90,30,.06);}
+  .muted{color:var(--mute);} .income{color:var(--income);} .expense{color:var(--expense);}
+  .gulbi-card{display:flex;align-items:center;gap:14px;}
+  .face{width:60px;height:60px;border-radius:50%;background:#FBE4C4;display:flex;align-items:center;justify-content:center;font-size:30px;flex-shrink:0;}
+  .bubble{flex:1;background:var(--cream-2);border-radius:16px;padding:12px 14px;font-size:14px;font-weight:700;line-height:1.5;}
+  .num-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+  .num{padding:14px 6px;text-align:center;}
+  .num-lbl{font-size:12px;color:var(--mute);font-weight:700;margin-bottom:6px;}
+  .num-val{font-size:14px;font-weight:800;}
+  .head{font-size:15px;font-weight:800;margin-bottom:8px;}
+  .donut-pair{display:flex;justify-content:center;align-items:flex-end;gap:12px;margin:8px 0 12px;}
+  .donut-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
+  .donut-cap{font-size:12px;font-weight:800;} .donut-sum{font-size:12px;font-weight:700;}
+  svg.donut{transform:rotate(-90deg);}
+  .legend{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--line);font-size:13px;font-weight:700;}
+  .legend i{width:11px;height:11px;border-radius:4px;}
+  .legend b{margin-left:auto;font-weight:700;}
+  .lp{color:var(--mute);min-width:30px;text-align:right;}
+  .ld{font-size:11px;min-width:54px;text-align:right;}
+  .ai{margin-top:10px;padding:11px 13px;background:var(--cream-2);border-radius:14px;font-size:13px;font-weight:700;line-height:1.6;}
+  .glance{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px;}
+  .g-cell{background:var(--cream-2);border-radius:12px;padding:10px 12px;}
+  .g-lbl{font-size:11px;color:var(--mute);font-weight:700;}
+  .g-val{font-size:15px;font-weight:800;}
+  .weeks{display:flex;flex-direction:column;gap:9px;margin-top:10px;}
+  .wk{display:flex;align-items:center;gap:8px;font-size:13px;}
+  .wk-lbl{width:48px;color:var(--mute);font-weight:700;}
+  .wk-bar{flex:1;height:10px;background:var(--cream-2);border-radius:6px;overflow:hidden;}
+  .wk-fill{height:100%;}
+  .wk-pct{width:62px;text-align:right;font-weight:800;}
+  .head-acc{font-size:14px;font-weight:800;color:var(--gold-deep);margin-bottom:8px;}
+  .mem b{font-weight:800;}
+  .talk-row{display:flex;gap:8px;margin-top:10px;}
+  .talk-row input{flex:1;border:1px solid var(--line);border-radius:12px;padding:11px 13px;font-size:13px;}
+  .send{background:var(--gold-deep);color:#fff;border:none;border-radius:12px;padding:0 16px;font-weight:800;}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="title">이달의 굴비 레포트</div>
+  <div class="month-nav"><button class="nav-btn">‹</button><span class="month-label">2026년 5월 ▾</span><button class="nav-btn">›</button></div>
+
+  <div class="card gulbi-card">
+    <div class="face">🐟</div>
+    <div class="bubble">이번 달은 예산을 자주 넘겼네… 다음 달은 굴비랑 같이 다잡아보자.</div>
+  </div>
+
+  <div class="num-grid">
+    <div class="card num" style="margin:0"><div class="num-lbl">총 지출</div><div class="num-val expense">620,000원</div></div>
+    <div class="card num" style="margin:0"><div class="num-lbl">전월 대비</div><div class="num-val expense">▲ 112%</div></div>
+    <div class="card num" style="margin:0"><div class="num-lbl">예산 성공</div><div class="num-val"><span class="income">1</span><span class="muted"> / 5주</span></div></div>
+  </div>
+
+  <div class="card">
+    <div class="head">카테고리 분석 <span class="muted" style="font-size:13px;font-weight:700">· 전월과 비교</span></div>
+    <div class="donut-pair">
+      <div class="donut-col">
+        <span class="donut-cap muted">전월</span><span class="donut-sum muted">293,000원</span>
+        <svg class="donut" width="104" height="104" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#E08A72" stroke-width="26" stroke-dasharray="113 226" stroke-dashoffset="0"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#E7BE63" stroke-width="26" stroke-dasharray="56 283" stroke-dashoffset="-113"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#94B8E6" stroke-width="26" stroke-dasharray="60 279" stroke-dashoffset="-169"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#B197D0" stroke-width="26" stroke-dasharray="71 268" stroke-dashoffset="-229"/>
+        </svg>
+      </div>
+      <div class="donut-col">
+        <span class="donut-cap">이번 달</span><span class="donut-sum">620,000원</span>
+        <svg class="donut" width="132" height="132" viewBox="0 0 160 160">
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#E08A72" stroke-width="26" stroke-dasharray="115 224" stroke-dashoffset="0"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#E7BE63" stroke-width="26" stroke-dasharray="76 263" stroke-dashoffset="-115"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#94B8E6" stroke-width="26" stroke-dasharray="69 270" stroke-dashoffset="-191"/>
+          <circle cx="80" cy="80" r="54" fill="none" stroke="#B197D0" stroke-width="26" stroke-dasharray="34 305" stroke-dashoffset="-260"/>
+        </svg>
+      </div>
+    </div>
+    <div class="legend" style="border-top:none"><span style="display:flex;align-items:center;gap:8px"><i style="background:#E08A72"></i>의류</span><b>210,000</b><span class="lp">34%</span><span class="ld expense">▲115,000</span></div>
+    <div class="legend"><span style="display:flex;align-items:center;gap:8px"><i style="background:#E7BE63"></i>문화생활</span><b>140,000</b><span class="lp">23%</span><span class="ld expense">▲92,000</span></div>
+    <div class="legend"><span style="display:flex;align-items:center;gap:8px"><i style="background:#94B8E6"></i>식비</span><b>127,000</b><span class="lp">20%</span><span class="ld expense">▲88,000</span></div>
+    <div class="legend"><span style="display:flex;align-items:center;gap:8px"><i style="background:#B197D0"></i>의료비</span><b>80,000</b><span class="lp">13%</span><span class="ld income">▼60,000</span></div>
+    <p class="ai">🐟 의류·문화생활이 크게 늘었어. 다음 달엔 큰 쇼핑 한 번만 미뤄도 숨통이 트일 거야.</p>
+  </div>
+
+  <div class="card">
+    <div class="head">이번 달 한눈에</div>
+    <div class="glance">
+      <div class="g-cell"><div class="g-lbl">하루 평균</div><div class="g-val">20,000원</div></div>
+      <div class="g-cell"><div class="g-lbl">무지출 날</div><div class="g-val">19일 🐟</div></div>
+      <div class="g-cell"><div class="g-lbl">가장 큰 하루</div><div class="g-val">5/15 · 210,000원</div></div>
+      <div class="g-cell"><div class="g-lbl">가장 아낀 항목</div><div class="g-val income">의료비 ▼60,000</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head">주차별 예산 달성</div>
+    <div class="weeks">
+      <div class="wk"><span class="wk-lbl">1주차</span><div class="wk-bar"><div class="wk-fill" style="width:0%;background:var(--income)"></div></div><span class="wk-pct income">✓ 0%</span></div>
+      <div class="wk"><span class="wk-lbl">2주차</span><div class="wk-bar"><div class="wk-fill" style="width:100%;background:var(--expense)"></div></div><span class="wk-pct expense">✗ 135%</span></div>
+      <div class="wk"><span class="wk-lbl">3주차</span><div class="wk-bar"><div class="wk-fill" style="width:100%;background:var(--expense)"></div></div><span class="wk-pct expense">✗ 210%</span></div>
+      <div class="wk"><span class="wk-lbl">4주차</span><div class="wk-bar"><div class="wk-fill" style="width:100%;background:var(--expense)"></div></div><span class="wk-pct expense">✗ 195%</span></div>
+      <div class="wk"><span class="wk-lbl">5주차</span><div class="wk-bar"><div class="wk-fill" style="width:100%;background:var(--expense)"></div></div><span class="wk-pct expense">✗ 114%</span></div>
+    </div>
+  </div>
+
+  <div class="card"><div class="head-acc">굴비의 한 수</div><p style="font-size:14px;font-weight:600;line-height:1.6">큰 지출이 2~5주에 몰렸어. 다음 달엔 주 1회 '무지출 데이'를 정해 충동구매를 한 박자 늦춰보자.</p></div>
+
+  <div class="card mem"><div class="head-acc">굴비가 기억하는 너</div>
+    <p style="font-size:13px;font-weight:600;line-height:1.6;color:#6F6557">2026년 4월엔 <b style="color:var(--ink)">“다음 달엔 옷 좀 그만 살게!”</b> 라고 했었지?</p>
+    <p style="font-size:13px;font-weight:700;line-height:1.6;margin-top:8px">🐟 근데 이번 달 의류가 또 늘었네… 다음 달엔 진짜 약속 지켜보자!</p>
+  </div>
+
+  <div class="card"><div class="head-acc">굴비에게 한 마디 <span class="muted" style="font-size:11px">한 달에 한 번</span></div>
+    <div class="talk-row"><input placeholder="예) 다음 달엔 쇼핑 줄여볼게!" /><button class="send">보내기</button></div>
+  </div>
+</div>
+</body>
+</html>

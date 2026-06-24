@@ -55,4 +55,5 @@ public class MonthlyReport {
     // ===== 컬럼이 아닌 파생 필드 (JSON 을 파싱해 응답에 실어줌) =====
     private List<CategoryDiffItem> categories;   // categoryJson 파싱
     private ReportExtra extra;                    // extraJson 파싱 (부가 지표)
+    private ReportMemory memory;                  // 과거 다짐 ("굴비가 기억하는 너"), 조회 시 주입
 }
