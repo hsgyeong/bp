@@ -3,17 +3,16 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { drawGulbiReward, decideGulbiReward, getGulbiReward } from '@/api/gulbiReward'
 
-// GulbiMascot 과 동일한 5종 무드 PNG (기본 굴비)
-import hello from '@/assets/gulbi/gulbi-hello.png'
+// 4종 무드 PNG (기본 굴비). hello는 로그인/회원가입 전용이라 제외.
 import happy from '@/assets/gulbi/gulbi-happy.png'
 import sad   from '@/assets/gulbi/gulbi-sad.png'
 import smirk from '@/assets/gulbi/gulbi-smirk.png'
 import angry from '@/assets/gulbi/gulbi-angry.png'
 
 
-const baseAssets = { hello, happy, sad, smirk, angry }
+const baseAssets = { happy, smirk, angry, sad }
 const MOOD_LABEL = {
-  hello: '인사', happy: '흐뭇', sad: '슬픔', smirk: '씨익', angry: '화남',
+  happy: '흐뭇', smirk: '씨익', angry: '화남', sad: '슬픔',
 }
 
 // router/index.js 에서 props:true 로 넘겨받음
@@ -48,7 +47,7 @@ async function toBase64(url) {
 
 async function buildBaseImages() {
   const entries = await Promise.all(
-    Object.entries(MOODS).map(async ([mood, url]) => [mood, await toBase64(url)]),
+    Object.entries(baseAssets).map(async ([mood, url]) => [mood, await toBase64(url)]),
   )
   return Object.fromEntries(entries)
 }
