@@ -64,11 +64,15 @@ public class NotificationServiceImpl implements NotificationService {
         }
 
         // 2) 월 레포트: 새 달이 시작됐으면 '지난달' 레포트 알림 1건 (월 1회)
+        //    단, 이번 달 시작 이전 가입자만 (지난달에 회원이 아니었으면 그 달 레포트는 의미 없음)
         try {
-            LocalDate prevMonth = LocalDate.now().minusMonths(1);
+            LocalDate now = LocalDate.now();
+            LocalDate prevMonth = now.minusMonths(1);
             int year = prevMonth.getYear();
             int month = prevMonth.getMonthValue();
-            if (notificationDao.existsReportNotification(userId, year, month) == 0) {
+            LocalDate firstOfThisMonth = now.withDayOfMonth(1);
+            if (notificationDao.countMemberBefore(userId, firstOfThisMonth) > 0
+                    && notificationDao.existsReportNotification(userId, year, month) == 0) {
                 try {
                     notificationDao.insertReportNotification(userId, year, month);
                 } catch (DuplicateKeyException ignore) {

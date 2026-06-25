@@ -99,6 +99,13 @@
 	    VALUES (#{userId}, 'REPORT', #{year}, #{month})
 	</insert>
 
+	<!-- 이 유저가 기준일 이전에 가입했는가 (0=아님 / 1=가입함). REPORT 알림 가드용:
+	     이번 달 시작 이전 가입자만 '지난달 레포트' 알림 대상 (지난달에 회원이었어야 함) -->
+	<select id="countMemberBefore" resultType="int">
+	    SELECT COUNT(*) FROM `user`
+	    WHERE id = #{userId} AND created_at &lt; #{date}
+	</select>
+
 	<!-- 트리거: 이 주 예산에 이미 발송된 최고 임계치 (행 없으면 NULL) -->
 	<select id="selectMaxThreshold" resultType="java.lang.Integer">
 	    SELECT MAX(threshold)

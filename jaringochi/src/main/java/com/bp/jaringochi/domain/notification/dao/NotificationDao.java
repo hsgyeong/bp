@@ -53,4 +53,8 @@ public interface NotificationDao {
     int insertReportNotification(@Param("userId") Long userId,
                                  @Param("year") int year,
                                  @Param("month") int month);
+
+    // REPORT 가드: 기준일(이번 달 시작) 이전에 가입했는지 (0/1)
+    int countMemberBefore(@Param("userId") Long userId,
+                          @Param("date") java.time.LocalDate date);
 }
