@@ -57,4 +57,7 @@ public interface NotificationDao {
     // REPORT 가드: 기준일(이번 달 시작) 이전에 가입했는지 (0/1)
     int countMemberBefore(@Param("userId") Long userId,
                           @Param("date") java.time.LocalDate date);
+
+    // 지난주 평가용: 오늘 이전에 끝난 가장 최근 주의 종료일 (없으면 null)
+    java.time.LocalDate selectLastWeekDate(Long userId);
 }

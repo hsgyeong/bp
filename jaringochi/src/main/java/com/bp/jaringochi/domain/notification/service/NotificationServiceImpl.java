@@ -50,6 +50,18 @@ public class NotificationServiceImpl implements NotificationService {
     // DRAW(절약 성공으로 옷 뽑기 가능) / REPORT(새 달 시작 → 지난달 레포트 생성 가능)
     // 알림 실패가 조회를 막으면 안 되므로 전부 try-catch로 삼킴.
     private void syncEventNotifications(Long userId) {
+        // 0) 예산 사용 알림: 지난주(오늘 이전 끝난 가장 최근 주)를 평가해 최고 임계 1건.
+        //    실시간(지출 등록) 트리거가 그 주에 이미 보낸 단계가 있으면 maxSent/unique로 중복 차단.
+        //    시드/직접입력처럼 트리거를 안 탄 경우에도 조회 시점에 지난주 결산이 한 번 뜨게 함.
+        try {
+            LocalDate lastWeekDate = notificationDao.selectLastWeekDate(userId);
+            if (lastWeekDate != null) {
+                evaluateExpense(userId, lastWeekDate);   // 그 주 최고 임계 1건 (내부에 try-catch 있음)
+            }
+        } catch (Exception e) {
+            log.warn("지난주 예산 알림 동기화 실패 userId={}", userId, e);
+        }
+
         // 1) 옷 뽑기 기회: 끝난 주 중 절약 성공·미결정·미알림인 주마다 1건
         try {
             for (Long weeklyBudgetId : notificationDao.selectEligibleDrawWeeks(userId)) {

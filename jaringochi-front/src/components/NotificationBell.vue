@@ -75,10 +75,11 @@ async function onReadAll() {
 function message(n) {
   if (n.type === 'DRAW') return '절약 성공! 굴비 옷 뽑기 기회가 왔어요'
   if (n.type === 'REPORT') return `${n.reportMonth}월 가계부 레포트가 준비됐어요`
+  // BUDGET: 실시간(현재 주)·지난주 결산 양쪽에 쓰이므로 주차 표현 없이 중립적으로
   const t = n.threshold
-  if (t >= 125) return `이번 주 예산을 ${t - 100}% 초과했어요`
-  if (t >= 100) return `이번 주 예산을 다 썼어요!`
-  return `이번 주 예산의 ${t}%를 썼어요`
+  if (t >= 125) return `주간 예산을 ${t - 100}% 초과했어요`
+  if (t >= 100) return `주간 예산을 다 썼어요!`
+  return `주간 예산의 ${t}%를 썼어요`
 }
 function messageEmoji(n) {
   if (n.type === 'DRAW') return '🎁'
