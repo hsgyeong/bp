@@ -87,8 +87,8 @@
 	          )
 	</select>
 
-	<!-- DRAW 알림 생성 -->
-	<insert id="insertDrawNotification" useGeneratedKeys="true" keyProperty="id">
+	<!-- DRAW 알림 생성 (생성 PK 미사용 → 파라미터가 여러 개라 useGeneratedKeys 사용 불가, 제거) -->
+	<insert id="insertDrawNotification">
 	    INSERT INTO notification (user_id, type, weekly_budget_id)
 	    VALUES (#{userId}, 'DRAW', #{weeklyBudgetId})
 	</insert>
@@ -100,8 +100,8 @@
 	      AND report_year = #{year} AND report_month = #{month}
 	</select>
 
-	<!-- REPORT 알림 생성 -->
-	<insert id="insertReportNotification" useGeneratedKeys="true" keyProperty="id">
+	<!-- REPORT 알림 생성 (생성 PK 미사용 → 파라미터가 여러 개라 useGeneratedKeys 사용 불가, 제거) -->
+	<insert id="insertReportNotification">
 	    INSERT INTO notification (user_id, type, report_year, report_month)
 	    VALUES (#{userId}, 'REPORT', #{year}, #{month})
 	</insert>
