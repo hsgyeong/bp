@@ -66,6 +66,10 @@ public class GmsImageClient {
 		                same pose, same facial expression, same white or transparent background.
 		                Invent ONE random, creative outfit (clothing or costume) and dress the fish in it.
 		                The clothing has NO sleeves; never add arms, hands, legs, or feet.
+		                The fish is a HORIZONTAL animal, not a standing human: place any neckline or collar
+		                around the fish's neck (where the head meets the body), not at the top of the body.
+		                Keep the garment's coverage consistent — decide clearly whether it covers the back or
+		                leaves it bare, and render it that way.
 		                Output EXACTLY ONE fish. Never draw a second fish or character.
 		                Do not add text inside the image, scenery, extra characters, shadows, or realistic photo style.
 		                After the image, output two plain-text lines, nothing else:
@@ -116,6 +120,14 @@ public class GmsImageClient {
 		                  the description explicitly says white.
 		                - This character has NO arms, NO hands, NO legs, NO feet, and the clothing has NO sleeves.
 		                  NEVER add arms, hands, legs, feet, or sleeves. The outfit lies flat on the fish's body.
+		                - Match the described coverage EXACTLY: cover the same areas and leave the same areas
+		                  bare, on BOTH the front and the back. If the description says the back is bare, leave
+		                  the fish's back uncovered; if it wraps around, cover the back. Never change which
+		                  parts are covered.
+		                - The fish is a HORIZONTAL animal, NOT a standing human. Place the garment's neckline,
+		                  collar, or neck opening around the fish's NECK — the narrow area just behind the head
+		                  where the head meets the body — never at the top of the body as on a standing person.
+		                  Orient and wrap the whole outfit to follow the fish's horizontal body.
 		                - Change ONLY the clothing. Keep the fish 100%% identical: same shape, body, face,
 		                  facial expression, pose, and the same hand-drawn line style, on the same white or
 		                  transparent background. Do not redraw, recolor, restyle, or reshape the fish, and do

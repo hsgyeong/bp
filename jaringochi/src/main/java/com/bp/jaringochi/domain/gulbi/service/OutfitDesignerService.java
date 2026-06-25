@@ -56,6 +56,11 @@ public class OutfitDesignerService {
 			   than three details.
 			6. This fish has NO arms and NO legs. Design only clothing worn flat on its body,
 			   with NO sleeves and nothing that would require arms, hands, legs, or feet.
+			7. ALWAYS state how the garment covers the body in 3D, especially the BACK. Say
+			   explicitly whether it wraps fully around and covers the back, or is front-only
+			   with the back left bare, and where it fastens — e.g., "wraps fully around the
+			   body, back covered" or "front-only apron, the back is left bare, tied with two
+			   straps at the back". This removes ambiguity so every render covers the same areas.
 
 			Describe ONLY the outfit. Do NOT describe or change the fish, its face, pose,
 			line style, or background.
@@ -64,7 +69,8 @@ public class OutfitDesignerService {
 			NAME: <a short 1-4 word outfit name in Korean>
 			SPEC: <one compact English description, 60 words MAX, that an image model can
 			follow. Order it as: concept first, then the 1-2 HEX colors and what each is for,
-			then the 2-3 key details with their exact positions. Be concrete but brief.>
+			then the 2-3 key details with their exact positions, and how it covers the body
+			(front-only with bare back, or fully wrapped). Be concrete but brief.>
 			""";
 
 	// 사용자 메시지 — %s 자리에 코드가 뽑은 컨셉 키워드가 들어간다.
@@ -83,7 +89,7 @@ public class OutfitDesignerService {
 			"sailor uniform", "chef's outfit", "wizard robe", "pirate costume", "astronaut suit",
 			"cowboy outfit", "ninja outfit", "graduation gown", "winter puffer jacket", "bee costume",
 			"pumpkin costume", "bear onesie", "Japanese kimono", "hooded poncho", "tuxedo",
-			"police uniform", "firefighter coat", "soccer jersey", "doctor's white coat", "angel robe");
+			"police uniform", "firefighter coat", "soccer jersey", "angel robe");
 
 	/**
 	 * 옷 설계. 카탈로그에서 컨셉을 랜덤으로 뽑아 디자이너에게 정밀화시킨 뒤, 옷 이름(NAME)·스펙(SPEC)을 반환한다.
