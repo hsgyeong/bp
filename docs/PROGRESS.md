@@ -14,6 +14,7 @@
 | 날짜 | 담당 | 작업 |
 |------|------|------|
 | 2026-06-25 | pearlseo73(Claude) | **알림 유형 확장(DRAW·REPORT) + paint 색 통일/완화** — `notification`에 `type`/`report_year`/`report_month` 추가·`weekly_budget_id`/`threshold` NULL 허용(schema + 라이브 DB ALTER `migration/2026-06-25-...sql`). 옷 뽑기 기회(DRAW)·월 레포트(REPORT) 알림을 **조회 시 지연 생성**(스케줄러 없이, 종 배지 폴링으로 자동 표시, DEC-0026). DTO/Mapper/Dao/Service + `NotificationBell.vue` 유형별 문구·아이콘·클릭 이동(뽑기/레포트). 디자인: paint 순흑(#000/#161616)→graphite #383430 완화 + `gold==gold-deep`로 그라데이션/flat 버튼 색 통일, `GulbiRewardView` 하드코딩 골드 제거. **classic 테마 폐기, paint 단일**(DEC-0027). API.md §5 갱신. 앱에서 alice 검증(DRAW 자격주별 1건·REPORT 월1건 중복없음, 배지 자동 증가, 실행 중 백엔드에 devtools 핫리로드로 반영됨) |
+| 2026-06-24 | hsgyeong | **AI 호출 GMS 게이트웨이 제거 → 직접 호출 전환**(DEC-0026) — GMS 토큰 소진 대응. 이미지(굴비 옷)=일반 **Gemini 직접**(`gemini.*` 프로퍼티, `generativelanguage.googleapis.com/v1beta/models/...:generateContent`, `x-goog-api-key`), 텍스트(레포트·한마디)=**OpenAI 직접**(`api.openai.com/v1`, `gpt-4o-mini`). 코드는 `GmsImageClient`만 수정(`@Value` `gms.*`→`gemini.*`, URL 프록시 세그먼트 제거), 나머지는 `application.properties`+루트 `.env` 설정 변경. `.env` 키 `GMS_KEY`→`GEMINI_KEY`·`OPENAI_KEY` 2개로 분리. 컴파일 통과. ⚠️ OpenAI 모델명·Gemini 이미지 쿼터(직접 호출 시 무료티어 0 주의) 확인 필요 |
 | 2026-06-24 | pearlseo73 | **레포트 "굴비의 총평" 카드 추가 + "굴비가 기억하는 너" 제거** — memory 기능 전면 삭제(`ReportMemory` DTO·`attachMemory`·`MonthlyReport.memory`·프론트 카드). "굴비의 한 수"(advice) 바로 위에 **300자 총평** `story` 카드 신설. story는 **추가 AI 호출 없이** `applyAiNarrative` 단일 구조화 호출에 필드 1개 추가로 생성, DB 캐싱 위해 `monthly_report.story`(VARCHAR(1000)) 컬럼·매퍼 반영. 실패 시 숫자 기반 폴백. API.md §8-1 갱신 |
 | 2026-06-24 | hsgyeong | **가계부 달력 날짜 상세 모달** - 달력 뷰에서 거래 있는 날짜 클릭 시 **화면 중앙 모달**로 그날 수입/지출/합계 + 거래 목록 표시(항목 클릭→수정 이동, Esc·배경 클릭으로 닫힘, 월 변경 시 자동 닫힘). 모달 및 수입/지출/합계 박스 테두리를 그림판 테마 손그림 선(`.paint-box`)으로 통일. 거래 수정 화면 다녀와도 보던 탭(달력)이 유지되도록 `viewMode`를 `sessionStorage`에 저장/복원(DEC-0025). `LedgerView.vue` 단일 파일. ※ 작업 중 디스크 풀(C: 98%)로 파일이 0바이트 손상되어 HEAD에서 복구 후 재작성 |
 | 2026-06-23 | hsgyeong | **굴비 보상 고도화** - 옷을 고정 6종 대신 **Gemini 랜덤 생성**으로 전환(`OUTFITS`/`pickOutfitExcept` 제거, 앵커가 옷+한국어 이름 반환 · DEC-0021). 레퍼런스 프롬프트 강화(옷만 변경·외형/표정 불변·옷 없는 결과 금지). 결과 이미지 **서버측 다운스케일**(`shrinkToDataUrl`, MAX_EDGE=256 · DEC-0022). 프론트 `GulbiRewardView`의 `OUTFIT_LABEL` 맵 제거 → `outfitKey`(모델 한글 이름) 직접 표시. API.md §7 갱신 |
@@ -37,7 +38,7 @@
 
 - ~~MyBatis 매퍼 경로 불일치~~ -> **해결됨**: `application.properties`(`classpath:mappers/**/*.xml`)와 실제 폴더(`resources/mappers/`)가 모두 복수 `mappers`로 통일됨.
 - `ratio` 컬럼이 `DECIMAL(5,2)`(최대 999.99) - 예산을 아주 적게 잡고 지출이 1000%를 넘으면 저장 실패 가능. 드문 케이스라 보류, 필요 시 자릿수 확대.
-- **굴비 보상 운영 주의** - (1) `gms.model`이 GMS 실제 카탈로그 이름과 일치해야 함(목록 확인), 인증 안 되면 `Authorization: Bearer`로 대체. (2) 뽑기 1회=이미지 7회 호출이라 GMS 쿼터/지연 부담 → 테스트 시 프론트 무드 1~2개로 축소. (3) `httpClient` 타임아웃 미설정 → 멈추면 길게 블로킹(개선 권장). (4) `gemini-2.5-flash-image`를 Google **직접** 호출하면 무료 티어 한도 0(429)이라 GMS 경유 필수.
+- **굴비 보상 운영 주의** (DEC-0026 이후, GMS 제거·Gemini 직접 호출) - (1) `gemini.model`(`gemini-2.5-flash-image`)이 일반 Gemini API 카탈로그와 일치해야 함, 인증은 `x-goog-api-key: <GEMINI_KEY>`. (2) 뽑기 1회=이미지 7회 호출이라 쿼터/지연 부담 → 테스트 시 프론트 무드 1~2개로 축소. (3) `httpClient` 타임아웃 미설정 → 멈추면 길게 블로킹(개선 권장). (4) ⚠️ `gemini-2.5-flash-image` **직접** 호출은 과거 무료 티어 0(429)이었음 → 키의 유료/쿼터 상태 확인 필요(막히면 결제 활성화 또는 대체 모델).
 
 ## 다음 할 일 (Backlog)
 

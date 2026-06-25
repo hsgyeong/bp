@@ -157,6 +157,7 @@
   - 컨트롤러 `@RequestBody`는 반드시 `org.springframework.web.bind.annotation` 것을 사용(초기 버그: Swagger 애너테이션을 import해 본문 바인딩이 안 돼 `baseImages`가 null → NPE).
 
 ## DEC-0019 · 이미지 생성 제공자: SSAFY GMS(Gemini) 채택
+> ⚠️ **DEC-0026 으로 대체됨(2026-06-24)** — GMS 토큰 소진으로 일반 Gemini/OpenAI 키 직접 호출로 전환. 아래는 당시 기록.
 - **날짜**: 2026-06-22
 - **결정**: 굴비 옷 이미지 생성은 **SSAFY GMS 게이트웨이 경유 Gemini 이미지 모델**(`gemini-2.5-flash-image`, JSON `generateContent`)을 사용한다. 호출 URL은 `{gms.base-url}/generativelanguage.googleapis.com/v1beta/models/{model}:generateContent`, 인증 헤더 `x-goog-api-key: <GMS_KEY>`. 키는 `.env`(`GMS_KEY`)로 주입, `.gitignore` 대상.
 - **이유**: Claude는 이미지 생성 불가, OpenAI `gpt-image-1`은 유료, Google 직접 호출은 이미지 모델 무료 티어 0(429). GMS는 SSAFY 제공으로 학생 무료 + Gemini 이미지 편집 지원.
@@ -256,3 +257,15 @@
   - `style.css` paint 토큰 값만 조정(요소별 CSS는 대부분 그대로 var 참조라 광범위 자동 반영). classic(:root 기본값)은 코드상 남아 있으나 **미사용**(추후 정리 가능).
   - 통계 탭(`.seg .s.on`)·홈/예산/거래/뽑기 primary 버튼이 동일 graphite로 통일. 본문 텍스트·손그림 테두리도 graphite라 전반적으로 덜 새까맣다.
   - classic 전용 분기/토글 제거는 후속 정리 항목(현재는 무해하게 잔존).
+## DEC-0028 · AI 호출: GMS 게이트웨이 제거 → Gemini/OpenAI 키 직접 호출 (DEC-0019 대체)
+- **날짜**: 2026-06-24
+- **결정**: SSAFY GMS 게이트웨이 경유를 걷어내고 **정식 엔드포인트 직접 호출**로 전환한다.
+  - **이미지(굴비 옷)**: 일반 **Gemini API 직접** — `gemini.base-url=https://generativelanguage.googleapis.com`, `/v1beta/models/{model}:generateContent`, 헤더 `x-goog-api-key: <GEMINI_KEY>`, 모델 `gemini-2.5-flash-image`.
+  - **텍스트(레포트·굴비 한마디)**: **OpenAI 직접** — `spring.ai.openai.base-url=https://api.openai.com/v1`, `OPENAI_KEY`, 모델 `gpt-5.5-pro`.
+  - 키는 루트 `.env`(gitignore)에 `GEMINI_KEY`·`OPENAI_KEY` 2개로 분리. 기존 `GMS_KEY`·`gms.*` 프로퍼티 폐기.
+- **이유**: GMS 토큰 소진. 요청/응답 포맷이 이미 각 벤더 네이티브라(이미지=Gemini `generateContent`, 텍스트=OpenAI SDK) 게이트웨이만 제거하면 되어 전환 비용이 낮음.
+- **영향**:
+  - 코드는 `GmsImageClient`만 변경 — `@Value` 키 `gms.*`→`gemini.*`, URL에서 GMS 프록시용 호스트 세그먼트(`/generativelanguage.googleapis.com`) 제거. 요청 본문·`x-goog-api-key` 헤더·응답 파싱은 그대로.
+  - `AiConfig`·`GulbiRewardService`·`report` 도메인은 무변경(Spring AI가 properties만 보고 OpenAI로 붙음). `application.properties`·`.env` 설정 변경이 대부분.
+  - ⚠️ 모델명 주의: 기존 `gpt-5.4-mini`는 GMS 별칭 → 실제 OpenAI 계정 모델(`gpt-5.5-pro` 채택)로 교체 필요.
+  - ⚠️ `gemini-2.5-flash-image`를 Google **직접** 호출 시 과거엔 무료 티어 0(429)이었음(DEC-0019 근거) → 유료/쿼터 확인 필요. 클래스명 `GmsImageClient`는 잔존(추후 리네임 가능).
