@@ -26,15 +26,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 @Service
 public class GulbiRewardService {
 
+	private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(GulbiRewardService.class);
+
 	private final GmsImageClient gmsImageClient;
+	private final OutfitDesignerService outfitDesigner;
 	private final GulbiRewardDao gulbiRewardDao;
 	private final GulbiRewardTx gulbiRewardTx;
 	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	public GulbiRewardService(GmsImageClient gmsImageClient,
+	                          OutfitDesignerService outfitDesigner,
 	                          GulbiRewardDao gulbiRewardDao,
 	                          GulbiRewardTx gulbiRewardTx) {
 		this.gmsImageClient = gmsImageClient;
+		this.outfitDesigner = outfitDesigner;
 		this.gulbiRewardDao = gulbiRewardDao;
 		this.gulbiRewardTx = gulbiRewardTx;
 	}
@@ -150,51 +155,68 @@ public class GulbiRewardService {
 			return new GenerateResult(images, "랜덤 옷");
 		}
 		
-		// 앵커 : 먼저 순차로 생성 (나머지가 이 이미지를 참조함)
-		Map.Entry<String, GulbiDrawRequest.BaseImage> anchor = entries.get(0);
-		GulbiDrawRequest.BaseImage anchorBase = anchor.getValue();
-		GmsImageClient.DressResult a;
-		
+		// 1) 옷 설계 : OpenAI 디자이너가 base 물고기를 보고 옷 스펙(SPEC)+이름(NAME)을 만든다.
+		//    실패하면 Gemini 앵커 방식(첫 무드에 옷 발명 + DESC)으로 폴백한다.
+		Map.Entry<String, GulbiDrawRequest.BaseImage> first = entries.get(0);
+		GulbiDrawRequest.BaseImage firstBase = first.getValue();
+
+		String outfitName;
+		String outfitSpec;
 		try {
-			// 앵커는 다른 무드의 기준이 되기 때문에 반드시 먼저 순차로 생성
-			a = gmsImageClient.dressGulbi(
-					anchorBase.base64(), anchorBase.mimeType(), anchor.getKey(), null);
+			OutfitDesignerService.OutfitDesign design = outfitDesigner.design();
+			if (design.outfitSpec() == null || design.outfitSpec().isBlank()) {
+				throw new IllegalStateException("designer returned empty spec");
+			}
+			outfitSpec = design.outfitSpec();
+			outfitName = (design.outfitName() == null || design.outfitName().isBlank())
+					? "랜덤 옷" : design.outfitName().trim();
 		} catch (Exception ex) {
-			throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED, ex);
+			// 폴백 : Gemini가 첫 무드에 옷을 발명하고 그 결과 이미지·묘사를 그대로 쓴다.
+			log.warn("옷 디자이너(OpenAI) 실패 → Gemini 앵커 방식으로 폴백", ex);
+			GmsImageClient.DressResult a;
+			try {
+				a = gmsImageClient.dressAnchor(firstBase.base64(), firstBase.mimeType(), first.getKey());
+			} catch (Exception ex2) {
+				log.error("굴비 이미지 생성 실패(anchor 폴백)", ex2);
+				throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED, ex2);
+			}
+			images.put(first.getKey(), a.dataUrl());	// 앵커 렌더 결과는 이미 옷을 입었으므로 그대로 사용
+			outfitName = (a.outfitName() == null || a.outfitName().isBlank()) ? "랜덤 옷" : a.outfitName().trim();
+			outfitSpec = (a.outfitDescription() == null || a.outfitDescription().isBlank())
+					? outfitName : a.outfitDescription();
 		}
-		// 앵커 결과 이미지를 맵에 저장
-		images.put(anchor.getKey(), a.dataUrl());
-		
-		String outfitName = (a.outfitName() == null || a.outfitName().isBlank()) ? "랜덤 옷" : a.outfitName().trim();
+
 		// DB 컬럼 길이 보호 (50자를 넘으면 잘라냄)
 		if (outfitName.length() > 50) {
 			outfitName = outfitName.substring(0, 50);
 		}
-		
-		final String referenceB64 = a.dataUrl().substring(a.dataUrl().indexOf(',') + 1);
-		
-		// 나머지 무드 : 서로 독립으로 동시에 호출해 시간 단축. 동시에 3개까지
+
+		// 2) 각 무드 base 이미지에 '같은 옷 스펙'으로 옷을 입혀 동시에 생성. 동시에 3개까지.
+		//    디자이너 성공 시 images가 비어있어 0번부터, 폴백 시 0번(앵커)은 이미 채워졌으므로 1번부터.
+		final String spec = outfitSpec;
+		int start = images.containsKey(first.getKey()) ? 1 : 0;
 		ExecutorService pool = Executors.newFixedThreadPool(3);
 		try {
 			List<String> moodKeys = new ArrayList<>();	// 순서 보존용
 			List<Future<String>> futures = new ArrayList<>();
-			
-			// i=1부터(앵커 제외) 무드별 작업을 만들어 풀에 제출 → 백그라운드에서 동시에 실행 시작.
-			for (int i = 1; i < entries.size(); i++) {
+
+			// 무드별 작업을 만들어 풀에 제출 → 백그라운드에서 동시에 실행 시작.
+			for (int i = start; i < entries.size(); i++) {
 				Map.Entry<String, GulbiDrawRequest.BaseImage> e = entries.get(i);
 				final String mood = e.getKey();			// 익명 클래스에서 쓰려면 final
 				final GulbiDrawRequest.BaseImage base = e.getValue();
-				
+
 				moodKeys.add(mood);
-				
+
 				Callable<String> task = new Callable<String>() {
 
 					@Override
 					public String call() throws Exception {
-						return gmsImageClient.dressGulbi(
-								base.base64(), base.mimeType(), mood, referenceB64).dataUrl();
+						// 무드 base 이미지에 옷 스펙으로 옷을 입힘 → 표정은 base 그대로, 옷은 스펙으로 통일
+						return gmsImageClient.dressWithDescription(
+								base.base64(), base.mimeType(), mood, spec);
 					}
-					
+
 				};
 				futures.add(pool.submit(task));
 			}
@@ -203,6 +225,7 @@ public class GulbiRewardService {
 				try {
 					images.put(moodKeys.get(i), futures.get(i).get());
 				} catch (Exception ex) {
+					log.error("굴비 이미지 생성 실패(mood={})", moodKeys.get(i), ex);	// 실제 Gemini 응답/예외 확인용
 					throw new BusinessException(ErrorCode.REWARD_IMAGE_GENERATION_FAILED, ex);
 				}
 			}
