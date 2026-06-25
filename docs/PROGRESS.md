@@ -6,13 +6,13 @@
 
 | 담당 | 작업 | 브랜치 | 비고 |
 |------|------|--------|------|
-| pearlseo73 | **AI 월간 레포트 + 굴비 한마디** 백엔드 | feat/report2 | 백엔드 완성(컴파일 통과). `domain/report`(controller/service/dao/dto) + `monthly_report` 테이블 + `REPORT_*` ErrorCode(R400/404/409/503). **Spring AI `ChatClient` + GMS 경유**(`gpt-5.4-mini`), AI 2회 호출(레포트 생성 `.entity()`·굴비 한마디 `.content()`), 통계/예산 서비스 재사용, 지난달 연속성(DB조회), 실패 시 폴백. ⚠️ 실행엔 `jaringochi/.env`에 `GMS_KEY` 필요(gitignore됨). **남음**: 프론트(`api/report.js`·`ReportView.vue`·라우트), GMS키 미설정 시 일반 OpenAI키 폴백(보류), `GmsConfig.java`(이미지용·미사용) 정리 |
-| pearlseo73 | 알림 트리거(생성) 백엔드 + 컨트롤러 실인증 통일 + threshold 버그픽스 | feat/notification-trigger | **PR 대기**. 지출 등록 시 임계치 알림 자동 생성(DEC-0011·0012). Swagger 검증 완료: 25~150 단계 생성·같은 단계 중복차단·다단계 점프 시 최고 1건. hsgyeong 공유 필요: `schema.sql` 2곳(UNIQUE 안전망 + threshold `TINYINT`->`SMALLINT`), `TransactionServiceImpl.addTransaction` 연결 1줄 |
+| — | _(현재 진행 중 항목 없음)_ | — | 완료된 작업은 아래 로그 참고 |
 
 ## 완료 (Done)
 
 | 날짜 | 담당 | 작업 |
 |------|------|------|
+| 2026-06-25 | pearlseo73(Claude) | **PROGRESS 정리** — 아래 "진행 중"에 남아 있던 ① `feat/report2`(AI 월간 레포트+굴비 한마디: 백엔드+프론트 `ReportView`/`api/report.js`) ② `feat/notification-trigger`(지출 임계치 알림 트리거) 두 건은 **이미 머지 완료**되어 진행 중 표에서 정리함. 이후 알림은 DRAW/REPORT 유형까지 확장됨(아래 동일 일자 항목·DEC-0026). |
 | 2026-06-25 | pearlseo73(Claude) | **알림 유형 확장(DRAW·REPORT) + paint 색 통일/완화** — `notification`에 `type`/`report_year`/`report_month` 추가·`weekly_budget_id`/`threshold` NULL 허용(schema + 라이브 DB ALTER `migration/2026-06-25-...sql`). 옷 뽑기 기회(DRAW)·월 레포트(REPORT) 알림을 **조회 시 지연 생성**(스케줄러 없이, 종 배지 폴링으로 자동 표시, DEC-0026). DTO/Mapper/Dao/Service + `NotificationBell.vue` 유형별 문구·아이콘·클릭 이동(뽑기/레포트). 디자인: paint 순흑(#000/#161616)→graphite #383430 완화 + `gold==gold-deep`로 그라데이션/flat 버튼 색 통일, `GulbiRewardView` 하드코딩 골드 제거. **classic 테마 폐기, paint 단일**(DEC-0027). API.md §5 갱신. 앱에서 alice 검증(DRAW 자격주별 1건·REPORT 월1건 중복없음, 배지 자동 증가, 실행 중 백엔드에 devtools 핫리로드로 반영됨) |
 | 2026-06-24 | hsgyeong | **AI 호출 GMS 게이트웨이 제거 → 직접 호출 전환**(DEC-0026) — GMS 토큰 소진 대응. 이미지(굴비 옷)=일반 **Gemini 직접**(`gemini.*` 프로퍼티, `generativelanguage.googleapis.com/v1beta/models/...:generateContent`, `x-goog-api-key`), 텍스트(레포트·한마디)=**OpenAI 직접**(`api.openai.com/v1`, `gpt-4o-mini`). 코드는 `GmsImageClient`만 수정(`@Value` `gms.*`→`gemini.*`, URL 프록시 세그먼트 제거), 나머지는 `application.properties`+루트 `.env` 설정 변경. `.env` 키 `GMS_KEY`→`GEMINI_KEY`·`OPENAI_KEY` 2개로 분리. 컴파일 통과. ⚠️ OpenAI 모델명·Gemini 이미지 쿼터(직접 호출 시 무료티어 0 주의) 확인 필요 |
 | 2026-06-24 | pearlseo73 | **레포트 "굴비의 총평" 카드 추가 + "굴비가 기억하는 너" 제거** — memory 기능 전면 삭제(`ReportMemory` DTO·`attachMemory`·`MonthlyReport.memory`·프론트 카드). "굴비의 한 수"(advice) 바로 위에 **300자 총평** `story` 카드 신설. story는 **추가 AI 호출 없이** `applyAiNarrative` 단일 구조화 호출에 필드 1개 추가로 생성, DB 캐싱 위해 `monthly_report.story`(VARCHAR(1000)) 컬럼·매퍼 반영. 실패 시 숫자 기반 폴백. API.md §8-1 갱신 |
