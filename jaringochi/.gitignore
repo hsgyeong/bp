@@ -2,7 +2,7 @@ HELP.md
 target/
 bin/
 
-# 환경변수/시크릿 (GMS_KEY 등) — 절대 커밋 금지
+# 환경변수/시크릿 (GEMINI_KEY·OPENAI_KEY 등) — 절대 커밋 금지
 .env
 .env.properties
 .mvn/wrapper/maven-wrapper.jar
