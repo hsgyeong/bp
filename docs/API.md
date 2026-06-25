@@ -318,7 +318,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 > 알림 유형 `type` 3종 (DEC-0026):
 > - `BUDGET` — 주간 예산 임계치 도달 (지출 등록 트리거, `threshold`/`ratio` 등 포함)
-> - `DRAW` — 옷 뽑기 기회 (지난 주 절약 성공·미결정). `weeklyBudgetId`로 뽑기 화면 이동
+> - `DRAW` — 옷 뽑기 기회 (최근 4주 이내 끝난 주 중 절약 성공·미결정·미알림). `weeklyBudgetId`로 뽑기 화면 이동
 > - `REPORT` — 새 달 시작 → 지난달 레포트 생성 가능. `reportYear`/`reportMonth` 포함
 >
 > `DRAW`/`REPORT`는 **스케줄러 없이** 알림 조회(5-1, 5-2) 시점에 자격을 검사해 없으면 생성한다(지연 생성). 종 배지가 5-2를 폴링하므로 사용자가 화면을 이동하면 배지가 자동 갱신된다. 중복은 `DRAW`=주별 1건(존재검사), `REPORT`=월별 1건(`UNIQUE(user_id,type,report_year,report_month)`)으로 차단.

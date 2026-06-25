@@ -62,12 +62,14 @@
 
 	<!-- ===== 이벤트 알림: 옷 뽑기 기회(DRAW) / 월 레포트(REPORT) ===== -->
 
-	<!-- DRAW 후보: 끝난 주(end_date < 오늘) + 절약 성공(지출 <= 예산) + 미결정 + 아직 DRAW 알림 없음 -->
+	<!-- DRAW 후보: 끝난 주(end_date < 오늘) + 현 시점 기준 최근 4주 이내 + 절약 성공(지출 <= 예산)
+	     + 미결정(아직 옷 뽑기 안 함) + 아직 DRAW 알림 없음(=확인 안 한 알림으로 1회만 노출) -->
 	<select id="selectEligibleDrawWeeks" resultType="java.lang.Long">
 	    SELECT wb.id
 	    FROM weekly_budget wb
 	    WHERE wb.user_id = #{userId}
 	      AND wb.end_date &lt; CURDATE()
+	      AND wb.end_date &gt;= CURDATE() - INTERVAL 4 WEEK
 	      AND (wb.reward_status IS NULL OR wb.reward_status = 'PENDING')
 	      AND COALESCE((
 	            SELECT SUM(t.amount) FROM `transaction` t
