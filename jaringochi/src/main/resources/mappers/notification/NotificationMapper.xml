@@ -6,19 +6,25 @@
 
     <!-- 공통 컬럼 (snake_case → DTO camelCase 자동 매핑) -->
     <sql id="cols">
-        id, user_id, weekly_budget_id, threshold,
-        current_budget, spent_money, ratio, is_read, created_at
+        id, user_id, type, weekly_budget_id, threshold,
+        current_budget, spent_money, ratio, report_year, report_month,
+        is_read, created_at
     </sql>
 
-    <!-- 5-1. 목록 (isRead 주면 필터, 없으면 전체) 최신순 -->
+    <!-- 5-1. 목록 (isRead 주면 필터, 없으면 전체) 최신순.
+         weekly_budget JOIN으로 그 주 기간(week_start/end_date)도 실어 어느 주인지 표시 -->
     <select id="selectByUser" resultType="Notification">
-        SELECT <include refid="cols"/>
-        FROM notification
-        WHERE user_id = #{userId}
+        SELECT n.id, n.user_id, n.type, n.weekly_budget_id, n.threshold,
+               n.current_budget, n.spent_money, n.ratio, n.report_year, n.report_month,
+               n.is_read, n.created_at,
+               wb.start_date AS week_start_date, wb.end_date AS week_end_date
+        FROM notification n
+        LEFT JOIN weekly_budget wb ON wb.id = n.weekly_budget_id
+        WHERE n.user_id = #{userId}
         <if test="isRead != null">
-            AND is_read = #{isRead}
+            AND n.is_read = #{isRead}
         </if>
-        ORDER BY created_at DESC
+        ORDER BY n.created_at DESC
     </select>
 
     <!-- 5-2. 안읽은 개수 -->
@@ -50,14 +56,72 @@
     </select>
     
     <!-- 트리거가 알림을 만들 수 있게 함 -->
-    <!-- 트리거: 알림 생성 (is_read는 DB 기본값 0, created_at도 DB 기본값) -->
+    <!-- 트리거: 예산 임계치(BUDGET) 알림 생성 (is_read·created_at은 DB 기본값) -->
 	<insert id="insertNotification" parameterType="Notification"
 	        useGeneratedKeys="true" keyProperty="id">
 	    INSERT INTO notification
-	        (user_id, weekly_budget_id, threshold, current_budget, spent_money, ratio)
+	        (user_id, type, weekly_budget_id, threshold, current_budget, spent_money, ratio)
 	    VALUES
-	        (#{userId}, #{weeklyBudgetId}, #{threshold}, #{currentBudget}, #{spentMoney}, #{ratio})
+	        (#{userId}, 'BUDGET', #{weeklyBudgetId}, #{threshold}, #{currentBudget}, #{spentMoney}, #{ratio})
 	</insert>
+
+	<!-- ===== 이벤트 알림: 옷 뽑기 기회(DRAW) / 월 레포트(REPORT) ===== -->
+
+	<!-- DRAW 후보: 끝난 주(end_date < 오늘) + 현 시점 기준 최근 4주 이내 + 절약 성공(지출 <= 예산)
+	     + 미결정(아직 옷 뽑기 안 함) + 아직 DRAW 알림 없음(=확인 안 한 알림으로 1회만 노출) -->
+	<select id="selectEligibleDrawWeeks" resultType="java.lang.Long">
+	    SELECT wb.id
+	    FROM weekly_budget wb
+	    WHERE wb.user_id = #{userId}
+	      AND wb.end_date &lt; CURDATE()
+	      AND wb.end_date &gt;= CURDATE() - INTERVAL 4 WEEK
+	      AND (wb.reward_status IS NULL OR wb.reward_status = 'PENDING')
+	      AND COALESCE((
+	            SELECT SUM(t.amount) FROM `transaction` t
+	            WHERE t.user_id = wb.user_id AND t.type = 2
+	              AND t.`date` BETWEEN wb.start_date AND wb.end_date
+	          ), 0) &lt;= wb.amount
+	      AND NOT EXISTS (
+	            SELECT 1 FROM notification n
+	            WHERE n.type = 'DRAW' AND n.weekly_budget_id = wb.id
+	          )
+	</select>
+
+	<!-- DRAW 알림 생성 -->
+	<insert id="insertDrawNotification" useGeneratedKeys="true" keyProperty="id">
+	    INSERT INTO notification (user_id, type, weekly_budget_id)
+	    VALUES (#{userId}, 'DRAW', #{weeklyBudgetId})
+	</insert>
+
+	<!-- 이 (유저, 연, 월)로 이미 REPORT 알림이 있는가 (0/1) -->
+	<select id="existsReportNotification" resultType="int">
+	    SELECT COUNT(*) FROM notification
+	    WHERE user_id = #{userId} AND type = 'REPORT'
+	      AND report_year = #{year} AND report_month = #{month}
+	</select>
+
+	<!-- REPORT 알림 생성 -->
+	<insert id="insertReportNotification" useGeneratedKeys="true" keyProperty="id">
+	    INSERT INTO notification (user_id, type, report_year, report_month)
+	    VALUES (#{userId}, 'REPORT', #{year}, #{month})
+	</insert>
+
+	<!-- 지난주 평가용: 오늘 이전에 끝난 가장 최근 주간예산의 종료일 (없으면 null) -->
+	<select id="selectLastWeekDate" resultType="java.time.LocalDate">
+	    SELECT end_date
+	    FROM weekly_budget
+	    WHERE user_id = #{userId}
+	      AND end_date &lt; CURDATE()
+	    ORDER BY end_date DESC
+	    LIMIT 1
+	</select>
+
+	<!-- 이 유저가 기준일 이전에 가입했는가 (0=아님 / 1=가입함). REPORT 알림 가드용:
+	     이번 달 시작 이전 가입자만 '지난달 레포트' 알림 대상 (지난달에 회원이었어야 함) -->
+	<select id="countMemberBefore" resultType="int">
+	    SELECT COUNT(*) FROM `user`
+	    WHERE id = #{userId} AND created_at &lt; #{date}
+	</select>
 
 	<!-- 트리거: 이 주 예산에 이미 발송된 최고 임계치 (행 없으면 NULL) -->
 	<select id="selectMaxThreshold" resultType="java.lang.Integer">

@@ -233,7 +233,31 @@
   - classic 테마에선 `.paint-box`가 무효라 기존 직선 테두리 유지(회귀 없음).
   - sessionStorage라 **같은 브라우저 탭에서 새로고침해도 마지막 탭 유지**(탭을 닫으면 초기화). "가계부 진입 시 항상 일자별로 시작"이 필요해지면 query 방식으로 전환 가능.
 
-## DEC-0026 · AI 호출: GMS 게이트웨이 제거 → Gemini/OpenAI 키 직접 호출 (DEC-0019 대체)
+## DEC-0026 · 알림 유형 확장(DRAW·REPORT) + 시간 기반 이벤트는 조회 시 지연 생성
+- **날짜**: 2026-06-25
+- **결정**: `notification`을 예산 임계치 전용에서 **유형 3종**으로 확장한다. `type` 컬럼 추가(`BUDGET`/`DRAW`/`REPORT`), `weekly_budget_id`·`threshold`를 **NULL 허용**으로 완화, `REPORT`용 `report_year`·`report_month` 추가.
+  - **BUDGET**(예산 사용): 기존 실시간 트리거(지출 등록 시)에 더해, **조회 시 '지난주'(오늘 이전 끝난 가장 최근 주)를 평가해 최고 임계 1건**을 결산으로 생성(`evaluateExpense(userId, 지난주날짜)` 재사용 → `maxSent`+unique로 중복 차단). 시드로 '6월 첫주'를 하드코딩하던 알림 행은 제거하고 전부 동적 생성으로 전환. 문구는 실시간/지난주 양쪽에 쓰이므로 "이번 주"를 빼고 "주간 예산…"으로 중립화하고, **어느 주인지** 헷갈리지 않게 응답에 그 주 기간(`weekStartDate`/`weekEndDate`, weekly_budget JOIN)을 실어 프론트 meta에 "6/15~6/21"로 표시.
+  - **DRAW**(옷 뽑기 기회): 끝난 주(end_date<오늘) + **현 시점 기준 최근 4주 이내**(`end_date >= CURDATE()-INTERVAL 4 WEEK`) + 절약 성공(지출≤예산) + 미결정(reward_status NULL/PENDING)인 주마다 1건. 4주 윈도우로 과거 절약주 백로그가 무한정 쌓이지 않게 한정(예: alice 10건→2건).
+  - **REPORT**(월 레포트): 새 달이 시작되면 **직전 달**(now-1month) 1건. 단 **이번 달 시작(1일) 이전 가입자만**(지난달에 회원이 아니었으면 그 달 레포트는 의미 없음 → `user.created_at < 이번달1일` 가드). 그 달 거래 유무는 보지 않음(빈 레포트 허용).
+  - 백엔드에 스케줄러가 없으므로, 두 이벤트는 **알림 조회(5-1 목록 / 5-2 개수) 시점에 자격 검사 후 없으면 생성**(지연 생성, `NotificationServiceImpl.syncEventNotifications`). 종 배지가 5-2를 폴링하므로 사용자가 화면만 이동해도 배지가 자동으로 뜬다(종을 열 필요 없음).
+- **이유**: "절약 성공 → 옷 뽑기", "달 바뀜 → 레포트 준비"는 시간 경계 이벤트라 임계치 트리거(지출 등록)로는 못 잡는다. `@Scheduled` 도입+유저 전수 스캔보다, 이미 폴링되는 조회 지점에 자격 검사를 얹는 편이 2인 MVP에 단순하고 인프라 추가가 없다. 진짜 푸시(앱 종료 중 알림)는 PWA/FCM이 필요해 범위 밖.
+- **영향**:
+  - `schema.sql` notification 테이블 개편 + 라이브 DB는 `migration/2026-06-25-notification-event-types.sql`로 ALTER. 중복 차단: DRAW=`NOT EXISTS`(주별 1건), REPORT=`UNIQUE(user_id,type,report_year,report_month)`(월별 1건). 동시요청 대비 INSERT는 `DuplicateKeyException` 삼킴.
+  - `Notification` DTO에 `type`/`reportYear`/`reportMonth` 추가, `weeklyBudgetId`는 DRAW 화면 이동 위해 응답에 **노출**(기존 `@JsonIgnore` 해제). Mapper/Dao에 `selectEligibleDrawWeeks`·`insert*Notification`·`existsReportNotification` 추가.
+  - 조회 메서드가 쓰기(생성)를 유발 → `getNotifications`/`getUnreadCount`가 더 이상 순수 read-only 아님(설계상 의도). 실패는 로깅 후 삼켜 조회를 막지 않음.
+  - 프론트 `NotificationBell.vue`가 `type`별 문구/아이콘 + 클릭 이동(DRAW→`gulbi-reward`, REPORT→`report`). API.md §5 갱신.
+  - 다량의 과거 절약주가 있으면 DRAW가 그만큼 쌓인다(테스트 데이터 alice=10건). 실사용은 주 1건 수준이고 받기/거절 시 자격에서 빠짐.
+
+## DEC-0027 · classic 테마 폐기(paint 단일) + paint 색 통일·순흑 완화
+- **날짜**: 2026-06-25
+- **결정**: 더 이상 **classic 테마를 사용하지 않는다**(그림판 `paint` 단일 테마로 운영). 디자인 토큰(DEC-0004 골드/크림 등)은 paint가 흑백으로 덮어쓰므로 실질 표시는 paint 기준.
+  - paint 테마의 순흑(`--ink #161616`, `--gold-deep #000000`)을 **흑연 톤 `#383430`로 완화**하고, `--gold == --gold-deep`로 맞춰 **골드 그라데이션 버튼과 flat 버튼이 같은 색으로 통일**되게 했다. 하드코딩 골드(`GulbiRewardView`의 `#F2A33C`)는 `var(--gold)`로 교체.
+- **이유**: 두 테마 병행이 색 통일을 깨고(버튼이 화면마다 gold/gold-deep/하드코딩/검정으로 갈림) 유지비를 키웠다. 사용자가 paint로 단일화하기로 결정. 순흑은 "너무 새까매서 안 예쁨" 피드백 → 연필 스케치 컨셉엔 graphite 톤이 더 어울리고 부드럽다. gold=gold-deep 한 줄로 그라데이션/flat 버튼을 일괄 통일.
+- **영향**:
+  - `style.css` paint 토큰 값만 조정(요소별 CSS는 대부분 그대로 var 참조라 광범위 자동 반영). classic(:root 기본값)은 코드상 남아 있으나 **미사용**(추후 정리 가능).
+  - 통계 탭(`.seg .s.on`)·홈/예산/거래/뽑기 primary 버튼이 동일 graphite로 통일. 본문 텍스트·손그림 테두리도 graphite라 전반적으로 덜 새까맣다.
+  - classic 전용 분기/토글 제거는 후속 정리 항목(현재는 무해하게 잔존).
+## DEC-0028 · AI 호출: GMS 게이트웨이 제거 → Gemini/OpenAI 키 직접 호출 (DEC-0019 대체)
 - **날짜**: 2026-06-24
 - **결정**: SSAFY GMS 게이트웨이 경유를 걷어내고 **정식 엔드포인트 직접 호출**로 전환한다.
   - **이미지(굴비 옷)**: 일반 **Gemini API 직접** — `gemini.base-url=https://generativelanguage.googleapis.com`, `/v1beta/models/{model}:generateContent`, 헤더 `x-goog-api-key: <GEMINI_KEY>`, 모델 `gemini-2.5-flash-image`.

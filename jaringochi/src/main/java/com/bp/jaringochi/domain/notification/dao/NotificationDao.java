@@ -35,4 +35,29 @@ public interface NotificationDao {
 
     // 예산 수정 시: 그 주 예산의 알림 전부 삭제 (기준 리셋용, DEC-0017)
     int deleteByWeeklyBudgetId(Long weeklyBudgetId);
+
+    // ==== 이벤트 알림: 옷 뽑기 기회(DRAW) / 월 레포트(REPORT) ==== //
+    // 뽑기 자격 주 중 아직 DRAW 알림 없는 weekly_budget_id 목록
+    List<Long> selectEligibleDrawWeeks(Long userId);
+
+    // DRAW 알림 생성
+    int insertDrawNotification(@Param("userId") Long userId,
+                               @Param("weeklyBudgetId") Long weeklyBudgetId);
+
+    // 이 (유저, 연, 월)로 이미 REPORT 알림이 있는지 (0/1+)
+    int existsReportNotification(@Param("userId") Long userId,
+                                 @Param("year") int year,
+                                 @Param("month") int month);
+
+    // REPORT 알림 생성
+    int insertReportNotification(@Param("userId") Long userId,
+                                 @Param("year") int year,
+                                 @Param("month") int month);
+
+    // REPORT 가드: 기준일(이번 달 시작) 이전에 가입했는지 (0/1)
+    int countMemberBefore(@Param("userId") Long userId,
+                          @Param("date") java.time.LocalDate date);
+
+    // 지난주 평가용: 오늘 이전에 끝난 가장 최근 주의 종료일 (없으면 null)
+    java.time.LocalDate selectLastWeekDate(Long userId);
 }

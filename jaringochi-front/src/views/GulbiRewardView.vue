@@ -193,8 +193,8 @@ onMounted(async () => {
   width: 100%; padding: 13px; border-radius: 12px;
   font-weight: 800; font-size: 15px; cursor: pointer; border: none;
 }
-.btn.primary { background: #F2A33C; color: #fff; }
-.btn.line   { background: #fff; color: #F2A33C; border: 1.5px solid #F2A33C; }
+.btn.primary { background: var(--gold); color: #fff; }
+.btn.line   { background: #fff; color: var(--gold); border: 1.5px solid var(--gold); }
 .btn.ghost  { background: transparent; color: #9a8f7a; }
 
 .spinner {

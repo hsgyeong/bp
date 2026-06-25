@@ -84,18 +84,22 @@ CREATE TABLE `weekly_budget` (
   `reward_decided_at`  DATETIME    NULL COMMENT '받기/거절 확정 시각'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- 예산 초과 알림
+-- 알림 (BUDGET=예산 임계치 / DRAW=옷 뽑기 기회 / REPORT=월 레포트)
 CREATE TABLE `notification` (
   `id`               BIGINT        PRIMARY KEY AUTO_INCREMENT COMMENT '알림 ID',
   `user_id`          BIGINT        NOT NULL                   COMMENT '받는 사람',
-  `weekly_budget_id` BIGINT        NOT NULL                   COMMENT '어느 주 예산 기준',
-  `threshold`        SMALLINT      NOT NULL                   COMMENT '25/50/75/100/125/150 (한 행=한 단계)',
-  `current_budget`   DECIMAL(12,2) NULL                       COMMENT '그 시점 예산',
-  `spent_money`      DECIMAL(12,2) NULL                       COMMENT '그 시점 지출 합계',
-  `ratio`            DECIMAL(5,2)  NULL                       COMMENT 'spent_money / current_budget (%)',
+  `type`             VARCHAR(20)   NOT NULL DEFAULT 'BUDGET'  COMMENT 'BUDGET=예산임계치 / DRAW=옷뽑기기회 / REPORT=월레포트',
+  `weekly_budget_id` BIGINT        NULL                       COMMENT '어느 주 예산 기준 (BUDGET/DRAW). REPORT는 NULL',
+  `threshold`        SMALLINT      NULL                       COMMENT '25/50/75/100/125/150 (BUDGET 전용, 한 행=한 단계)',
+  `current_budget`   DECIMAL(12,2) NULL                       COMMENT '그 시점 예산 (BUDGET)',
+  `spent_money`      DECIMAL(12,2) NULL                       COMMENT '그 시점 지출 합계 (BUDGET)',
+  `ratio`            DECIMAL(5,2)  NULL                       COMMENT 'spent_money / current_budget (%) (BUDGET)',
+  `report_year`      INT           NULL                       COMMENT '레포트 대상 연도 (REPORT 전용)',
+  `report_month`     INT           NULL                       COMMENT '레포트 대상 월 (REPORT 전용)',
   `is_read`          TINYINT       NOT NULL DEFAULT 0         COMMENT '0=안읽음 / 1=읽음',
   `created_at`       DATETIME      DEFAULT CURRENT_TIMESTAMP  COMMENT '알림 발생 시각',
-  UNIQUE KEY `uq_budget_threshold` (`weekly_budget_id`, `threshold`) -- 앱 로직(mexSent 체크)이 이미 중복을 막지만, 동시 요청 충돌용 DB 안전망
+  UNIQUE KEY `uq_budget_threshold` (`weekly_budget_id`, `threshold`), -- BUDGET 단계 중복 방지(동시 요청 충돌용 DB 안전망)
+  UNIQUE KEY `uq_report_period` (`user_id`, `type`, `report_year`, `report_month`) -- REPORT 월 1회 중복 방지(DRAW는 코드에서 존재검사)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- 월간 AI 레포트 (월 1회 생성 후 캐싱)

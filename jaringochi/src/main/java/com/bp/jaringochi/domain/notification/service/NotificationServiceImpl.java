@@ -32,16 +32,68 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private BudgetDao budgetDao;
 
-    // 5-1. 목록 - 그대로 위임
+    // 5-1. 목록 - 이벤트 알림 동기화 후 조회
     @Override
     public List<Notification> getNotifications(Long userId, Integer isRead) {
+        syncEventNotifications(userId);
         return notificationDao.selectByUser(userId, isRead);
     }
 
-    // 5-2. 개수 - 그대로 위임
+    // 5-2. 개수 - 이벤트 알림 동기화 후 조회 (종 배지는 이 호출을 폴링하므로 여기서 생성해야 배지가 자동으로 뜸)
     @Override
     public int getUnreadCount(Long userId) {
+        syncEventNotifications(userId);
         return notificationDao.countUnread(userId);
+    }
+
+    // ===== 이벤트 알림 지연 생성 (스케줄러 대체): 조회 시점에 자격 검사 후 없으면 생성 =====
+    // DRAW(절약 성공으로 옷 뽑기 가능) / REPORT(새 달 시작 → 지난달 레포트 생성 가능)
+    // 알림 실패가 조회를 막으면 안 되므로 전부 try-catch로 삼킴.
+    private void syncEventNotifications(Long userId) {
+        // 0) 예산 사용 알림: 지난주(오늘 이전 끝난 가장 최근 주)를 평가해 최고 임계 1건.
+        //    실시간(지출 등록) 트리거가 그 주에 이미 보낸 단계가 있으면 maxSent/unique로 중복 차단.
+        //    시드/직접입력처럼 트리거를 안 탄 경우에도 조회 시점에 지난주 결산이 한 번 뜨게 함.
+        try {
+            LocalDate lastWeekDate = notificationDao.selectLastWeekDate(userId);
+            if (lastWeekDate != null) {
+                evaluateExpense(userId, lastWeekDate);   // 그 주 최고 임계 1건 (내부에 try-catch 있음)
+            }
+        } catch (Exception e) {
+            log.warn("지난주 예산 알림 동기화 실패 userId={}", userId, e);
+        }
+
+        // 1) 옷 뽑기 기회: 끝난 주 중 절약 성공·미결정·미알림인 주마다 1건
+        try {
+            for (Long weeklyBudgetId : notificationDao.selectEligibleDrawWeeks(userId)) {
+                try {
+                    notificationDao.insertDrawNotification(userId, weeklyBudgetId);
+                } catch (DuplicateKeyException ignore) {
+                    // 동시 요청 안전망 (NOT EXISTS 통과 후 경합) — 정상
+                }
+            }
+        } catch (Exception e) {
+            log.warn("DRAW 알림 동기화 실패 userId={}", userId, e);
+        }
+
+        // 2) 월 레포트: 새 달이 시작됐으면 '지난달' 레포트 알림 1건 (월 1회)
+        //    단, 이번 달 시작 이전 가입자만 (지난달에 회원이 아니었으면 그 달 레포트는 의미 없음)
+        try {
+            LocalDate now = LocalDate.now();
+            LocalDate prevMonth = now.minusMonths(1);
+            int year = prevMonth.getYear();
+            int month = prevMonth.getMonthValue();
+            LocalDate firstOfThisMonth = now.withDayOfMonth(1);
+            if (notificationDao.countMemberBefore(userId, firstOfThisMonth) > 0
+                    && notificationDao.existsReportNotification(userId, year, month) == 0) {
+                try {
+                    notificationDao.insertReportNotification(userId, year, month);
+                } catch (DuplicateKeyException ignore) {
+                    // uq_report_period 안전망 — 정상
+                }
+            }
+        } catch (Exception e) {
+            log.warn("REPORT 알림 동기화 실패 userId={}", userId, e);
+        }
     }
 
     // 5-3. 단건 읽음 - 소유권 확인 후 처리
