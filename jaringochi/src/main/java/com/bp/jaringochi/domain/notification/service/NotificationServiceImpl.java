@@ -32,16 +32,52 @@ public class NotificationServiceImpl implements NotificationService {
     @Autowired
     private BudgetDao budgetDao;
 
-    // 5-1. 목록 - 그대로 위임
+    // 5-1. 목록 - 이벤트 알림 동기화 후 조회
     @Override
     public List<Notification> getNotifications(Long userId, Integer isRead) {
+        syncEventNotifications(userId);
         return notificationDao.selectByUser(userId, isRead);
     }
 
-    // 5-2. 개수 - 그대로 위임
+    // 5-2. 개수 - 이벤트 알림 동기화 후 조회 (종 배지는 이 호출을 폴링하므로 여기서 생성해야 배지가 자동으로 뜸)
     @Override
     public int getUnreadCount(Long userId) {
+        syncEventNotifications(userId);
         return notificationDao.countUnread(userId);
+    }
+
+    // ===== 이벤트 알림 지연 생성 (스케줄러 대체): 조회 시점에 자격 검사 후 없으면 생성 =====
+    // DRAW(절약 성공으로 옷 뽑기 가능) / REPORT(새 달 시작 → 지난달 레포트 생성 가능)
+    // 알림 실패가 조회를 막으면 안 되므로 전부 try-catch로 삼킴.
+    private void syncEventNotifications(Long userId) {
+        // 1) 옷 뽑기 기회: 끝난 주 중 절약 성공·미결정·미알림인 주마다 1건
+        try {
+            for (Long weeklyBudgetId : notificationDao.selectEligibleDrawWeeks(userId)) {
+                try {
+                    notificationDao.insertDrawNotification(userId, weeklyBudgetId);
+                } catch (DuplicateKeyException ignore) {
+                    // 동시 요청 안전망 (NOT EXISTS 통과 후 경합) — 정상
+                }
+            }
+        } catch (Exception e) {
+            log.warn("DRAW 알림 동기화 실패 userId={}", userId, e);
+        }
+
+        // 2) 월 레포트: 새 달이 시작됐으면 '지난달' 레포트 알림 1건 (월 1회)
+        try {
+            LocalDate prevMonth = LocalDate.now().minusMonths(1);
+            int year = prevMonth.getYear();
+            int month = prevMonth.getMonthValue();
+            if (notificationDao.existsReportNotification(userId, year, month) == 0) {
+                try {
+                    notificationDao.insertReportNotification(userId, year, month);
+                } catch (DuplicateKeyException ignore) {
+                    // uq_report_period 안전망 — 정상
+                }
+            }
+        } catch (Exception e) {
+            log.warn("REPORT 알림 동기화 실패 userId={}", userId, e);
+        }
     }
 
     // 5-3. 단건 읽음 - 소유권 확인 후 처리

@@ -6,8 +6,9 @@
 
     <!-- 공통 컬럼 (snake_case → DTO camelCase 자동 매핑) -->
     <sql id="cols">
-        id, user_id, weekly_budget_id, threshold,
-        current_budget, spent_money, ratio, is_read, created_at
+        id, user_id, type, weekly_budget_id, threshold,
+        current_budget, spent_money, ratio, report_year, report_month,
+        is_read, created_at
     </sql>
 
     <!-- 5-1. 목록 (isRead 주면 필터, 없으면 전체) 최신순 -->
@@ -50,13 +51,52 @@
     </select>
     
     <!-- 트리거가 알림을 만들 수 있게 함 -->
-    <!-- 트리거: 알림 생성 (is_read는 DB 기본값 0, created_at도 DB 기본값) -->
+    <!-- 트리거: 예산 임계치(BUDGET) 알림 생성 (is_read·created_at은 DB 기본값) -->
 	<insert id="insertNotification" parameterType="Notification"
 	        useGeneratedKeys="true" keyProperty="id">
 	    INSERT INTO notification
-	        (user_id, weekly_budget_id, threshold, current_budget, spent_money, ratio)
+	        (user_id, type, weekly_budget_id, threshold, current_budget, spent_money, ratio)
 	    VALUES
-	        (#{userId}, #{weeklyBudgetId}, #{threshold}, #{currentBudget}, #{spentMoney}, #{ratio})
+	        (#{userId}, 'BUDGET', #{weeklyBudgetId}, #{threshold}, #{currentBudget}, #{spentMoney}, #{ratio})
+	</insert>
+
+	<!-- ===== 이벤트 알림: 옷 뽑기 기회(DRAW) / 월 레포트(REPORT) ===== -->
+
+	<!-- DRAW 후보: 끝난 주(end_date < 오늘) + 절약 성공(지출 <= 예산) + 미결정 + 아직 DRAW 알림 없음 -->
+	<select id="selectEligibleDrawWeeks" resultType="java.lang.Long">
+	    SELECT wb.id
+	    FROM weekly_budget wb
+	    WHERE wb.user_id = #{userId}
+	      AND wb.end_date &lt; CURDATE()
+	      AND (wb.reward_status IS NULL OR wb.reward_status = 'PENDING')
+	      AND COALESCE((
+	            SELECT SUM(t.amount) FROM `transaction` t
+	            WHERE t.user_id = wb.user_id AND t.type = 2
+	              AND t.`date` BETWEEN wb.start_date AND wb.end_date
+	          ), 0) &lt;= wb.amount
+	      AND NOT EXISTS (
+	            SELECT 1 FROM notification n
+	            WHERE n.type = 'DRAW' AND n.weekly_budget_id = wb.id
+	          )
+	</select>
+
+	<!-- DRAW 알림 생성 -->
+	<insert id="insertDrawNotification" useGeneratedKeys="true" keyProperty="id">
+	    INSERT INTO notification (user_id, type, weekly_budget_id)
+	    VALUES (#{userId}, 'DRAW', #{weeklyBudgetId})
+	</insert>
+
+	<!-- 이 (유저, 연, 월)로 이미 REPORT 알림이 있는가 (0/1) -->
+	<select id="existsReportNotification" resultType="int">
+	    SELECT COUNT(*) FROM notification
+	    WHERE user_id = #{userId} AND type = 'REPORT'
+	      AND report_year = #{year} AND report_month = #{month}
+	</select>
+
+	<!-- REPORT 알림 생성 -->
+	<insert id="insertReportNotification" useGeneratedKeys="true" keyProperty="id">
+	    INSERT INTO notification (user_id, type, report_year, report_month)
+	    VALUES (#{userId}, 'REPORT', #{year}, #{month})
 	</insert>
 
 	<!-- 트리거: 이 주 예산에 이미 발송된 최고 임계치 (행 없으면 NULL) -->

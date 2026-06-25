@@ -316,6 +316,13 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 ## 5. 알림 (Notification)
 
+> 알림 유형 `type` 3종 (DEC-0026):
+> - `BUDGET` — 주간 예산 임계치 도달 (지출 등록 트리거, `threshold`/`ratio` 등 포함)
+> - `DRAW` — 옷 뽑기 기회 (지난 주 절약 성공·미결정). `weeklyBudgetId`로 뽑기 화면 이동
+> - `REPORT` — 새 달 시작 → 지난달 레포트 생성 가능. `reportYear`/`reportMonth` 포함
+>
+> `DRAW`/`REPORT`는 **스케줄러 없이** 알림 조회(5-1, 5-2) 시점에 자격을 검사해 없으면 생성한다(지연 생성). 종 배지가 5-2를 폴링하므로 사용자가 화면을 이동하면 배지가 자동 갱신된다. 중복은 `DRAW`=주별 1건(존재검사), `REPORT`=월별 1건(`UNIQUE(user_id,type,report_year,report_month)`)으로 차단.
+
 ### 5-1. 알림 목록 조회
 - **GET** `/api/notifications`
 - 인증: 필요
@@ -324,16 +331,28 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 |------|------|------|
 | isRead | int | 0=안읽음 / 1=읽음 (생략 시 전체) |
 
-**Response 200**
+**Response 200** (유형별 필드 — 해당 없는 필드는 null)
 ```json
 [
   {
-    "id": 3, "threshold": 75,
+    "id": 3, "type": "BUDGET", "weeklyBudgetId": 1, "threshold": 75,
     "currentBudget": 300000.00, "spentMoney": 235000.00, "ratio": 78.33,
+    "reportYear": null, "reportMonth": null,
     "isRead": 0, "createdAt": "2026-06-07T19:00:00"
+  },
+  {
+    "id": 5, "type": "DRAW", "weeklyBudgetId": 2, "threshold": null,
+    "reportYear": null, "reportMonth": null,
+    "isRead": 0, "createdAt": "2026-06-25T11:38:00"
+  },
+  {
+    "id": 6, "type": "REPORT", "weeklyBudgetId": null, "threshold": null,
+    "reportYear": 2026, "reportMonth": 5,
+    "isRead": 0, "createdAt": "2026-06-25T11:37:00"
   }
 ]
 ```
+> 프론트는 `type`으로 문구·아이콘을 조립하고, 클릭 시 `DRAW`→뽑기 화면(`weeklyBudgetId`), `REPORT`→레포트 화면으로 이동한다.
 
 ---
 
@@ -341,6 +360,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 - **GET** `/api/notifications/unread-count`
 - 인증: 필요
 - **Response 200** `{ "count": 2 }`
+- 비고: 호출 시 `DRAW`/`REPORT` 이벤트 알림을 지연 생성하므로, 새 자격이 생기면 이 개수가 자동으로 증가한다.
 
 ---
 

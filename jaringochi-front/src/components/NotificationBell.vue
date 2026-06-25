@@ -1,10 +1,11 @@
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { listNotifications, getUnreadCount, markRead, markAllRead } from '@/api/notification'
 import { useTheme } from '@/composables/useTheme'
 
 const route = useRoute()
+const router = useRouter()
 const { theme } = useTheme()
 
 const open = ref(false)     // 드롭다운 열림 여부
@@ -42,12 +43,24 @@ async function loadList() {
   }
 }
 
-// 한 건 클릭 -> 안 읽음이면 읽음 처리 + 배지 감소
+// 한 건 클릭 -> 안 읽음이면 읽음 처리 + 배지 감소 -> 유형별 화면 이동
 async function onItemClick(n) {
   if (n.isRead === 0) {
     await markRead(n.id)
     n.isRead = 1
     count.value = Math.max(0, count.value - 1)
+  }
+  goByType(n)
+}
+
+// 알림 유형별 이동: DRAW -> 굴비 옷 뽑기, REPORT -> 월 레포트
+function goByType(n) {
+  if (n.type === 'DRAW' && n.weeklyBudgetId != null) {
+    open.value = false
+    router.push({ name: 'gulbi-reward', params: { weeklyBudgetId: n.weeklyBudgetId } })
+  } else if (n.type === 'REPORT') {
+    open.value = false
+    router.push({ name: 'report' })
   }
 }
 
@@ -57,21 +70,27 @@ async function onReadAll() {
   count.value = 0
 }
 
-// threshold -> 문구 조립 (DB엔 문구 없음, 프론트가 조립 - 관심사 분리)
+// 유형/threshold -> 문구 조립 (DB엔 문구 없음, 프론트가 조립 - 관심사 분리)
 // 끝에 붙는 아이콘은 분리: classic=이모지 / paint=Tabler 라인 아이콘
 function message(n) {
+  if (n.type === 'DRAW') return '절약 성공! 굴비 옷 뽑기 기회가 왔어요'
+  if (n.type === 'REPORT') return `${n.reportMonth}월 가계부 레포트가 준비됐어요`
   const t = n.threshold
   if (t >= 125) return `이번 주 예산을 ${t - 100}% 초과했어요`
   if (t >= 100) return `이번 주 예산을 다 썼어요!`
   return `이번 주 예산의 ${t}%를 썼어요`
 }
 function messageEmoji(n) {
+  if (n.type === 'DRAW') return '🎁'
+  if (n.type === 'REPORT') return '📑'
   const t = n.threshold
   if (t >= 125) return '😱'
   if (t >= 100) return ''
   return '🐟'
 }
 function messageTi(n) {
+  if (n.type === 'DRAW') return 'ti-gift'
+  if (n.type === 'REPORT') return 'ti-report'
   const t = n.threshold
   if (t >= 125) return 'ti-alert-triangle'
   if (t >= 100) return ''
