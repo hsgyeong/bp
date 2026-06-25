@@ -679,7 +679,7 @@ watch(type, loadCategories)
   display: none;
 }
 /* 수입/지출 토글: 회색 프레임 제거(흰색). 비선택은 흰 배경 + 해당 색 글씨,
-   선택 시 수입=파스텔 블루(#bdcad9)/글씨 #6FA3DC, 지출=파스텔 코랄(#e0c1b8)/글씨 #E08A72 */
+   선택 시 수입=파스텔 블루(#e9f3ff)/글씨 #6FA3DC, 지출=파스텔 코랄(#ffede8)/글씨 #E08A72 */
 :root[data-theme="paint"] .seg {
   background: #fff;
 }
@@ -692,11 +692,11 @@ watch(type, loadCategories)
   color: var(--expense);
 }
 :root[data-theme="paint"] .seg button.income.on {
-  background: #bdcad9;
+  background: #e9f3ff;
   color: #6FA3DC;
 }
 :root[data-theme="paint"] .seg button.expense.on {
-  background: #e0c1b8;
+  background: #ffede8;
   color: #E08A72;
 }
 /* 분류 칩: 선택 시 흑백 반전으로 또렷하게 (gold-soft 회색 대신) */

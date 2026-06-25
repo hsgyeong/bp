@@ -543,7 +543,7 @@ const rateChart = computed(() => {
   border-top-color: transparent;
   --hand-line-w: 1px;
 }
-/* 선택된 토글 칩: 검정 채움 대신 연한 회색(#d3d3d3) + 검정 글씨 */
+/* 선택된 토글 칩: 검정 채움 대신 연한 회색(#e9e9e9) + 검정 글씨 */
 :root[data-theme="paint"] .seg .s.on { color: #000; }
-:root[data-theme="paint"] .seg .s.on::before { background: #d3d3d3; }
+:root[data-theme="paint"] .seg .s.on::before { background: #e9e9e9; }
 </style>

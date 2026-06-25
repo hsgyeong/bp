@@ -1081,7 +1081,7 @@ onBeforeUnmount(() => {
 :root[data-theme="paint"] .calendar-head span:last-child {
   color: var(--ink-2);
 }
-/* 일자별/달력 토글: 회색 프레임 제거(흰색), 선택 칸만 #d3d3d3+검정 글씨, 비선택은 흰색 */
+/* 일자별/달력 토글: 회색 프레임 제거(흰색), 선택 칸만 #e9e9e9+검정 글씨, 비선택은 흰색 */
 :root[data-theme="paint"] .mode-wrap .seg {
   background: #fff;
 }
@@ -1089,7 +1089,7 @@ onBeforeUnmount(() => {
   background: #fff;
 }
 :root[data-theme="paint"] .mode-wrap .seg button.on {
-  background: #d3d3d3;
+  background: #e9e9e9;
   color: #000;
 }
 

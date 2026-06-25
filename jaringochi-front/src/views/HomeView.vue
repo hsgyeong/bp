@@ -736,6 +736,11 @@ onMounted(() => {
 }
 
 /* ── paint(그림판) 테마 보정 — 하드코딩된 골드/그라데이션을 흑백으로 ── */
+/* 예산 설정하기 버튼: 회색 배경(#e9e9e9) + 검정 글씨 */
+:root[data-theme="paint"] .budget-link {
+  background: #e9e9e9;
+  color: #000;
+}
 /* 굴비 옷 뽑기 버튼: 노란 배경(#FDDF7B) + 검정 글씨 */
 :root[data-theme="paint"] .budget-link.reward {
   background: #FDDF7B;

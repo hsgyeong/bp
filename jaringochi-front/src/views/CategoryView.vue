@@ -114,11 +114,11 @@ async function onDeleteConfirm() {
 /* 행 구분선: .paint-hline-b 가 손그림 선을 그림 → 직선 border 숨김 */
 :root[data-theme="paint"] .menu { border-bottom-color: transparent; }
 /* 수입/지출 분류 토글: 거래 등록 화면과 동일한 색 규칙.
-   비선택은 흰 배경 + 해당 색 글씨, 선택 시 수입=#bdcad9/글씨 #6FA3DC, 지출=#e0c1b8/글씨 #E08A72 */
+   비선택은 흰 배경 + 해당 색 글씨, 선택 시 수입=#e9f3ff/글씨 #6FA3DC, 지출=#ffede8/글씨 #E08A72 */
 :root[data-theme="paint"] .seg .s.income { color: var(--income); }
 :root[data-theme="paint"] .seg .s.expense { color: var(--expense); }
 :root[data-theme="paint"] .seg .s.income.on { color: #6FA3DC; }
-:root[data-theme="paint"] .seg .s.income.on::before { background: #bdcad9; }
+:root[data-theme="paint"] .seg .s.income.on::before { background: #e9f3ff; }
 :root[data-theme="paint"] .seg .s.expense.on { color: #E08A72; }
-:root[data-theme="paint"] .seg .s.expense.on::before { background: #e0c1b8; }
+:root[data-theme="paint"] .seg .s.expense.on::before { background: #ffede8; }
 </style>
