@@ -1,6 +1,6 @@
 # 자린고치 가계부 API 명세서
 
-> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification`, `refresh_token` (6개 테이블)
+> 기준 DB: `user`, `category`, `transaction`, `weekly_budget`, `notification`, `monthly_report`, `refresh_token` (7개 테이블)
 > Base URL: `/api`
 > 인증: 로그인 후 발급된 토큰(JWT 등)을 `Authorization: Bearer <token>` 헤더로 전달
 > 공통 응답 형식 / 상태 코드는 문서 하단 참고
@@ -616,7 +616,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 ### 엔드포인트 요약
 | 도메인 | 메서드 & 경로 |
 |--------|---------------|
-| 인증 | POST /auth/signup, /auth/login, /auth/logout |
+| 인증 | POST /auth/signup, /auth/login, /auth/logout · GET /auth/check-nickname |
 | 사용자 | GET·PUT·DELETE /users/me |
 | 카테고리 | GET·POST /categories, PUT·DELETE /categories/{id} |
 | 거래 | GET·POST /transactions, GET·PUT·DELETE /transactions/{id} |
