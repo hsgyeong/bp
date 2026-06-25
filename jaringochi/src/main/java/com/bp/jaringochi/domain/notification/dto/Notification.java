@@ -28,6 +28,9 @@ public class Notification {
     private BigDecimal ratio;          // % (BUDGET)
     private Integer reportYear;        // 레포트 대상 연도 (REPORT 전용)
     private Integer reportMonth;       // 레포트 대상 월 (REPORT 전용)
+    // BUDGET/DRAW의 그 주 기간 (weekly_budget JOIN으로 채움). 어느 주인지 표시용
+    private java.time.LocalDate weekStartDate;
+    private java.time.LocalDate weekEndDate;
     private Integer isRead;            // 0=안읽음 / 1=읽음
     private LocalDateTime createdAt;
 }

@@ -105,6 +105,15 @@ function fmtDate(s) {
   return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
 }
 
+// BUDGET 알림: 그 주 기간 "6/15~6/21" (어느 주인지 표시). TZ 영향 없게 문자열 파싱
+function fmtWeek(n) {
+  const md = (d) => {
+    const [, m, day] = String(d).split('-')
+    return `${Number(m)}/${Number(day)}`
+  }
+  return `${md(n.weekStartDate)}~${md(n.weekEndDate)}`
+}
+
 onMounted(loadCount)
 watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 배지 갱신
 </script>
@@ -145,7 +154,8 @@ watch(() => route.path, loadCount)   // 로그인 후 화면 이동 등에서 �
                 <template v-else-if="messageEmoji(n)">{{ messageEmoji(n) }}</template>
               </div>
               <div class="meta">
-                {{ fmtDate(n.createdAt) }}
+                <template v-if="n.type === 'BUDGET' && n.weekStartDate">{{ fmtWeek(n) }}</template>
+                <template v-else>{{ fmtDate(n.createdAt) }}</template>
                 <span v-if="n.ratio != null"> · {{ Number(n.ratio).toFixed(0) }}%</span>
               </div>
             </div>

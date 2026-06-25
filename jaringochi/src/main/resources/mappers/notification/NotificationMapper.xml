@@ -11,15 +11,20 @@
         is_read, created_at
     </sql>
 
-    <!-- 5-1. 목록 (isRead 주면 필터, 없으면 전체) 최신순 -->
+    <!-- 5-1. 목록 (isRead 주면 필터, 없으면 전체) 최신순.
+         weekly_budget JOIN으로 그 주 기간(week_start/end_date)도 실어 어느 주인지 표시 -->
     <select id="selectByUser" resultType="Notification">
-        SELECT <include refid="cols"/>
-        FROM notification
-        WHERE user_id = #{userId}
+        SELECT n.id, n.user_id, n.type, n.weekly_budget_id, n.threshold,
+               n.current_budget, n.spent_money, n.ratio, n.report_year, n.report_month,
+               n.is_read, n.created_at,
+               wb.start_date AS week_start_date, wb.end_date AS week_end_date
+        FROM notification n
+        LEFT JOIN weekly_budget wb ON wb.id = n.weekly_budget_id
+        WHERE n.user_id = #{userId}
         <if test="isRead != null">
-            AND is_read = #{isRead}
+            AND n.is_read = #{isRead}
         </if>
-        ORDER BY created_at DESC
+        ORDER BY n.created_at DESC
     </select>
 
     <!-- 5-2. 안읽은 개수 -->

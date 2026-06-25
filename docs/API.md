@@ -338,6 +338,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
     "id": 3, "type": "BUDGET", "weeklyBudgetId": 1, "threshold": 75,
     "currentBudget": 300000.00, "spentMoney": 235000.00, "ratio": 78.33,
     "reportYear": null, "reportMonth": null,
+    "weekStartDate": "2026-06-01", "weekEndDate": "2026-06-07",
     "isRead": 0, "createdAt": "2026-06-07T19:00:00"
   },
   {
@@ -353,6 +354,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 ]
 ```
 > 프론트는 `type`으로 문구·아이콘을 조립하고, 클릭 시 `DRAW`→뽑기 화면(`weeklyBudgetId`), `REPORT`→레포트 화면으로 이동한다.
+> `weekStartDate`/`weekEndDate`는 weekly_budget JOIN으로 채운 그 주 기간(BUDGET/DRAW만, REPORT는 null). BUDGET 알림은 실시간(이번 주)·지난주 결산 양쪽에 쓰여 어느 주인지 헷갈릴 수 있어, 프론트가 이 기간을 meta에 "6/15~6/21"로 표시한다.
 
 ---
 
