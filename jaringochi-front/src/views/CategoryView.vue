@@ -45,8 +45,8 @@ async function onDeleteConfirm() {
 
     <!-- 수입/지출 세그먼트 탭 -->
     <div class="seg">
-      <div class="s" :class="{ on: type === 1 }" @click="type = 1">수입 분류</div>
-      <div class="s" :class="{ on: type === 2 }" @click="type = 2">지출 분류</div>
+      <div class="s income" :class="{ on: type === 1 }" @click="type = 1">수입 분류</div>
+      <div class="s expense" :class="{ on: type === 2 }" @click="type = 2">지출 분류</div>
     </div>
 
     <!-- 목록 -->
@@ -113,4 +113,12 @@ async function onDeleteConfirm() {
 :root[data-theme="paint"] .cat-ic { background: transparent !important; border-radius: 0; font-size: 22px; }
 /* 행 구분선: .paint-hline-b 가 손그림 선을 그림 → 직선 border 숨김 */
 :root[data-theme="paint"] .menu { border-bottom-color: transparent; }
+/* 수입/지출 분류 토글: 거래 등록 화면과 동일한 색 규칙.
+   비선택은 흰 배경 + 해당 색 글씨, 선택 시 수입=#bdcad9/글씨 #6FA3DC, 지출=#e0c1b8/글씨 #E08A72 */
+:root[data-theme="paint"] .seg .s.income { color: var(--income); }
+:root[data-theme="paint"] .seg .s.expense { color: var(--expense); }
+:root[data-theme="paint"] .seg .s.income.on { color: #6FA3DC; }
+:root[data-theme="paint"] .seg .s.income.on::before { background: #bdcad9; }
+:root[data-theme="paint"] .seg .s.expense.on { color: #E08A72; }
+:root[data-theme="paint"] .seg .s.expense.on::before { background: #e0c1b8; }
 </style>

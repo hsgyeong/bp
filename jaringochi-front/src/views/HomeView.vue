@@ -300,7 +300,7 @@ onMounted(() => {
           <strong class="budget-empty-title">지난주 예산을 지켜냈어요! 🎉</strong>
           <div class="budget-empty-action">
             <p>절약에 성공한 보상으로 굴비에게 새 옷을 선물할 수 있어요.</p>
-            <button class="budget-link" type="button" @click="goReward">굴비 옷 뽑기</button>
+            <button class="budget-link reward" type="button" @click="goReward">굴비 옷 뽑기</button>
           </div>
         </template>
 
@@ -736,6 +736,11 @@ onMounted(() => {
 }
 
 /* ── paint(그림판) 테마 보정 — 하드코딩된 골드/그라데이션을 흑백으로 ── */
+/* 굴비 옷 뽑기 버튼: 노란 배경(#FDDF7B) + 검정 글씨 */
+:root[data-theme="paint"] .budget-link.reward {
+  background: #FDDF7B;
+  color: #000;
+}
 :root[data-theme="paint"] .mascot-card {
   background: var(--card) !important;
   border-radius: 5px !important;

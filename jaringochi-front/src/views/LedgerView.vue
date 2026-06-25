@@ -1081,6 +1081,17 @@ onBeforeUnmount(() => {
 :root[data-theme="paint"] .calendar-head span:last-child {
   color: var(--ink-2);
 }
+/* 일자별/달력 토글: 회색 프레임 제거(흰색), 선택 칸만 #d3d3d3+검정 글씨, 비선택은 흰색 */
+:root[data-theme="paint"] .mode-wrap .seg {
+  background: #fff;
+}
+:root[data-theme="paint"] .mode-wrap .seg button {
+  background: #fff;
+}
+:root[data-theme="paint"] .mode-wrap .seg button.on {
+  background: #d3d3d3;
+  color: #000;
+}
 
 /* ── 날짜 상세 모달 ──────────────────────────────────────────────────── */
 .day-modal-backdrop {
