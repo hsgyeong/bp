@@ -24,6 +24,13 @@ const sort = ref('date_desc')        // 정렬 기준: 기본은 최신순
 const categories = ref([])
 const selectedCategory = ref('all')
 
+// 유형(전체/수입/지출)에 맞는 카테고리만 드롭다운에 보여준다.
+const visibleCategories = computed(() => {
+  if (transactionType.value === 'all') return categories.value
+  const t = Number(transactionType.value)
+  return categories.value.filter((c) => c.type === t)
+})
+
 const selectedDay = ref(null)  // 달력에서 클릭한 날짜의 상세(모달). null이면 닫힘.
 
 // 선택한 날짜의 순합계(수입 - 지출)
@@ -290,6 +297,12 @@ function scheduleSearch() {
   }, 300)
 }
 
+// 유형을 바꾸면 카테고리 선택을 '전체'로 초기화 (다른 유형 항목이 남지 않도록).
+// 아래 조회 watch보다 먼저 등록돼 유형 변경 시 조회는 한 번만 실행된다.
+watch(transactionType, () => {
+  selectedCategory.value = 'all'
+})
+
 // 월, 거래 유형, 정렬 기준은 선택 즉시 다시 조회한다.
 watch([selectedMonth, transactionType, sort, selectedCategory], loadTransactions)
 
@@ -373,7 +386,7 @@ onBeforeUnmount(() => {
         <span class="paint-field">
           <select v-model="selectedCategory">
             <option value="all">전체</option>
-            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            <option v-for="c in visibleCategories" :key="c.id" :value="c.id">{{ c.name }}</option>
           </select>
         </span>
       </label>
