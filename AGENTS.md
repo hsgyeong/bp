@@ -40,8 +40,8 @@ bp/
 - 패키지 베이스: `com.bp.jaringochi`, 도메인형 구조 `domain/<도메인>/{controller,service,...}`
 - 빌드: `./mvnw spring-boot:run` (Windows: `mvnw.cmd`)
 - **AI**: GMS 게이트웨이를 걷어내고 **정식 엔드포인트 직접 호출**로 전환.
-  - **텍스트(월간 레포트·굴비 한마디)**: **Spring AI 2.0.0-RC1** `spring-ai-starter-model-openai` + `ChatClient`. OpenAI 직접 호출 — `spring.ai.openai.base-url=https://api.openai.com/v1`, 모델 `gpt-5.5-pro`.
-  - **이미지(굴비 옷)**: `GmsImageClient`가 **Gemini 네이티브 API 직접 호출** — `gemini.base-url=https://generativelanguage.googleapis.com`, `/v1beta/models/{model}:generateContent`, `x-goog-api-key` 헤더, 모델 `gemini-2.5-flash-image`.
+  - **텍스트(월간 레포트·굴비 한마디)**: **Spring AI 2.0.0-RC1** `spring-ai-starter-model-openai` + `ChatClient`. OpenAI 직접 호출 — `spring.ai.openai.base-url=https://api.openai.com/v1`, 모델 `gpt-5.4-mini-2026-03-17`.
+  - **이미지(굴비 옷)**: `GmsImageClient`가 **Gemini 네이티브 API 직접 호출** — `gemini.base-url=https://generativelanguage.googleapis.com`, `/v1beta/models/{model}:generateContent`, `x-goog-api-key` 헤더, 모델 `gemini-3.1-flash-image`.
   - **키는 커밋 금지** — 루트 `.env`(gitignore됨)에 `OPENAI_KEY=...`, `GEMINI_KEY=...`, `spring.config.import=optional:file:../.env` 로 로드. (집↔강의장 이동 시 `.env`만 새로 만들면 됨)
 
 ### 프론트엔드 (`jaringochi-front/`)
