@@ -517,7 +517,7 @@ GET /api/transactions?startDate=2026-06-01&endDate=2026-06-30&keyword=식비&sor
 
 > AI(굴비) 월간 레포트. 통계/예산 지표는 기존 도메인을 재사용해 정확히 계산하고, 텍스트
 > (한줄평·코멘트·조언·한마디 응답)는 **Spring AI `ChatClient`**로 생성한다. AI 호출은
-> **OpenAI 직접**(`spring.ai.openai.base-url=https://api.openai.com/v1`, 키는 `.env`의 `OPENAI_KEY`, 모델 `gpt-5.5-pro`). (이미지=굴비 옷은 별도로 Gemini 직접 호출 — §7·DEC-0026)
+> **OpenAI 직접**(`spring.ai.openai.base-url=https://api.openai.com/v1`, 키는 `.env`의 `OPENAI_KEY`, 모델 `gpt-5.4-mini-2026-03-17`). (이미지=굴비 옷은 별도로 Gemini 직접 호출 — §7·DEC-0026)
 > 레포트는 **월 1회 생성 후 DB 캐싱**(`monthly_report`), 굴비 한마디도 **월 1회**.
 > 생성 대상은 **완료된 달(지난달까지)만** — 진행 중인 이번 달/미래 달은 400(R400).
 > 주간 예산 성공 주는 **완료된 최근 3주**(진행 중 주 제외) 중 `ratio ≤ 100` 카운트(월 무관).

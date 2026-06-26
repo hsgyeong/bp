@@ -45,7 +45,7 @@ public class GmsImageClient {
 	@Value("${gemini.api-key}")
 	private String apiKey;
 
-	@Value("${gemini.model:gemini-2.5-flash-image}")
+	@Value("${gemini.model:gemini-3.1-flash-image}")
 	private String model;
 
 	/**
