@@ -269,3 +269,22 @@
   - `AiConfig`·`GulbiRewardService`·`report` 도메인은 무변경(Spring AI가 properties만 보고 OpenAI로 붙음). `application.properties`·`.env` 설정 변경이 대부분.
   - ⚠️ 모델명 주의: 기존 `gpt-5.4-mini`는 GMS 별칭 → 실제 OpenAI 계정 모델(`gpt-5.5-pro` 채택)로 교체 필요.
   - ⚠️ `gemini-2.5-flash-image`를 Google **직접** 호출 시 과거엔 무료 티어 0(429)이었음(DEC-0019 근거) → 유료/쿼터 확인 필요. 클래스명 `GmsImageClient`는 잔존(추후 리네임 가능).
+
+## DEC-0029 · AI 운영 모델 확정 (DEC-0028 정정 노트)
+- **날짜**: 2026-06-26
+- **결정**: 실제 운영 모델을 다음으로 **확정**한다 — 텍스트(OpenAI) `gpt-5.4-mini-2026-03-17`, 이미지(Gemini) `gemini-3.1-flash-image`.
+- **이유**: DEC-0028에는 "`gpt-5.5-pro` 채택"·`gemini-2.5-flash-image`로 적혀 있으나, 실제 `application.properties` 설정은 `spring.ai.openai.chat.options.model=gpt-5.4-mini-2026-03-17` / `gemini.model=gemini-3.1-flash-image` 였다. 문서·코드가 어긋나 있어 **실동작 값으로 통일**.
+- **영향**:
+  - DEC-0028 본문의 옛 모델명(`gpt-5.5-pro`, `gemini-2.5-flash-image`)은 **이력으로 보존**하되, 유효 값은 본 항목(DEC-0029)이다.
+  - AGENTS.md §3, docs/API.md §8, docs/PROGRESS.md, 산출물 요구사항정의서를 실제 값으로 정정 완료.
+  - ⚠️ `GmsImageClient.java`의 `@Value` 기본값은 여전히 `gemini-2.5-flash-image`이나, `application.properties`가 `gemini-3.1-flash-image`로 오버라이드하므로 실동작은 후자. (코드 기본값도 맞추려면 후속 정리)
+
+## DEC-0030 · EC2 배포 보안 정리 — 시크릿·CORS 환경변수화 + prod 프로필
+- **날짜**: 2026-06-26
+- **결정**: `jwt.secret`/DB 자격증명/CORS allowed-origins을 `application.properties`에 하드코딩하지 않고 환경변수(`JWT_SECRET`, `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `ALLOWED_ORIGINS`)로 오버라이드 가능하게 바꾸고, 로컬 개발값은 `:기본값` 형태로만 폴백 유지. `application-prod.properties` 프로필을 추가해 `spring.sql.init.mode=never`로 운영 DB가 재기동 시 `data.sql`로 초기화되지 않게 함.
+- **이유**: 기존 `jwt.secret`과 DB 비밀번호가 git에 평문으로 커밋되어 있어, 누구나 값을 알면 JWT를 위조하거나 DB에 접근할 수 있는 상태였음(EC2 배포 전 보안 점검 중 발견). CORS도 `localhost:5173`로 고정돼 있어 운영 프론트 도메인에서 API 호출이 막히는 문제도 함께 해결.
+- **영향**:
+  - EC2 배포 시 `JWT_SECRET`은 기존 노출된 값 그대로 쓰지 말고 **새 값으로 재발급**해야 함(코드만 env화해서는 노출 이력이 사라지지 않음).
+  - 운영 기동 시 `-Dspring.profiles.active=prod` + 위 환경변수들을 반드시 설정.
+  - `SecurityConfig.java`의 CORS 빈이 `app.cors.allowed-origins`(쉼표구분 리스트, Spring이 자동 변환) 프로퍼티를 읽도록 변경됨.
+  - `jaringochi/.gitignore`에 `*.bak` 추가(테스트 중 생성된 `data.sql.bak` 같은 파일이 실수로 커밋되는 것 방지).
